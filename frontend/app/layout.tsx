@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+
+import { Navbar } from "@/components/navbar";
+
+import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,11 +19,17 @@ export default function RootLayout({
     <html
       lang="en"
       className={`h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <div className="container mx-auto px-4">
-          {children}
-        </div>
+        <Providers>
+          <div className="min-h-full flex flex-col">
+            <Navbar />
+            <div className="container mx-auto px-4 pt-3 pb-6">
+              {children}
+            </div>
+          </div>
+        </Providers>
       </body>
     </html>
   );

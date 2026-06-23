@@ -114,14 +114,14 @@ export default function TradingPositionsPage() {
   const losers = rows.length - winners;
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb] text-zinc-900 pb-8">
-      <section className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-zinc-200">
+    <main className="min-h-screen bg-[#f5f7fb] text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100 pb-8 transition-colors">
+      <section className="sticky top-14 z-10 bg-white/95 dark:bg-[#0f141c]/95 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800 transition-colors">
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">F&O</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">F&O</p>
               <h1 className="text-lg font-semibold leading-tight">Positions</h1>
-              <p className="text-[11px] text-zinc-500 mt-0.5">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {lastUpdated
                   ? `Updated ${lastUpdated.toLocaleTimeString()}`
                   : "Waiting for live prices"}
@@ -130,15 +130,15 @@ export default function TradingPositionsPage() {
 
             <button
               onClick={() => void refresh()}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium border border-zinc-300 text-zinc-700 bg-white active:scale-95 transition"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 active:scale-95 transition"
             >
               {loading ? "Syncing" : "Sync"}
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-3">
-            <article className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Day P&L</p>
+            <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Day P&L</p>
               <p
                 className={`text-sm font-semibold ${
                   totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
@@ -148,14 +148,14 @@ export default function TradingPositionsPage() {
               </p>
             </article>
 
-            <article className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Exposure</p>
-              <p className="text-sm font-semibold text-zinc-900">{formatCompact(totalTurnover)}</p>
+            <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Exposure</p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{formatCompact(totalTurnover)}</p>
             </article>
 
-            <article className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">W/L</p>
-              <p className="text-sm font-semibold text-zinc-900">{winners}/{losers}</p>
+            <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">W/L</p>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{winners}/{losers}</p>
             </article>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function TradingPositionsPage() {
 
       <section className="px-3 pt-3 space-y-2.5">
         {error ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
+          <div className="rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-2.5 text-xs text-rose-700 dark:text-rose-300">
             {error}
           </div>
         ) : null}
@@ -171,12 +171,12 @@ export default function TradingPositionsPage() {
         {rows.map((row) => (
           <article
             key={row.id}
-            className="rounded-xl border border-zinc-200 bg-white px-3 py-3"
+            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-[14px] font-semibold leading-tight truncate">{row.label}</h2>
-                <p className="text-[11px] text-zinc-500 mt-0.5 truncate">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
                   {row.expiry} • {row.product} • Qty {row.qty}
                 </p>
               </div>
@@ -184,8 +184,8 @@ export default function TradingPositionsPage() {
               <span
                 className={`text-[10px] px-2 py-0.5 rounded border ${
                   row.side === "LONG"
-                    ? "border-emerald-200 text-emerald-700 bg-emerald-50"
-                    : "border-rose-200 text-rose-700 bg-rose-50"
+                    ? "border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
+                    : "border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30"
                 }`}
               >
                 {row.side}
@@ -194,15 +194,15 @@ export default function TradingPositionsPage() {
 
             <div className="grid grid-cols-4 gap-2 mt-2.5 text-[11px]">
               <div>
-                <p className="text-zinc-500">Avg</p>
+                <p className="text-zinc-500 dark:text-zinc-400">Avg</p>
                 <p className="font-medium">{formatMoney(row.avgPrice)}</p>
               </div>
               <div>
-                <p className="text-zinc-500">LTP</p>
+                <p className="text-zinc-500 dark:text-zinc-400">LTP</p>
                 <p className="font-medium">{formatMoney(row.ltp)}</p>
               </div>
               <div>
-                <p className="text-zinc-500">Chg</p>
+                <p className="text-zinc-500 dark:text-zinc-400">Chg</p>
                 <p
                   className={`font-medium ${
                     row.changePct >= 0 ? "text-emerald-600" : "text-rose-600"
@@ -212,7 +212,7 @@ export default function TradingPositionsPage() {
                 </p>
               </div>
               <div>
-                <p className="text-zinc-500">P&L</p>
+                <p className="text-zinc-500 dark:text-zinc-400">P&L</p>
                 <p
                   className={`font-semibold ${
                     row.pnl >= 0 ? "text-emerald-600" : "text-rose-600"

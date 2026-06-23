@@ -8,19 +8,19 @@ export default function Home() {
   ];
 
   return (
-    <>
+    <main className="min-h-[calc(100vh-7rem)] bg-[#f5f7fb] dark:bg-[#0b0f15] text-zinc-900 dark:text-zinc-100 transition-colors rounded-xl p-3">
       <div className="grid [grid-template-columns:repeat(auto-fit,minmax(250px,1fr))] gap-4">
         {cards.map((card) => (
             <a
               key={card.id}
               href={card.url}
-              className="block bg-white p-4 rounded shadow hover:shadow-lg transition-shadow"
+              className="block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded shadow-sm hover:shadow-md transition"
             >
               <h2 className="text-xl font-semibold">{card.title}</h2>
               <p>{card.content}</p>
             </a>
         ))}
       </div>
-    </>
+    </main>
   );
 }
