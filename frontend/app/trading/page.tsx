@@ -120,7 +120,7 @@ export default function TradingPositionsPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">F&O</p>
-              <h1 className="text-lg font-semibold leading-tight">Positions</h1>
+              <h1 className="display-face text-lg font-semibold leading-tight">Positions</h1>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {lastUpdated
                   ? `Updated ${lastUpdated.toLocaleTimeString()}`

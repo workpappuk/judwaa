@@ -16,7 +16,7 @@ export default function Home() {
               href={card.url}
               className="block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded shadow-sm hover:shadow-md transition"
             >
-              <h2 className="text-xl font-semibold">{card.title}</h2>
+              <h2 className="display-face text-xl font-semibold">{card.title}</h2>
               <p>{card.content}</p>
             </a>
         ))}
