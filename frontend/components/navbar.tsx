@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { FiMoon, FiSun } from "react-icons/fi";
+import { FiHome, FiMoon, FiSun, FiTrendingUp } from "react-icons/fi";
 import { useTheme } from "next-themes";
 
 import { useAppDispatch } from "@/store/hooks";
@@ -33,10 +33,12 @@ export function Navbar() {
             Judwaa
           </Link>
           <nav className="flex items-center gap-4 text-xs font-medium text-zinc-600 dark:text-zinc-300">
-            <Link href="/" className="hover:text-zinc-900 dark:hover:text-white transition-colors">
+            <Link href="/" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
+              <FiHome className="h-3.5 w-3.5" />
               Home
             </Link>
-            <Link href="/trading" className="hover:text-zinc-900 dark:hover:text-white transition-colors">
+            <Link href="/trading" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
+              <FiTrendingUp className="h-3.5 w-3.5" />
               Trading
             </Link>
           </nav>

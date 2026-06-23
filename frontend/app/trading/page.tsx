@@ -1,6 +1,17 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import {
+  FiActivity,
+  FiArrowDownRight,
+  FiArrowUpRight,
+  FiBarChart2,
+  FiDollarSign,
+  FiHash,
+  FiRefreshCw,
+  FiTarget,
+  FiTrendingUp,
+} from "react-icons/fi";
 
 import { useNeoQuotes } from "@/hooks/use-neo-quotes";
 import type { FnOPositionDraft, FnOPositionView } from "@/types/trading";
@@ -72,7 +83,7 @@ const formatCompact = (value: number): string => {
 
 export default function TradingPositionsPage() {
   const symbols = useMemo(() => POSITIONS.map((position) => position.neoSymbol), []);
-  const { quotes, loading, error, refresh, lastUpdated } = useNeoQuotes(symbols);
+  const { quotes, loading, error, isStale, refresh, lastUpdated } = useNeoQuotes(symbols);
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => {
@@ -117,28 +128,36 @@ export default function TradingPositionsPage() {
     <main className="min-h-screen bg-[#f5f7fb] text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100 pb-8 transition-colors">
       <section className="sticky top-14 z-10 bg-white/95 dark:bg-[#0f141c]/95 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800 transition-colors">
         <div className="px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">F&O</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
+                <FiActivity className="h-3 w-3" />
+                F&O
+              </p>
               <h1 className="display-face text-lg font-semibold leading-tight">Positions</h1>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {lastUpdated
-                  ? `Updated ${lastUpdated.toLocaleTimeString()}`
+                  ? `Updated ${lastUpdated.toLocaleTimeString()}${isStale ? " • stale" : ""}`
                   : "Waiting for live prices"}
               </p>
             </div>
 
             <button
               onClick={() => void refresh()}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 active:scale-95 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 active:scale-95 transition shrink-0"
+              aria-label="Refresh quotes"
             >
-              {loading ? "Syncing" : "Sync"}
+              <FiRefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              <span>{loading ? "Syncing" : "Sync"}</span>
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-3">
             <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Day P&L</p>
+              <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <FiDollarSign className="h-3 w-3" />
+                Day P&L
+              </p>
               <p
                 className={`text-sm font-semibold ${
                   totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
@@ -149,12 +168,18 @@ export default function TradingPositionsPage() {
             </article>
 
             <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Exposure</p>
+              <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <FiBarChart2 className="h-3 w-3" />
+                Exposure
+              </p>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{formatCompact(totalTurnover)}</p>
             </article>
 
             <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">W/L</p>
+              <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <FiTarget className="h-3 w-3" />
+                W/L
+              </p>
               <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{winners}/{losers}</p>
             </article>
           </div>
@@ -194,15 +219,18 @@ export default function TradingPositionsPage() {
 
             <div className="grid grid-cols-4 gap-2 mt-2.5 text-[11px]">
               <div>
-                <p className="text-zinc-500 dark:text-zinc-400">Avg</p>
+                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400"><FiHash className="h-3 w-3" />Avg</p>
                 <p className="font-medium">{formatMoney(row.avgPrice)}</p>
               </div>
               <div>
-                <p className="text-zinc-500 dark:text-zinc-400">LTP</p>
+                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400"><FiBarChart2 className="h-3 w-3" />LTP</p>
                 <p className="font-medium">{formatMoney(row.ltp)}</p>
               </div>
               <div>
-                <p className="text-zinc-500 dark:text-zinc-400">Chg</p>
+                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                  {row.changePct >= 0 ? <FiArrowUpRight className="h-3 w-3" /> : <FiArrowDownRight className="h-3 w-3" />}
+                  Chg
+                </p>
                 <p
                   className={`font-medium ${
                     row.changePct >= 0 ? "text-emerald-600" : "text-rose-600"
@@ -212,7 +240,7 @@ export default function TradingPositionsPage() {
                 </p>
               </div>
               <div>
-                <p className="text-zinc-500 dark:text-zinc-400">P&L</p>
+                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400"><FiTrendingUp className="h-3 w-3" />P&L</p>
                 <p
                   className={`font-semibold ${
                     row.pnl >= 0 ? "text-emerald-600" : "text-rose-600"
