@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { NeoQuoteResponse } from "@/types/trading";
+import type { NeoQuoteResponse, PaginatedInstrumentResponse } from "@/types/trading";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
@@ -19,6 +19,19 @@ export async function getNeoQuotes(
 
   const response = await tradingApi.get<NeoQuoteResponse[]>("/api/neo/quotes", {
     params,
+    signal,
+  });
+
+  return response.data;
+}
+
+export async function getInstruments(
+  page: number,
+  size: number,
+  signal?: AbortSignal,
+): Promise<PaginatedInstrumentResponse> {
+  const response = await tradingApi.get<PaginatedInstrumentResponse>("/api/neo/instruments", {
+    params: { page, size },
     signal,
   });
 

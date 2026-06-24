@@ -56,3 +56,28 @@ export interface FnOPositionView extends FnOPositionDraft {
   pnl: number;
   turnover: number;
 }
+
+export interface InstrumentPojo {
+  sourceFile: string;
+  rowNumber: number;
+  exchangeSegment: string;
+  instrumentType: string;
+  symbol: string;
+  tradingSymbol: string;
+  optionType: string;
+  exchange: string;
+  expiryDate: string;
+  lotSize: string;
+  strikePrice: string;
+  fields: Record<string, string>;
+}
+
+export interface PaginatedInstrumentResponse {
+  content: InstrumentPojo[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
