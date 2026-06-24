@@ -13,9 +13,8 @@ export default function Home() {
   };
 
   const cards: Card[] = [
-    { id: 1, title: "Trading", content: "Live market dashboard", url: "/trading", icon: FiTrendingUp },
-    { id: 2, title: "Youtube", content: "Video ideas and publishing", url: "/youtube", icon: FiPlayCircle },
-    { id: 3, title: "Blog", content: "Research notes and writeups", url: "/blog", icon: FiBookOpen },
+    { id: 1, title: "F&O", content: "Live market dashboard", url: "/trading/f&o", icon: FiTrendingUp },
+    { id: 2, title: "Instruments", content: "List of all instruments", url: "/trading/instrument", icon: FiBookOpen },
   ];
 
   return (
