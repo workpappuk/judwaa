@@ -37,10 +37,6 @@ export function Navbar() {
               <FiHome className="h-3.5 w-3.5" />
               Home
             </Link>
-            <Link href="/trading" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
-              <FiTrendingUp className="h-3.5 w-3.5" />
-              Trading
-            </Link>
           </nav>
         </div>
 

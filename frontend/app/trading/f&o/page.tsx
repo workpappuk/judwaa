@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 
 import { useNeoQuotes } from "@/hooks/use-neo-quotes";
+import { useAppSelector } from "@/store/hooks";
 import type { FnOPositionDraft, FnOPositionView } from "@/types/trading";
 
 const POSITIONS: FnOPositionDraft[] = [
@@ -82,7 +83,10 @@ const formatCompact = (value: number): string => {
 };
 
 export default function TradingPositionsPage() {
-  const symbols = useMemo(() => POSITIONS.map((position) => position.neoSymbol), []);
+  const draftPositions = useAppSelector((state) => state.trading.draftPositions);
+  const positions = draftPositions.length > 0 ? draftPositions : POSITIONS;
+
+  const symbols = useMemo(() => positions.map((position) => position.neoSymbol), [positions]);
   const { quotes, loading, error, isStale, refresh, lastUpdated } = useNeoQuotes(symbols);
 
   useEffect(() => {
@@ -101,7 +105,7 @@ export default function TradingPositionsPage() {
   }, [refresh]);
 
   const rows: FnOPositionView[] = useMemo(() => {
-    return POSITIONS.map((position, index) => {
+    return positions.map((position, index) => {
       const quote = quotes[index];
       const ltp = toNumber(quote?.ltp);
       const changePct = toNumber(quote?.per_change);
@@ -117,7 +121,7 @@ export default function TradingPositionsPage() {
         turnover,
       };
     });
-  }, [quotes]);
+  }, [positions, quotes]);
 
   const totalPnl = rows.reduce((acc, row) => acc + row.pnl, 0);
   const totalTurnover = rows.reduce((acc, row) => acc + row.turnover, 0);
@@ -250,6 +254,7 @@ export default function TradingPositionsPage() {
                 </p>
               </div>
             </div>
+
           </article>
         ))}
       </section>
