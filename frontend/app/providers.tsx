@@ -7,10 +7,13 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { store } from "@/store";
 import type { RootState } from "@/store";
+import { setSession } from "@/store/slices/authSlice";
 import { setDraftPositions } from "@/store/slices/tradingSlice";
+import type { AuthSession } from "@/types/auth";
 import type { FnOPositionDraft } from "@/types/trading";
 
 const DRAFTS_STORAGE_KEY = "judwaa.trading.draftPositions";
+const AUTH_STORAGE_KEY = "judwaa.auth.session";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -43,10 +46,43 @@ function DraftPositionsPersistence() {
   return null;
 }
 
+function AuthSessionPersistence() {
+  const dispatch = useDispatch();
+  const authSession = useSelector((state: RootState) => state.auth.session);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<AuthSession>;
+      if (typeof parsed.username === "string" && typeof parsed.token === "string") {
+        dispatch(setSession({ username: parsed.username, token: parsed.token }));
+      }
+    } catch {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!authSession) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authSession));
+  }, [authSession]);
+
+  return null;
+}
+
 export function Providers({ children }: ProvidersProps) {
   return (
     <ReduxProvider store={store}>
       <DraftPositionsPersistence />
+      <AuthSessionPersistence />
       <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false}>
         {children}
       </ThemeProvider>

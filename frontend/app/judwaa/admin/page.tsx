@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { IconType } from "react-icons";
 import { FiArrowUpRight, FiBookOpen, FiLogOut, FiShield, FiTrendingUp, FiUserCheck } from "react-icons/fi";
 
-export default function Home() {
+export default function AdminHome() {
   type Card = {
     id: number;
     title: string;
@@ -13,10 +13,7 @@ export default function Home() {
   };
 
   const cards: Card[] = [
-    { id: 1, title: "F&O", content: "Live market dashboard", url: "/trading/f&o", icon: FiTrendingUp },
-    { id: 2, title: "Instruments", content: "List of all instruments", url: "/trading/instrument", icon: FiBookOpen },
-    { id: 3, title: "Auth", content: "Login and registration", url: "/auth", icon: FiUserCheck },
-    { id: 4, title: "Admin", content: "Admin dashboard", url: "/judwaa/admin", icon: FiShield },
+       { id: 5, title: "Force Logout", content: "Blacklist user token", url: "/judwaa/admin/security/forcelogout", icon: FiLogOut },
   ];
 
   return (

@@ -15,15 +15,18 @@ import jakarta.validation.Valid;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,6 +40,8 @@ public class AuthController {
 	private UserService userService;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	@Autowired
+	private TokenBlacklistService tokenBlacklistService;
 
 	@Operation(summary = "Authenticate user and get JWT token", description = "Returns a JWT token if credentials are valid.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = AuthRequestDTO.class))), responses = {
 			@ApiResponse(responseCode = "200", description = "JWT token returned"),
@@ -65,5 +70,72 @@ public class AuthController {
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 		userService.save(user);
 		return ResponseEntity.ok("User registered successfully");
+	}
+
+	@Operation(summary = "Logout user", description = "Blacklists the current JWT and clears the current security context.", responses = {
+			@ApiResponse(responseCode = "200", description = "User logged out successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid or missing token")})
+	@PostMapping("/logout")
+	public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+		String token = extractBearerToken(authHeader);
+		if (token == null) {
+			return ResponseEntity.badRequest().body("Authorization header with Bearer token is required");
+		}
+
+		try {
+			tokenBlacklistService.blacklistToken(token);
+			SecurityContextHolder.clearContext();
+			return ResponseEntity.ok("User logged out successfully");
+		} catch (Exception ex) {
+			return ResponseEntity.badRequest().body("Invalid token");
+		}
+	}
+
+	@Operation(summary = "Force logout token", description = "Admin-only endpoint to blacklist any JWT token.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = ForceLogoutRequestDTO.class))), responses = {
+			@ApiResponse(responseCode = "200", description = "Token forcefully logged out successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid token"),
+			@ApiResponse(responseCode = "403", description = "Forbidden")})
+	@PostMapping("/force-logout")
+	public ResponseEntity<?> forceLogout(@RequestBody @Valid ForceLogoutRequestDTO request,
+			Authentication authentication) {
+		boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+				.anyMatch(authority -> "ADMIN".equals(authority.getAuthority()));
+		if (!isAdmin) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin can force logout tokens");
+		}
+
+		String token = normalizeToken(request.getToken());
+		if (token == null) {
+			return ResponseEntity.badRequest().body("Token is required");
+		}
+
+		try {
+			tokenBlacklistService.blacklistToken(token);
+			return ResponseEntity.ok("Token forcefully logged out successfully");
+		} catch (Exception ex) {
+			return ResponseEntity.badRequest().body("Invalid token");
+		}
+	}
+
+	private String extractBearerToken(String authHeader) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			return null;
+		}
+
+		String token = authHeader.substring(7).trim();
+		return token.isEmpty() ? null : token;
+	}
+
+	private String normalizeToken(String token) {
+		if (token == null) {
+			return null;
+		}
+
+		String normalized = token.trim();
+		if (normalized.startsWith("Bearer ")) {
+			normalized = normalized.substring(7).trim();
+		}
+
+		return normalized.isEmpty() ? null : normalized;
 	}
 }
