@@ -12,15 +12,23 @@ export type Tab = {
 type TabsProps = {
   tabs: Tab[];
   defaultTab?: string;
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
+  showContent?: boolean;
+  ariaLabel?: string;
   className?: string;
 };
 
 export default function Tabs({
   tabs,
   defaultTab,
+  activeTab,
+  onTabChange,
+  showContent = true,
+  ariaLabel = "Trading views",
   className,
 }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+  const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || tabs[0]?.id);
   const tabsId = useId();
 
   if (!tabs.length) {
@@ -30,20 +38,26 @@ export default function Tabs({
   const fallbackActiveId = defaultTab && tabs.some((tab) => tab.id === defaultTab)
     ? defaultTab
     : tabs[0].id;
-  const activeId = tabs.some((tab) => tab.id === activeTab) ? activeTab : fallbackActiveId;
+  const resolvedActiveTab = activeTab ?? internalActiveTab;
+  const activeId = tabs.some((tab) => tab.id === resolvedActiveTab) ? resolvedActiveTab : fallbackActiveId;
   const active = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
+
+  const handleTabChange = (tabId: string) => {
+    setInternalActiveTab(tabId);
+    onTabChange?.(tabId);
+  };
 
   return (
     <div className={className}>
       <div
         className="inline-flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-1"
         role="tablist"
-        aria-label="Trading views"
+        aria-label={ariaLabel}
       >
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             type="button"
             role="tab"
             aria-selected={active.id === tab.id}
@@ -60,14 +74,16 @@ export default function Tabs({
         ))}
       </div>
 
-      <div
-        id={`${tabsId}-${active.id}-panel`}
-        role="tabpanel"
-        aria-labelledby={`${tabsId}-${active.id}-tab`}
-        className="pt-3"
-      >
-        {active.content}
-      </div>
+      {showContent ? (
+        <div
+          id={`${tabsId}-${active.id}-panel`}
+          role="tabpanel"
+          aria-labelledby={`${tabsId}-${active.id}-tab`}
+          className="pt-3"
+        >
+          {active.content}
+        </div>
+      ) : null}
     </div>
   );
 }

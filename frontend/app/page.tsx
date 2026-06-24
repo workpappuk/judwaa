@@ -17,6 +17,7 @@ export default function Home() {
     { id: 2, title: "Instruments", content: "List of all instruments", url: "/trading/instrument", icon: FiBookOpen },
     { id: 3, title: "Auth", content: "Login and registration", url: "/auth", icon: FiUserCheck },
     { id: 4, title: "Admin", content: "Admin dashboard", url: "/judwaa/admin", icon: FiShield },
+    { id: 5, title: "Incentive", content: "Scheme and rule manager", url: "/incentive", icon: FiLogOut },
   ];
 
   return (
