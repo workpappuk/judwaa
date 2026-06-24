@@ -4,8 +4,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.waajud.judwaa.modules.auth.entity.*;
-import com.waajud.judwaa.modules.auth.repository.*;
+import com.waajud.judwaa.modules.auth.entity.Permission;
+import com.waajud.judwaa.modules.auth.repository.PermissionRepository;
 
 @Service
 public class PermissionService {
