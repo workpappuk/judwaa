@@ -19,7 +19,7 @@ import type { FnOPositionDraft, FnOPositionView } from "@/types/trading";
 const POSITIONS: FnOPositionDraft[] = [
   {
     id: "p1",
-    neoSymbol: "nse_fo|NIFTY26JUN24300CE",
+    neoSymbol: "nse_fo|103204",
     label: "NIFTY 24300 CE",
     qty: 50,
     avgPrice: 122.4,
@@ -31,7 +31,7 @@ const POSITIONS: FnOPositionDraft[] = [
   },
   {
     id: "p2",
-    neoSymbol: "nse_fo|BANKNIFTY26JUN52500PE",
+    neoSymbol: "nse_fo|103272",
     label: "BANKNIFTY 52500 PE",
     qty: 15,
     avgPrice: 208.1,
@@ -43,7 +43,7 @@ const POSITIONS: FnOPositionDraft[] = [
   },
   {
     id: "p3",
-    neoSymbol: "nse_fo|FINNIFTY26JUN24150CE",
+    neoSymbol: "nse_fo|109901",
     label: "FINNIFTY 24150 CE",
     qty: 40,
     avgPrice: 76.7,

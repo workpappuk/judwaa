@@ -10,8 +10,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/neo")
-@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS}, 
-             allowedHeaders = "*", exposedHeaders = {"Content-Type", "Authorization"}, maxAge = 3600)
+@CrossOrigin(origins = "*", methods = { RequestMethod.GET, RequestMethod.POST,
+        RequestMethod.OPTIONS }, allowedHeaders = "*", exposedHeaders = { "Content-Type",
+                "Authorization" }, maxAge = 3600)
 public class KotakNeoController {
 
     @Autowired
@@ -23,15 +24,18 @@ public class KotakNeoController {
     @Autowired
     private KotakNeoQuoteService kotakNeoQuoteService;
 
+    @Autowired
+    private KotakInstrumentService kotakInstrumentService;
+
     @PostMapping("/login")
     public String login(@RequestParam String totp) {
         kotakSessionService.activateTradeSession(totp);
-        return "Login successful with TOTP: " + totp;   
+        return "Login successful with TOTP: " + totp;
     }
 
     @GetMapping("/script-download")
     public String downloadScript() {
-                        scripMasterDownloadService.downloadAll();
+        scripMasterDownloadService.downloadAll();
 
         return "Script downloaded successfully";
     }
@@ -39,6 +43,13 @@ public class KotakNeoController {
     @GetMapping("/quotes")
     public List<QuoteResponse> fetchQuotes(@RequestParam List<String> neoSymbols) {
         return kotakNeoQuoteService.fetchQuotes(neoSymbols);
+    }
+
+    @GetMapping("/instruments")
+    public KotakInstrumentService.PaginatedInstrumentResponse fetchInstruments(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return kotakInstrumentService.readAllCsvAsPojoPaginated(page, size);
     }
 
 }

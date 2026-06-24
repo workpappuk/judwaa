@@ -1,0 +1,233 @@
+[
+  {
+    "exchange_token": "103204",
+    "display_symbol": "IEX26JUL150PE",
+    "exchange": "nse_fo",
+    "lstup_time": "Mon Jan 01 1900 05:21:10 GMT+0521 (India Standard Time)",
+    "ltp": "0",
+    "last_traded_quantity": "0",
+    "total_buy": "0",
+    "total_sell": "0",
+    "last_volume": "0",
+    "change": "",
+    "per_change": "",
+    "year_high": "0",
+    "year_low": "0",
+    "ohlc": {
+      "open": "0",
+      "high": "0",
+      "low": "0",
+      "close": "0"
+    },
+    "depth": {
+      "buy": [
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        }
+      ],
+      "sell": [
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        }
+      ]
+    }
+  },
+  {
+    "exchange_token": "103272",
+    "display_symbol": "ICICIBANK26JUL1130PE",
+    "exchange": "nse_fo",
+    "lstup_time": "Mon Jan 01 1900 05:21:10 GMT+0521 (India Standard Time)",
+    "ltp": "4.95",
+    "last_traded_quantity": "0",
+    "total_buy": "0",
+    "total_sell": "0",
+    "last_volume": "0",
+    "change": "0",
+    "per_change": "0",
+    "year_high": "0",
+    "year_low": "0",
+    "ohlc": {
+      "open": "0",
+      "high": "0",
+      "low": "0",
+      "close": "4.95"
+    },
+    "depth": {
+      "buy": [
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        }
+      ],
+      "sell": [
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        }
+      ]
+    }
+  },
+  {
+    "exchange_token": "109901",
+    "display_symbol": "EXIDEIND26JUN330CE",
+    "exchange": "nse_fo",
+    "lstup_time": "Mon Jan 01 1900 05:21:10 GMT+0521 (India Standard Time)",
+    "ltp": "51",
+    "last_traded_quantity": "1800",
+    "total_buy": "0",
+    "total_sell": "0",
+    "last_volume": "0",
+    "change": "0",
+    "per_change": "0",
+    "year_high": "0",
+    "year_low": "0",
+    "ohlc": {
+      "open": "0",
+      "high": "0",
+      "low": "0",
+      "close": "51"
+    },
+    "depth": {
+      "buy": [
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        }
+      ],
+      "sell": [
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        },
+        {
+          "price": "0",
+          "quantity": "0",
+          "orders": "0"
+        }
+      ]
+    }
+  }
+]
