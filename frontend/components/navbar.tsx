@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { FiHome, FiMoon, FiSun, FiTrendingUp } from "react-icons/fi";
+import { FiHome, FiMaximize, FiMinimize, FiMoon, FiSun } from "react-icons/fi";
 import { useTheme } from "next-themes";
 
-import { useAppDispatch } from "@/store/hooks";
-import { setThemeMode, type ThemeMode } from "@/store/slices/uiSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setIsFullscreen, setThemeMode, type ThemeMode } from "@/store/slices/uiSlice";
 
 export function Navbar() {
   const dispatch = useAppDispatch();
+  const isFullscreen = useAppSelector((state) => state.ui.isFullscreen);
   const { setTheme, resolvedTheme } = useTheme();
   const currentTheme: ThemeMode = resolvedTheme === "dark" ? "dark" : "light";
 
@@ -19,10 +20,35 @@ export function Navbar() {
     }
   }, [dispatch, resolvedTheme]);
 
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      dispatch(setIsFullscreen(Boolean(document.fullscreenElement)));
+    };
+
+    onFullscreenChange();
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+    };
+  }, [dispatch]);
+
   const handleThemeToggle = () => {
     const nextTheme: ThemeMode = currentTheme === "dark" ? "light" : "dark";
     dispatch(setThemeMode(nextTheme));
     setTheme(nextTheme);
+  };
+
+  const handleFullscreenToggle = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Ignore browser permission and unsupported fullscreen errors.
+    }
   };
 
   return (
@@ -40,15 +66,27 @@ export function Navbar() {
           </nav>
         </div>
 
-        <button
-          type="button"
-          onClick={handleThemeToggle}
-          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
-          aria-label="Toggle theme"
-          title={currentTheme === "dark" ? "Switch to light" : "Switch to dark"}
-        >
-          {currentTheme === "dark" ? <FiSun className="h-4 w-4" /> : <FiMoon className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleFullscreenToggle}
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
+            aria-label="Toggle fullscreen"
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            {isFullscreen ? <FiMinimize className="h-4 w-4" /> : <FiMaximize className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleThemeToggle}
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
+            aria-label="Toggle theme"
+            title={currentTheme === "dark" ? "Switch to light" : "Switch to dark"}
+          >
+            {currentTheme === "dark" ? <FiSun className="h-4 w-4" /> : <FiMoon className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import type { IconType } from "react-icons";
-import { FiArrowUpRight, FiBookOpen, FiPlayCircle, FiTrendingUp } from "react-icons/fi";
+import { FiArrowUpRight, FiBookOpen, FiTrendingUp } from "react-icons/fi";
 
 export default function Home() {
   type Card = {
