@@ -5,11 +5,13 @@ export type ThemeMode = "light" | "dark";
 interface UiState {
   themeMode: ThemeMode;
   isFullscreen: boolean;
+  isAudioPlaying: boolean;
 }
 
 const initialState: UiState = {
   themeMode: "light",
   isFullscreen: false,
+  isAudioPlaying: false,
 };
 
 const uiSlice = createSlice({
@@ -28,8 +30,11 @@ const uiSlice = createSlice({
     toggleFullscreenState: (state) => {
       state.isFullscreen = !state.isFullscreen;
     },
+    setIsAudioPlaying: (state, action: PayloadAction<boolean>) => {
+      state.isAudioPlaying = action.payload;
+    },
   },
 });
 
-export const { setThemeMode, toggleThemeMode, setIsFullscreen, toggleFullscreenState } = uiSlice.actions;
+export const { setThemeMode, toggleThemeMode, setIsFullscreen, toggleFullscreenState, setIsAudioPlaying } = uiSlice.actions;
 export default uiSlice.reducer;

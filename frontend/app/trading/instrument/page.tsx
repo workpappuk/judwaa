@@ -161,7 +161,7 @@ export default function InstrumentPage() {
       return;
     }
 
-    const drafts: FnOPositionDraft[] = selectedEntries.map((entry, idx) => {
+    const drafts: FnOPositionDraft[] = selectedEntries.map((entry) => {
       const instrument = entry.instrument;
       const optionType = inferOptionType(instrument);
       const symbolPart = normalize(instrument.symbol) === "-" ? instrumentKey(instrument) : instrument.symbol;
