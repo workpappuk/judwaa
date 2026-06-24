@@ -1,6 +1,5 @@
 package com.waajud.judwaa.modules.trading.domain;
 
-
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,11 +10,8 @@ import java.time.Duration;
 @Configuration
 public class HttpConfig {
 
-    @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder
-                .setConnectTimeout(Duration.ofSeconds(30))
-                .setReadTimeout(Duration.ofSeconds(30))
-                .build();
-    }
+	@Bean
+	public RestTemplate restTemplate(RestTemplateBuilder builder) {
+		return builder.connectTimeout(Duration.ofSeconds(30)).readTimeout(Duration.ofSeconds(30)).build();
+	}
 }

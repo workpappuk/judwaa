@@ -4,6 +4,8 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 
 import java.util.List;
@@ -15,26 +17,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${swagger.api.base-url}")
-    private String baseUrl;
+	@Value("${swagger.api.base-url}")
+	private String baseUrl;
 
-    @Bean
-    public OpenAPI customOpenAPI() {
-        return new OpenAPI()
-                .servers(List.of(
-                        new Server()
-                                .url(baseUrl)
-                                .description("GitEnvironment Server")
-                ))
-                .info(new Info()
-                        .title("TPSBE API")
-                        .version("1.0.0")
-                        .description("Trading Platform Backend API")
-                        .contact(new Contact()
-                                .name("Support")
-                                .email("support@example.com"))
-                        .license(new License()
-                                .name("Apache 2.0")
-                                .url("https://www.apache.org/licenses/LICENSE-2.0.html")));
-    }
+	@Bean
+	public OpenAPI customOpenAPI() {
+		return new OpenAPI().addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+				.schemaRequirement("bearerAuth",
+						new SecurityScheme().name("Authorization").type(SecurityScheme.Type.HTTP).scheme("bearer")
+								.bearerFormat("JWT"))
+				.servers(List.of(new Server().url(baseUrl)))
+				.info(new Info().title("TPSBE API").version("1.0.0").description("Trading Platform Backend API")
+						.contact(new Contact().name("Support").email("support@example.com")).license(new License()
+								.name("Apache 2.0").url("https://www.apache.org/licenses/LICENSE-2.0.html")));
+	}
 }
