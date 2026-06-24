@@ -121,11 +121,11 @@ export function Navbar() {
 
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="display-face text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <Link href="/" className="display-face  font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">
             Judwaa
           </Link>
-          <nav className="flex items-center gap-4 text-xs font-medium text-zinc-600 dark:text-zinc-300">
-            <Link href="/" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
+          <nav className="flex items-center gap-4  font-medium text-zinc-600 dark:text-zinc-300">
+            <Link href="/" className="text-sm inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
               <FiHome className="h-3.5 w-3.5" />
               Home
             </Link>

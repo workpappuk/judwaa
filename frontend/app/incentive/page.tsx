@@ -1050,7 +1050,7 @@ export default function IncentivePage() {
             <div className="mb-5 flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold">Calculation History</h2>
               <button
-                onClick={handleRunCalculation}
+                onClick={() => void handleRunCalculation()}
                 type="button"
                 disabled={runningCalculation || !selectedScheme}
                 className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
