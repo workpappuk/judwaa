@@ -1,189 +1,134 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { FiArrowRight, FiCheckCircle, FiChevronLeft, FiChevronRight, FiDatabase, FiFileText, FiHelpCircle, FiLink2, FiPlayCircle, FiSettings, FiShield, FiUploadCloud, FiUsers } from "react-icons/fi";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FiArrowRight, FiCheckCircle, FiChevronLeft, FiChevronRight, FiUploadCloud, FiX } from "react-icons/fi";
 
-type CollectorStep = {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  fields: CollectorField[];
-};
-
-type CollectorField = {
-  key: string;
-  label: string;
-  type: "text" | "select" | "checkbox";
-  defaultValue: string | boolean;
-  placeholder?: string;
-  options?: string[];
-  colSpan?: 1 | 2;
-};
-
-type ExtraLink = {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  external?: boolean;
-};
-
-type CollectorConfig = {
-  title: string;
-  subtitle: string;
-  importButtonLabel: string;
-  steps: CollectorStep[];
-  extraLinks: ExtraLink[];
-};
-
-const dataCollectorConfig: CollectorConfig = {
-  title: "Data Collector",
-  subtitle: "Create and configure ingestion pipelines in guided steps.",
-  importButtonLabel: "Import Config",
-  steps: [
-    {
-      id: "source",
-      title: "Source Setup",
-      description: "Choose source and schedule details",
-      icon: FiDatabase,
-      fields: [
-        {
-          key: "collectorName",
-          label: "Collector Name",
-          type: "text",
-          defaultValue: "Daily Equity Snapshot",
-          placeholder: "Enter collector name",
-        },
-        {
-          key: "sourceType",
-          label: "Source Type",
-          type: "select",
-          defaultValue: "S3 Bucket",
-          options: ["S3 Bucket", "REST API", "Kafka Topic", "FTP Server"],
-        },
-        {
-          key: "schedule",
-          label: "Schedule (Cron)",
-          type: "text",
-          defaultValue: "0 30 8 * * 1-5",
-          placeholder: "0 30 8 * * 1-5",
-          colSpan: 2,
-        },
-        {
-          key: "ownerTeam",
-          label: "Owner Team",
-          type: "text",
-          defaultValue: "Trading Ops",
-          placeholder: "Trading Ops",
-          colSpan: 2,
-        },
-      ],
-    },
-    {
-      id: "mapping",
-      title: "Field Mapping",
-      description: "Map incoming fields to internal schema",
-      icon: FiFileText,
-      fields: [
-        {
-          key: "primaryKey",
-          label: "Primary Key Field",
-          type: "text",
-          defaultValue: "instrument_token",
-          placeholder: "instrument_token",
-        },
-        {
-          key: "timestampField",
-          label: "Timestamp Field",
-          type: "text",
-          defaultValue: "received_at",
-          placeholder: "received_at",
-        },
-        {
-          key: "timezone",
-          label: "Timezone",
-          type: "select",
-          defaultValue: "Asia/Kolkata",
-          options: ["Asia/Kolkata", "UTC", "America/New_York"],
-          colSpan: 2,
-        },
-      ],
-    },
-    {
-      id: "validation",
-      title: "Validation Rules",
-      description: "Define quality and integrity checks",
-      icon: FiShield,
-      fields: [
-        {
-          key: "nullThreshold",
-          label: "Null Threshold (%)",
-          type: "text",
-          defaultValue: "5",
-          placeholder: "5",
-          colSpan: 2,
-        },
-        {
-          key: "notifyChannel",
-          label: "Notification Channel",
-          type: "text",
-          defaultValue: "#data-alerts",
-          placeholder: "#data-alerts",
-          colSpan: 2,
-        },
-        {
-          key: "dedupeEnabled",
-          label: "Enable duplicate row protection",
-          type: "checkbox",
-          defaultValue: true,
-          colSpan: 2,
-        },
-      ],
-    },
-    {
-      id: "review",
-      title: "Review & Run",
-      description: "Confirm settings and start collection",
-      icon: FiPlayCircle,
-      fields: [],
-    },
-  ],
-  extraLinks: [
-    { label: "Incentive Module", href: "/incentive", icon: FiLink2 },
-    { label: "Trading Dashboard", href: "/trading/f&o", icon: FiUsers },
-    { label: "Instrument Library", href: "/trading/instrument", icon: FiSettings },
-    { label: "Collector Logging Guide", href: "https://docs.python.org/3/library/logging.html", icon: FiHelpCircle, external: true },
-  ],
-};
-
-const defaultFormValues = dataCollectorConfig.steps.reduce<Record<string, string | boolean>>((values, step) => {
-  step.fields.forEach((field) => {
-    values[field.key] = field.defaultValue;
-  });
-  return values;
-}, {});
+import { collectorConfigs, getDefaultFormValues, type CollectorField, type CollectorSection } from "./config";
 
 export default function DataCollectorPage() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formValues, setFormValues] = useState<Record<string, string | boolean>>(defaultFormValues);
+  const [selectedCollectorId, setSelectedCollectorId] = useState(collectorConfigs[0].id);
+  const [collectorSearch, setCollectorSearch] = useState("");
+  const [leftStepSearch, setLeftStepSearch] = useState("");
+  const [stepFieldSearch, setStepFieldSearch] = useState("");
+  const [rightLinkSearch, setRightLinkSearch] = useState("");
+  const collectorRailRef = useRef<HTMLDivElement | null>(null);
+  const selectedConfig = useMemo(
+    () => collectorConfigs.find((config) => config.id === selectedCollectorId) ?? collectorConfigs[0],
+    [selectedCollectorId],
+  );
+  const filteredCollectorConfigs = useMemo(() => {
+    const query = collectorSearch.trim().toLowerCase();
 
-  const progress = useMemo(() => Math.round(((currentStep + 1) / dataCollectorConfig.steps.length) * 100), [currentStep]);
+    if (!query) {
+      return collectorConfigs;
+    }
+
+    return collectorConfigs.filter((config) => {
+      return (
+        config.title.toLowerCase().includes(query)
+        || config.subtitle.toLowerCase().includes(query)
+        || config.category.toLowerCase().includes(query)
+        || config.id.toLowerCase().includes(query)
+      );
+    });
+  }, [collectorSearch]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formValues, setFormValues] = useState<Record<string, string | boolean>>(getDefaultFormValues(collectorConfigs[0]));
+
+  useEffect(() => {
+    setCurrentStep(0);
+    setFormValues(getDefaultFormValues(selectedConfig));
+  }, [selectedConfig]);
+
+  const progress = useMemo(() => Math.round(((currentStep + 1) / selectedConfig.steps.length) * 100), [currentStep, selectedConfig.steps.length]);
   const isFirst = currentStep === 0;
-  const isLast = currentStep === dataCollectorConfig.steps.length - 1;
-  const activeStep = dataCollectorConfig.steps[currentStep];
+  const isLast = currentStep === selectedConfig.steps.length - 1;
+  const activeStep = selectedConfig.steps[currentStep];
+  const activeStepFieldItems = useMemo(
+    () => activeStep.sections.flatMap((section) => section.fields.map((field) => ({ sectionTitle: section.title, field }))),
+    [activeStep],
+  );
+  const filteredStepFieldItems = useMemo(() => {
+    const query = stepFieldSearch.trim().toLowerCase();
+
+    if (!query) {
+      return activeStepFieldItems;
+    }
+
+    return activeStepFieldItems.filter((item) => {
+      return (
+        item.field.label.toLowerCase().includes(query)
+        || item.sectionTitle.toLowerCase().includes(query)
+        || item.field.key.toLowerCase().includes(query)
+      );
+    });
+  }, [activeStepFieldItems, stepFieldSearch]);
+  const filteredStepItems = useMemo(() => {
+    const query = leftStepSearch.trim().toLowerCase();
+    const indexedSteps = selectedConfig.steps.map((step, index) => ({ step, index }));
+
+    if (!query) {
+      return indexedSteps;
+    }
+
+    return indexedSteps.filter(({ step }) => {
+      return (
+        step.title.toLowerCase().includes(query)
+        || step.description.toLowerCase().includes(query)
+        || step.id.toLowerCase().includes(query)
+      );
+    });
+  }, [leftStepSearch, selectedConfig.steps]);
+  const filteredRightLinks = useMemo(() => {
+    const query = rightLinkSearch.trim().toLowerCase();
+
+    if (!query) {
+      return selectedConfig.extraLinks;
+    }
+
+    return selectedConfig.extraLinks.filter((item) => {
+      return item.label.toLowerCase().includes(query) || item.href.toLowerCase().includes(query);
+    });
+  }, [rightLinkSearch, selectedConfig.extraLinks]);
 
   const fieldMap = useMemo(() => {
-    return dataCollectorConfig.steps.reduce<Record<string, CollectorField>>((map, step) => {
-      step.fields.forEach((field) => {
-        map[field.key] = field;
+    return selectedConfig.steps.reduce<Record<string, CollectorField>>((map, step) => {
+      step.sections.forEach((section) => {
+        section.fields.forEach((field) => {
+          map[field.key] = field;
+        });
       });
       return map;
     }, {});
-  }, []);
+  }, [selectedConfig]);
 
   const handleFieldChange = (key: string, value: string | boolean) => {
     setFormValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const scrollCollectorRail = (direction: "left" | "right") => {
+    const rail = collectorRailRef.current;
+
+    if (!rail) {
+      return;
+    }
+
+    rail.scrollBy({
+      left: direction === "left" ? -320 : 320,
+      behavior: "smooth",
+    });
+  };
+
+  const focusFieldByKey = (fieldKey: string) => {
+    const element = document.getElementById(`field-${fieldKey}`) as HTMLElement | null;
+
+    if (!element) {
+      return;
+    }
+
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    element.focus({ preventScroll: true });
   };
 
   const formatValue = (value: string | boolean) => {
@@ -205,6 +150,7 @@ export default function DataCollectorPage() {
         >
           <input
             type="checkbox"
+            id={`field-${field.key}`}
             checked={Boolean(value)}
             onChange={(event) => handleFieldChange(field.key, event.target.checked)}
             className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
@@ -219,6 +165,7 @@ export default function DataCollectorPage() {
         <label key={field.key} className={`text-xs ${colSpanClass}`}>
           <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
           <select
+            id={`field-${field.key}`}
             value={String(value)}
             onChange={(event) => handleFieldChange(field.key, event.target.value)}
             className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
@@ -237,6 +184,7 @@ export default function DataCollectorPage() {
       <label key={field.key} className={`text-xs ${colSpanClass}`}>
         <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
         <input
+          id={`field-${field.key}`}
           value={String(value)}
           onChange={(event) => handleFieldChange(field.key, event.target.value)}
           className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
@@ -246,24 +194,62 @@ export default function DataCollectorPage() {
     );
   };
 
+  const renderSection = (section: CollectorSection) => {
+    return (
+      <section key={section.id} className="rounded-lg border border-zinc-200/80 bg-white/80 p-3 dark:border-zinc-800 dark:bg-zinc-900/70">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">{section.title}</h3>
+        {section.description ? <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">{section.description}</p> : null}
+        <div className="mt-2 grid gap-3 md:grid-cols-2">{section.fields.map((field) => renderField(field))}</div>
+      </section>
+    );
+  };
+
   const renderStepForm = () => {
-    if (activeStep.fields.length > 0) {
-      return <div className="grid gap-3 md:grid-cols-2">{activeStep.fields.map((field) => renderField(field))}</div>;
+    if (activeStep.sections.length > 0) {
+      return <div className="space-y-3">{activeStep.sections.map((section) => renderSection(section))}</div>;
     }
+
+    const reviewSteps = selectedConfig.steps.filter((step) => step.sections.length > 0);
+    const filledFieldCount = Object.values(formValues).filter((value) => String(value).trim().length > 0).length;
 
     return (
       <div className="space-y-3">
         <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900/70">
-          <p className="font-semibold">Configuration Summary</p>
-          <div className="mt-2 grid gap-1.5 md:grid-cols-2">
-            {Object.entries(formValues).map(([key, value]) => (
-              <div key={key} className="rounded border border-zinc-200/80 bg-white/80 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80">
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  {fieldMap[key]?.label ?? key}
-                </p>
-                <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{formatValue(value)}</p>
-              </div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-semibold">Collected Data Review</p>
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+              {filledFieldCount}/{Object.keys(formValues).length} fields filled
+            </span>
+          </div>
+
+          <div className="mt-3 space-y-3">
+            {reviewSteps.map((step) => (
+              <section key={step.id} className="rounded-md border border-zinc-200/80 bg-white/80 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/80">
+                <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">{step.title}</p>
+                <div className="mt-2 space-y-2">
+                  {step.sections.map((section) => (
+                    <div key={section.id} className="rounded border border-zinc-200/80 bg-zinc-50/70 p-2 dark:border-zinc-800 dark:bg-zinc-950/60">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{section.title}</p>
+                      <div className="mt-1.5 grid gap-1.5 md:grid-cols-2">
+                        {section.fields.map((field) => (
+                          <div key={field.key} className="rounded border border-zinc-200/80 bg-white/80 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80">
+                            <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{field.label}</p>
+                            <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{formatValue(formValues[field.key])}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))}
+          </div>
+
+          <div className="mt-3 rounded-md border border-zinc-200/80 bg-white/80 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/80">
+            <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Raw Payload Preview</p>
+            <pre className="mt-1 max-h-48 overflow-auto rounded bg-zinc-950 p-2 text-[11px] text-zinc-200">
+              {JSON.stringify(formValues, null, 2)}
+            </pre>
           </div>
         </div>
         <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
@@ -275,22 +261,119 @@ export default function DataCollectorPage() {
 
   return (
     <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[radial-gradient(circle_at_top_left,#dbeafe,#f4f7ff_45%,#eef2ff_75%)] p-3 text-zinc-900 transition-colors dark:bg-[radial-gradient(circle_at_top_left,#1e293b_0%,#111827_42%,#090d16_100%)] dark:text-zinc-100">
+      <section className="mb-4 rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">Available Data Collectors</h2>
+          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Choose a config to load wizard defaults</span>
+        </div>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="relative w-full md:w-72">
+            <input
+              type="text"
+              value={collectorSearch}
+              onChange={(event) => setCollectorSearch(event.target.value)}
+              placeholder="Search by name, id, or category"
+              className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 pr-8 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+            />
+            {collectorSearch ? (
+              <button
+                type="button"
+                onClick={() => setCollectorSearch("")}
+                className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label="Clear collector search"
+                title="Clear"
+              >
+                <FiX className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{filteredCollectorConfigs.length} collectors</p>
+            <button
+              type="button"
+              onClick={() => scrollCollectorRail("left")}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              aria-label="Scroll collectors left"
+              title="Scroll left"
+            >
+              <FiChevronLeft className="h-3.5 w-3.5" />
+              Left
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollCollectorRail("right")}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              aria-label="Scroll collectors right"
+              title="Scroll right"
+            >
+              Right
+              <FiChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+        <div ref={collectorRailRef} className="overflow-x-auto pb-1">
+          <div className="flex min-w-max gap-2 pr-1">
+            {filteredCollectorConfigs.map((config) => {
+              const isSelected = config.id === selectedCollectorId;
+
+              return (
+                <button
+                  key={config.id}
+                  type="button"
+                  onClick={() => setSelectedCollectorId(config.id)}
+                  className={`w-72 shrink-0 rounded-lg border p-3 text-left transition ${
+                    isSelected
+                      ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{config.category}</p>
+                  <p className="mt-1 text-sm font-semibold">{config.title}</p>
+                  <p className="mt-1 line-clamp-2 text-[11px] text-zinc-500 dark:text-zinc-400">{config.subtitle}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {filteredCollectorConfigs.length === 0 ? <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">No collectors found for this search.</p> : null}
+      </section>
+
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h1 className="display-face text-2xl font-semibold">{dataCollectorConfig.title}</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">{dataCollectorConfig.subtitle}</p>
+          <h1 className="display-face text-2xl font-semibold">{selectedConfig.title}</h1>
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">{selectedConfig.subtitle}</p>
         </div>
         <button type="button" className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
           <FiUploadCloud className="h-3.5 w-3.5" />
-          {dataCollectorConfig.importButtonLabel}
+          {selectedConfig.importButtonLabel}
         </button>
       </div>
 
-      <section className="grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)_260px]">
-        <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90">
+      <section className="grid gap-3 lg:h-[calc(100dvh-19rem)] lg:grid-cols-[240px_minmax(0,1fr)_260px]">
+        <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">All Steps</h2>
+          <div className="relative mb-2">
+            <input
+              type="text"
+              value={leftStepSearch}
+              onChange={(event) => setLeftStepSearch(event.target.value)}
+              placeholder="Search steps"
+              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+            {leftStepSearch ? (
+              <button
+                type="button"
+                onClick={() => setLeftStepSearch("")}
+                className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label="Clear step search"
+                title="Clear"
+              >
+                <FiX className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+          </div>
           <ol className="space-y-2">
-            {dataCollectorConfig.steps.map((step, index) => {
+            {filteredStepItems.map(({ step, index }) => {
               const StepIcon = step.icon;
               const isActive = index === currentStep;
               const isDone = index < currentStep;
@@ -319,20 +402,60 @@ export default function DataCollectorPage() {
               );
             })}
           </ol>
+          {filteredStepItems.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No steps match this search.</p> : null}
+
+          <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Current Step Fields ({filteredStepFieldItems.length}/{activeStepFieldItems.length})</h3>
+            <div className="relative mb-2">
+              <input
+                type="text"
+                value={stepFieldSearch}
+                onChange={(event) => setStepFieldSearch(event.target.value)}
+                placeholder="Search step fields"
+                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+              {stepFieldSearch ? (
+                <button
+                  type="button"
+                  onClick={() => setStepFieldSearch("")}
+                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                  aria-label="Clear step fields search"
+                  title="Clear"
+                >
+                  <FiX className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
+            <div className="space-y-1">
+              {filteredStepFieldItems.map((item, index) => (
+                <button
+                  key={`${item.field.key}-${index}`}
+                  type="button"
+                  onClick={() => focusFieldByKey(item.field.key)}
+                  className="w-full rounded border border-zinc-200/80 bg-zinc-50/80 px-2 py-1 text-left text-[11px] transition hover:border-blue-300 hover:bg-blue-50/80 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-blue-700 dark:hover:bg-blue-950/30"
+                  title={`Go to ${item.field.label}`}
+                >
+                  <p className="truncate font-medium text-zinc-700 dark:text-zinc-200">{item.field.label}</p>
+                  <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">{item.sectionTitle}</p>
+                </button>
+              ))}
+            </div>
+            {filteredStepFieldItems.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No fields match this search.</p> : null}
+          </div>
         </aside>
 
-        <article className="rounded-xl border border-zinc-200 bg-white/95 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/95">
-          <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+        <article className="flex min-h-0 flex-col rounded-xl border border-zinc-200 bg-white/95 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/95 lg:h-full">
+          <div className="shrink-0 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Current Step</p>
             <h2 className="mt-1 text-lg font-semibold">{activeStep.title}</h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{activeStep.description}</p>
           </div>
 
-          <div className="p-4">{renderStepForm()}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderStepForm()}</div>
 
-          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 px-4 py-3 dark:border-zinc-800">
+          <footer className="sticky bottom-0 mt-auto shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 bg-white/95 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/95">
             <div>
-              <p className="text-xs font-semibold">Step {currentStep + 1} of {dataCollectorConfig.steps.length}</p>
+              <p className="text-xs font-semibold">Step {currentStep + 1} of {selectedConfig.steps.length}</p>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Progress: {progress}%</p>
             </div>
 
@@ -350,7 +473,7 @@ export default function DataCollectorPage() {
               {!isLast ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep((prev) => Math.min(dataCollectorConfig.steps.length - 1, prev + 1))}
+                  onClick={() => setCurrentStep((prev) => Math.min(selectedConfig.steps.length - 1, prev + 1))}
                   className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
                 >
                   Next
@@ -369,10 +492,30 @@ export default function DataCollectorPage() {
           </footer>
         </article>
 
-        <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90">
+        <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Extra Links</h2>
+          <div className="relative mb-2">
+            <input
+              type="text"
+              value={rightLinkSearch}
+              onChange={(event) => setRightLinkSearch(event.target.value)}
+              placeholder="Search links"
+              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+            {rightLinkSearch ? (
+              <button
+                type="button"
+                onClick={() => setRightLinkSearch("")}
+                className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label="Clear links search"
+                title="Clear"
+              >
+                <FiX className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+          </div>
           <div className="space-y-2">
-            {dataCollectorConfig.extraLinks.map((item) => {
+            {filteredRightLinks.map((item) => {
               const LinkIcon = item.icon;
 
               if (item.external) {
@@ -402,6 +545,7 @@ export default function DataCollectorPage() {
               );
             })}
           </div>
+          {filteredRightLinks.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No links match this search.</p> : null}
         </aside>
       </section>
     </main>
