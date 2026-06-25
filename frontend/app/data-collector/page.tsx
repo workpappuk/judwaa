@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowRight, FiCheckCircle, FiChevronLeft, FiChevronRight, FiUploadCloud, FiX } from "react-icons/fi";
 
-import { collectorConfigs, getDefaultFormValues, type CollectorField, type CollectorSection } from "./config";
+import { collectorConfigs, getDefaultFormValues, type CollectorField, type CollectorFieldValue, type CollectorFormValues, type CollectorSection } from "./config";
 
 type SearchInputWithClearProps = {
   value: string;
@@ -77,11 +77,13 @@ export default function DataCollectorPage() {
     });
   }, [collectorSearch]);
   const [currentStep, setCurrentStep] = useState(0);
-  const [formValues, setFormValues] = useState<Record<string, string | boolean | number>>(getDefaultFormValues(collectorConfigs[0]));
+  const [formValues, setFormValues] = useState<CollectorFormValues>(getDefaultFormValues(collectorConfigs[0]));
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setCurrentStep(0);
     setFormValues(getDefaultFormValues(selectedConfig));
+    setFieldErrors({});
   }, [selectedConfig]);
 
   const progress = useMemo(() => Math.round(((currentStep + 1) / selectedConfig.steps.length) * 100), [currentStep, selectedConfig.steps.length]);
@@ -135,8 +137,139 @@ export default function DataCollectorPage() {
     });
   }, [rightLinkSearch, selectedConfig.extraLinks]);
 
-  const handleFieldChange = (key: string, value: string | boolean | number) => {
+  const allFields = useMemo(
+    () => selectedConfig.steps.flatMap((step) => step.sections.flatMap((section) => section.fields)),
+    [selectedConfig],
+  );
+  const fieldMap = useMemo(() => {
+    return allFields.reduce<Record<string, CollectorField>>((map, field) => {
+      map[field.key] = field;
+      return map;
+    }, {});
+  }, [allFields]);
+
+  const validateField = (field: CollectorField, value: CollectorFieldValue): string | null => {
+    const rules = field.validation;
+
+    if (!rules) {
+      return null;
+    }
+
+    if (rules.required) {
+      if (field.type === "checkbox") {
+        if (value !== true) {
+          return `${field.label} is required`;
+        }
+      } else if (String(value).trim().length === 0) {
+        return `${field.label} is required`;
+      }
+    }
+
+    if (field.type !== "checkbox") {
+      const stringValue = String(value);
+
+      if (rules.minLength !== undefined && stringValue.length > 0 && stringValue.length < rules.minLength) {
+        return `${field.label} must be at least ${rules.minLength} characters`;
+      }
+
+      if (rules.maxLength !== undefined && stringValue.length > rules.maxLength) {
+        return `${field.label} must be at most ${rules.maxLength} characters`;
+      }
+
+      if (rules.noSpecialChars && stringValue.length > 0 && !/^[a-zA-Z0-9 _-]+$/.test(stringValue)) {
+        return `${field.label} cannot contain special characters`;
+      }
+
+      if (rules.pattern && stringValue.length > 0 && !rules.pattern.test(stringValue)) {
+        return rules.patternMessage ?? `${field.label} format is invalid`;
+      }
+    }
+
+    if (field.type === "number") {
+      const numericValue = Number(value);
+
+      if (!Number.isNaN(numericValue)) {
+        if (rules.minValue !== undefined && numericValue < rules.minValue) {
+          return `${field.label} must be >= ${rules.minValue}`;
+        }
+        if (rules.maxValue !== undefined && numericValue > rules.maxValue) {
+          return `${field.label} must be <= ${rules.maxValue}`;
+        }
+      }
+    }
+
+    if (rules.custom) {
+      const customValidators = Array.isArray(rules.custom) ? rules.custom : [rules.custom];
+
+      for (const validator of customValidators) {
+        const customError = validator(value, formValues);
+        if (customError) {
+          return customError;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const validateFieldsAndSetErrors = (fields: CollectorField[]): boolean => {
+    const nextErrors: Record<string, string> = {};
+
+    fields.forEach((field) => {
+      const maybeError = validateField(field, formValues[field.key]);
+      if (maybeError) {
+        nextErrors[field.key] = maybeError;
+      }
+    });
+
+    setFieldErrors((prev) => {
+      const cleaned = { ...prev };
+      fields.forEach((field) => {
+        delete cleaned[field.key];
+      });
+      return { ...cleaned, ...nextErrors };
+    });
+
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleFieldChange = (key: string, value: CollectorFieldValue) => {
     setFormValues((prev) => ({ ...prev, [key]: value }));
+
+    const field = fieldMap[key];
+    if (!field) {
+      return;
+    }
+
+    const maybeError = validateField(field, value);
+    setFieldErrors((prev) => {
+      if (!maybeError) {
+        if (!(key in prev)) {
+          return prev;
+        }
+
+        const updated = { ...prev };
+        delete updated[key];
+        return updated;
+      }
+
+      return { ...prev, [key]: maybeError };
+    });
+  };
+
+  const validateActiveStepAndProceed = () => {
+    const activeStepFields = activeStep.sections.flatMap((section) => section.fields);
+    const isValid = validateFieldsAndSetErrors(activeStepFields);
+
+    if (!isValid) {
+      const firstInvalidField = activeStepFields.find((field) => validateField(field, formValues[field.key]) !== null);
+      if (firstInvalidField) {
+        focusFieldByKey(firstInvalidField.key);
+      }
+      return;
+    }
+
+    setCurrentStep((prev) => Math.min(selectedConfig.steps.length - 1, prev + 1));
   };
 
   const scrollCollectorRail = (direction: "left" | "right") => {
@@ -173,22 +306,26 @@ export default function DataCollectorPage() {
   const renderField = (field: CollectorField) => {
     const colSpanClass = field.colSpan === 2 ? "md:col-span-2" : "";
     const value = formValues[field.key];
+    const error = fieldErrors[field.key];
+    const baseInputClass = `w-full rounded-md border bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 dark:bg-zinc-950/70 dark:text-zinc-100 ${error ? "border-rose-500 focus:ring-rose-500/30 dark:border-rose-500" : "border-zinc-300 focus:ring-blue-500/30 dark:border-zinc-700"}`;
 
     if (field.type === "checkbox") {
       return (
-        <label
-          key={field.key}
-          className={`inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-zinc-800 dark:bg-zinc-900/70 ${colSpanClass}`}
-        >
-          <input
-            type="checkbox"
-            id={`field-${field.key}`}
-            checked={Boolean(value)}
-            onChange={(event) => handleFieldChange(field.key, event.target.checked)}
-            className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-          />
-          {field.label}
-        </label>
+        <div key={field.key} className={colSpanClass}>
+          <label
+            className={`inline-flex items-center gap-2 rounded-md border bg-zinc-50 px-3 py-2 text-xs dark:bg-zinc-900/70 ${error ? "border-rose-500 dark:border-rose-500" : "border-zinc-200 dark:border-zinc-800"}`}
+          >
+            <input
+              type="checkbox"
+              id={`field-${field.key}`}
+              checked={Boolean(value)}
+              onChange={(event) => handleFieldChange(field.key, event.target.checked)}
+              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+            />
+            {field.label}
+          </label>
+          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
+        </div>
       );
     }
 
@@ -200,7 +337,7 @@ export default function DataCollectorPage() {
             id={`field-${field.key}`}
             value={String(value)}
             onChange={(event) => handleFieldChange(field.key, event.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+            className={baseInputClass}
           >
             {(field.options ?? []).map((option) => (
               <option key={option} value={option}>
@@ -208,6 +345,7 @@ export default function DataCollectorPage() {
               </option>
             ))}
           </select>
+          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
         </label>
       );
     }
@@ -221,9 +359,10 @@ export default function DataCollectorPage() {
             value={String(value)}
             onChange={(event) => handleFieldChange(field.key, event.target.value)}
             rows={field.rows ?? 3}
-            className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+            className={baseInputClass}
             placeholder={field.placeholder}
           />
+          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
         </label>
       );
     }
@@ -243,9 +382,10 @@ export default function DataCollectorPage() {
             min={field.min}
             max={field.max}
             step={field.step}
-            className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+            className={baseInputClass}
             placeholder={field.placeholder}
           />
+          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
         </label>
       );
     }
@@ -258,9 +398,10 @@ export default function DataCollectorPage() {
           type={field.type === "date" || field.type === "email" || field.type === "url" || field.type === "tel" || field.type === "time" || field.type === "password" ? field.type : "text"}
           value={String(value)}
           onChange={(event) => handleFieldChange(field.key, event.target.value)}
-          className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+          className={baseInputClass}
           placeholder={field.placeholder}
         />
+        {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
       </label>
     );
   };
@@ -539,7 +680,7 @@ export default function DataCollectorPage() {
               {!isLast ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep((prev) => Math.min(selectedConfig.steps.length - 1, prev + 1))}
+                  onClick={validateActiveStepAndProceed}
                   className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
                 >
                   Next

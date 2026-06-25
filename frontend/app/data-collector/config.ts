@@ -16,11 +16,15 @@ export type CollectorSection = {
   fields: CollectorField[];
 };
 
+export type CollectorFieldValue = string | boolean | number;
+export type CollectorFormValues = Record<string, CollectorFieldValue>;
+export type CollectorCustomValidator = (value: CollectorFieldValue, allValues: CollectorFormValues) => string | null;
+
 export type CollectorField = {
   key: string;
   label: string;
   type: "text" | "select" | "checkbox" | "number" | "textarea" | "date" | "email" | "url" | "tel" | "time" | "password";
-  defaultValue: string | boolean | number;
+  defaultValue: CollectorFieldValue;
   placeholder?: string;
   options?: string[];
   colSpan?: 1 | 2;
@@ -28,6 +32,17 @@ export type CollectorField = {
   max?: number;
   step?: number;
   rows?: number;
+  validation?: {
+    required?: boolean;
+    noSpecialChars?: boolean;
+    pattern?: RegExp;
+    patternMessage?: string;
+    minLength?: number;
+    maxLength?: number;
+    minValue?: number;
+    maxValue?: number;
+    custom?: CollectorCustomValidator | CollectorCustomValidator[];
+  };
 };
 
 export type ExtraLink = {
@@ -90,6 +105,21 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             type: "text",
             defaultValue: defaults.collectorName,
             placeholder: "Enter collector name",
+            validation: {
+              required: true,
+              noSpecialChars: true,
+              minLength: 3,
+              custom: [
+                (value) => {
+                  const name = String(value).trim();
+                  return name.toLowerCase().startsWith("test") ? "Collector name cannot start with 'test'" : null;
+                },
+                (value) => {
+                  const name = String(value).trim().toLowerCase();
+                  return name.includes("temp") ? "Collector name cannot include 'temp'" : null;
+                },
+              ],
+            },
           },
           {
             key: "sourceType",
@@ -111,6 +141,13 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             defaultValue: defaults.schedule,
             placeholder: "0 30 8 * * 1-5",
             colSpan: 2,
+            validation: {
+              required: true,
+              custom: (value) => {
+                const parts = String(value).trim().split(/\s+/).filter(Boolean);
+                return parts.length >= 5 ? null : "Schedule must be a valid cron-style expression";
+              },
+            },
           },
           {
             key: "ownerTeam",
@@ -119,6 +156,10 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             defaultValue: defaults.ownerTeam,
             placeholder: "Trading Ops",
             colSpan: 2,
+            validation: {
+              required: true,
+              noSpecialChars: true,
+            },
           },
           {
             key: "sourceNotes",
@@ -135,6 +176,11 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             type: "email",
             defaultValue: "",
             placeholder: "ops-team@example.com",
+            validation: {
+              required: true,
+              pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              patternMessage: "Enter a valid email address",
+            },
           },
           {
             key: "callbackUrl",
@@ -149,6 +195,15 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             type: "tel",
             defaultValue: "",
             placeholder: "+91-9876543210",
+            validation: {
+              custom: (value) => {
+                const phone = String(value).trim();
+                if (!phone) {
+                  return null;
+                }
+                return /^\+?[0-9\-()\s]{8,20}$/.test(phone) ? null : "Enter a valid phone number";
+              },
+            },
           },
           {
             key: "cutoffTime",
@@ -184,6 +239,10 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             type: "text",
             defaultValue: defaults.primaryKey,
             placeholder: "instrument_token",
+            validation: {
+              required: true,
+              noSpecialChars: true,
+            },
           },
           {
             key: "timestampField",
@@ -244,6 +303,11 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             min: 0,
             max: 10,
             step: 1,
+            validation: {
+              required: true,
+              minValue: 0,
+              maxValue: 10,
+            },
           },
           {
             key: "effectiveFrom",
@@ -395,8 +459,8 @@ const generatedCollectorConfigs: CollectorConfig[] = Array.from({ length: 97 }, 
 
 export const collectorConfigs: CollectorConfig[] = [...baseCollectorConfigs, ...generatedCollectorConfigs];
 
-export const getDefaultFormValues = (config: CollectorConfig): Record<string, string | boolean | number> => {
-  return config.steps.reduce<Record<string, string | boolean | number>>((values, step) => {
+export const getDefaultFormValues = (config: CollectorConfig): CollectorFormValues => {
+  return config.steps.reduce<CollectorFormValues>((values, step) => {
     step.sections.forEach((section) => {
       section.fields.forEach((field) => {
         values[field.key] = field.defaultValue;
