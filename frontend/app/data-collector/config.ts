@@ -19,11 +19,15 @@ export type CollectorSection = {
 export type CollectorField = {
   key: string;
   label: string;
-  type: "text" | "select" | "checkbox";
-  defaultValue: string | boolean;
+  type: "text" | "select" | "checkbox" | "number" | "textarea" | "date" | "email" | "url" | "tel" | "time" | "password";
+  defaultValue: string | boolean | number;
   placeholder?: string;
   options?: string[];
   colSpan?: 1 | 2;
+  min?: number;
+  max?: number;
+  step?: number;
+  rows?: number;
 };
 
 export type ExtraLink = {
@@ -116,6 +120,50 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             placeholder: "Trading Ops",
             colSpan: 2,
           },
+          {
+            key: "sourceNotes",
+            label: "Source Notes",
+            type: "textarea",
+            defaultValue: "",
+            placeholder: "Optional context or runbook notes",
+            colSpan: 2,
+            rows: 3,
+          },
+          {
+            key: "supportEmail",
+            label: "Support Email",
+            type: "email",
+            defaultValue: "",
+            placeholder: "ops-team@example.com",
+          },
+          {
+            key: "callbackUrl",
+            label: "Callback URL",
+            type: "url",
+            defaultValue: "",
+            placeholder: "https://example.com/webhook",
+          },
+          {
+            key: "supportPhone",
+            label: "Support Phone",
+            type: "tel",
+            defaultValue: "",
+            placeholder: "+91-9876543210",
+          },
+          {
+            key: "cutoffTime",
+            label: "Cutoff Time",
+            type: "time",
+            defaultValue: "",
+          },
+          {
+            key: "apiSecret",
+            label: "API Secret",
+            type: "password",
+            defaultValue: "",
+            placeholder: "Enter secret token",
+            colSpan: 2,
+          },
         ],
       },
     ],
@@ -187,6 +235,21 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
             defaultValue: defaults.notifyChannel,
             placeholder: "#data-alerts",
             colSpan: 2,
+          },
+          {
+            key: "retryLimit",
+            label: "Retry Limit",
+            type: "number",
+            defaultValue: 3,
+            min: 0,
+            max: 10,
+            step: 1,
+          },
+          {
+            key: "effectiveFrom",
+            label: "Effective From",
+            type: "date",
+            defaultValue: "",
           },
         ],
       },
@@ -332,8 +395,8 @@ const generatedCollectorConfigs: CollectorConfig[] = Array.from({ length: 97 }, 
 
 export const collectorConfigs: CollectorConfig[] = [...baseCollectorConfigs, ...generatedCollectorConfigs];
 
-export const getDefaultFormValues = (config: CollectorConfig): Record<string, string | boolean> => {
-  return config.steps.reduce<Record<string, string | boolean>>((values, step) => {
+export const getDefaultFormValues = (config: CollectorConfig): Record<string, string | boolean | number> => {
+  return config.steps.reduce<Record<string, string | boolean | number>>((values, step) => {
     step.sections.forEach((section) => {
       section.fields.forEach((field) => {
         values[field.key] = field.defaultValue;

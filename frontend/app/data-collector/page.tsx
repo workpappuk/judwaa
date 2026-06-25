@@ -6,6 +6,49 @@ import { FiArrowRight, FiCheckCircle, FiChevronLeft, FiChevronRight, FiUploadClo
 
 import { collectorConfigs, getDefaultFormValues, type CollectorField, type CollectorSection } from "./config";
 
+type SearchInputWithClearProps = {
+  value: string;
+  onChange: (value: string) => void;
+  onClear: () => void;
+  placeholder: string;
+  clearAriaLabel: string;
+  containerClassName?: string;
+  inputClassName?: string;
+};
+
+function SearchInputWithClear({
+  value,
+  onChange,
+  onClear,
+  placeholder,
+  clearAriaLabel,
+  containerClassName,
+  inputClassName,
+}: SearchInputWithClearProps) {
+  return (
+    <div className={containerClassName ?? "relative"}>
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={inputClassName ?? "w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"}
+      />
+      {value ? (
+        <button
+          type="button"
+          onClick={onClear}
+          className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          aria-label={clearAriaLabel}
+          title="Clear"
+        >
+          <FiX className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function DataCollectorPage() {
   const [selectedCollectorId, setSelectedCollectorId] = useState(collectorConfigs[0].id);
   const [collectorSearch, setCollectorSearch] = useState("");
@@ -34,7 +77,7 @@ export default function DataCollectorPage() {
     });
   }, [collectorSearch]);
   const [currentStep, setCurrentStep] = useState(0);
-  const [formValues, setFormValues] = useState<Record<string, string | boolean>>(getDefaultFormValues(collectorConfigs[0]));
+  const [formValues, setFormValues] = useState<Record<string, string | boolean | number>>(getDefaultFormValues(collectorConfigs[0]));
 
   useEffect(() => {
     setCurrentStep(0);
@@ -92,18 +135,7 @@ export default function DataCollectorPage() {
     });
   }, [rightLinkSearch, selectedConfig.extraLinks]);
 
-  const fieldMap = useMemo(() => {
-    return selectedConfig.steps.reduce<Record<string, CollectorField>>((map, step) => {
-      step.sections.forEach((section) => {
-        section.fields.forEach((field) => {
-          map[field.key] = field;
-        });
-      });
-      return map;
-    }, {});
-  }, [selectedConfig]);
-
-  const handleFieldChange = (key: string, value: string | boolean) => {
+  const handleFieldChange = (key: string, value: string | boolean | number) => {
     setFormValues((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -131,7 +163,7 @@ export default function DataCollectorPage() {
     element.focus({ preventScroll: true });
   };
 
-  const formatValue = (value: string | boolean) => {
+  const formatValue = (value: string | boolean | number) => {
     if (typeof value === "boolean") {
       return value ? "Enabled" : "Disabled";
     }
@@ -180,11 +212,50 @@ export default function DataCollectorPage() {
       );
     }
 
+    if (field.type === "textarea") {
+      return (
+        <label key={field.key} className={`text-xs ${colSpanClass}`}>
+          <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
+          <textarea
+            id={`field-${field.key}`}
+            value={String(value)}
+            onChange={(event) => handleFieldChange(field.key, event.target.value)}
+            rows={field.rows ?? 3}
+            className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+            placeholder={field.placeholder}
+          />
+        </label>
+      );
+    }
+
+    if (field.type === "number") {
+      return (
+        <label key={field.key} className={`text-xs ${colSpanClass}`}>
+          <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
+          <input
+            id={`field-${field.key}`}
+            type="number"
+            value={String(value)}
+            onChange={(event) => {
+              const raw = event.target.value;
+              handleFieldChange(field.key, raw === "" ? "" : Number(raw));
+            }}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+            placeholder={field.placeholder}
+          />
+        </label>
+      );
+    }
+
     return (
       <label key={field.key} className={`text-xs ${colSpanClass}`}>
         <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
         <input
           id={`field-${field.key}`}
+          type={field.type === "date" || field.type === "email" || field.type === "url" || field.type === "tel" || field.type === "time" || field.type === "password" ? field.type : "text"}
           value={String(value)}
           onChange={(event) => handleFieldChange(field.key, event.target.value)}
           className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
@@ -201,6 +272,36 @@ export default function DataCollectorPage() {
         {section.description ? <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">{section.description}</p> : null}
         <div className="mt-2 grid gap-3 md:grid-cols-2">{section.fields.map((field) => renderField(field))}</div>
       </section>
+    );
+  };
+
+  const renderExtraLink = (item: (typeof selectedConfig.extraLinks)[number]) => {
+    const LinkIcon = item.icon;
+
+    if (item.external) {
+      return (
+        <a
+          key={item.label}
+          href={item.href}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
+        >
+          {item.label}
+          <LinkIcon className="h-3.5 w-3.5" />
+        </a>
+      );
+    }
+
+    return (
+      <Link
+        key={item.label}
+        href={item.href}
+        className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
+      >
+        {item.label}
+        <LinkIcon className="h-3.5 w-3.5" />
+      </Link>
     );
   };
 
@@ -267,26 +368,15 @@ export default function DataCollectorPage() {
           <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Choose a config to load wizard defaults</span>
         </div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="relative w-full md:w-72">
-            <input
-              type="text"
-              value={collectorSearch}
-              onChange={(event) => setCollectorSearch(event.target.value)}
-              placeholder="Search by name, id, or category"
-              className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 pr-8 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
-            />
-            {collectorSearch ? (
-              <button
-                type="button"
-                onClick={() => setCollectorSearch("")}
-                className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Clear collector search"
-                title="Clear"
-              >
-                <FiX className="h-3.5 w-3.5" />
-              </button>
-            ) : null}
-          </div>
+          <SearchInputWithClear
+            value={collectorSearch}
+            onChange={setCollectorSearch}
+            onClear={() => setCollectorSearch("")}
+            placeholder="Search by name, id, or category"
+            clearAriaLabel="Clear collector search"
+            containerClassName="relative w-full md:w-72"
+            inputClassName="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 pr-8 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
+          />
           <div className="flex items-center gap-2">
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{filteredCollectorConfigs.length} collectors</p>
             <button
@@ -352,26 +442,14 @@ export default function DataCollectorPage() {
       <section className="grid gap-3 lg:h-[calc(100dvh-19rem)] lg:grid-cols-[240px_minmax(0,1fr)_260px]">
         <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">All Steps</h2>
-          <div className="relative mb-2">
-            <input
-              type="text"
-              value={leftStepSearch}
-              onChange={(event) => setLeftStepSearch(event.target.value)}
-              placeholder="Search steps"
-              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-            {leftStepSearch ? (
-              <button
-                type="button"
-                onClick={() => setLeftStepSearch("")}
-                className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Clear step search"
-                title="Clear"
-              >
-                <FiX className="h-3.5 w-3.5" />
-              </button>
-            ) : null}
-          </div>
+          <SearchInputWithClear
+            value={leftStepSearch}
+            onChange={setLeftStepSearch}
+            onClear={() => setLeftStepSearch("")}
+            placeholder="Search steps"
+            clearAriaLabel="Clear step search"
+            containerClassName="relative mb-2"
+          />
           <ol className="space-y-2">
             {filteredStepItems.map(({ step, index }) => {
               const StepIcon = step.icon;
@@ -406,26 +484,14 @@ export default function DataCollectorPage() {
 
           <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Current Step Fields ({filteredStepFieldItems.length}/{activeStepFieldItems.length})</h3>
-            <div className="relative mb-2">
-              <input
-                type="text"
-                value={stepFieldSearch}
-                onChange={(event) => setStepFieldSearch(event.target.value)}
-                placeholder="Search step fields"
-                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              />
-              {stepFieldSearch ? (
-                <button
-                  type="button"
-                  onClick={() => setStepFieldSearch("")}
-                  className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                  aria-label="Clear step fields search"
-                  title="Clear"
-                >
-                  <FiX className="h-3.5 w-3.5" />
-                </button>
-              ) : null}
-            </div>
+            <SearchInputWithClear
+              value={stepFieldSearch}
+              onChange={setStepFieldSearch}
+              onClear={() => setStepFieldSearch("")}
+              placeholder="Search step fields"
+              clearAriaLabel="Clear step fields search"
+              containerClassName="relative mb-2"
+            />
             <div className="space-y-1">
               {filteredStepFieldItems.map((item, index) => (
                 <button
@@ -494,56 +560,16 @@ export default function DataCollectorPage() {
 
         <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Extra Links</h2>
-          <div className="relative mb-2">
-            <input
-              type="text"
-              value={rightLinkSearch}
-              onChange={(event) => setRightLinkSearch(event.target.value)}
-              placeholder="Search links"
-              className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-            {rightLinkSearch ? (
-              <button
-                type="button"
-                onClick={() => setRightLinkSearch("")}
-                className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Clear links search"
-                title="Clear"
-              >
-                <FiX className="h-3.5 w-3.5" />
-              </button>
-            ) : null}
-          </div>
+          <SearchInputWithClear
+            value={rightLinkSearch}
+            onChange={setRightLinkSearch}
+            onClear={() => setRightLinkSearch("")}
+            placeholder="Search links"
+            clearAriaLabel="Clear links search"
+            containerClassName="relative mb-2"
+          />
           <div className="space-y-2">
-            {filteredRightLinks.map((item) => {
-              const LinkIcon = item.icon;
-
-              if (item.external) {
-                return (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
-                  >
-                    {item.label}
-                    <LinkIcon className="h-3.5 w-3.5" />
-                  </a>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
-                >
-                  {item.label}
-                  <LinkIcon className="h-3.5 w-3.5" />
-                </Link>
-              );
-            })}
+            {filteredRightLinks.map((item) => renderExtraLink(item))}
           </div>
           {filteredRightLinks.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No links match this search.</p> : null}
         </aside>
