@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import type { IconType } from "react-icons";
-import { FiArrowUpRight, FiBookOpen, FiLogOut, FiShield, FiTrendingUp, FiUserCheck } from "react-icons/fi";
+import { FiArrowUpRight, FiBookOpen, FiDatabase, FiLogOut, FiShield, FiTrendingUp, FiUserCheck } from "react-icons/fi";
 
 export default function Home() {
   type Card = {
@@ -18,6 +18,7 @@ export default function Home() {
     { id: 3, title: "Auth", content: "Login and registration", url: "/auth", icon: FiUserCheck },
     { id: 4, title: "Admin", content: "Admin dashboard", url: "/judwaa/admin", icon: FiShield },
     { id: 5, title: "Incentive", content: "Scheme and rule manager", url: "/incentive", icon: FiLogOut },
+    { id: 6, title: "Data Collector", content: "Step-based ingestion setup", url: "/data-collector", icon: FiDatabase },
   ];
 
   return (
