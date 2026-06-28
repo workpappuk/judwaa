@@ -8,7 +8,6 @@ import {
   FiClipboard,
   FiDollarSign,
   FiHash,
-  FiTarget,
   FiTrendingUp,
 } from "react-icons/fi";
 
@@ -126,13 +125,10 @@ export default function TradingPositionsPage() {
   }, [positions, quotes]);
 
   const totalPnl = rows.reduce((acc, row) => acc + row.pnl, 0);
-  const totalTurnover = rows.reduce((acc, row) => acc + row.turnover, 0);
-  const winners = rows.filter((row) => row.pnl > 0).length;
-  const losers = rows.length - winners;
 
   const positionTabContent = (
     <>
-      <div className="grid grid-cols-3 gap-2 mt-3" >
+      <div className="grid grid-cols-1 gap-2 mt-3" >
         <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
           <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             <FiDollarSign className="h-3 w-3" />
@@ -144,22 +140,6 @@ export default function TradingPositionsPage() {
           >
             {formatCompact(totalPnl)}
           </p>
-        </article>
-
-        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
-          <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            <FiBarChart2 className="h-3 w-3" />
-            Exposure
-          </p>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{formatCompact(totalTurnover)}</p>
-        </article>
-
-        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
-          <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            <FiTarget className="h-3 w-3" />
-            W/L
-          </p>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{winners}/{losers}</p>
         </article>
       </div >
       <section className="  pt-3 space-y-2.5">

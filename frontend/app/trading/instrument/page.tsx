@@ -43,6 +43,15 @@ interface SelectedInstrumentInput {
 
 const instrumentKey = (item: InstrumentPojo): string => `${item.sourceFile}-${item.rowNumber}`;
 
+const randomFrom = <T,>(values: readonly T[]): T => values[Math.floor(Math.random() * values.length)];
+
+const getRandomSelectionDefaults = (): Omit<SelectedInstrumentInput, "instrument"> => ({
+  quantity: randomFrom(["11", "15", "25", "50"]),
+  avgPrice: randomFrom(["11", "25", "50", "100", "150"]),
+  side: randomFrom<PositionSide>(["LONG", "SHORT"]),
+  product: randomFrom<PositionProduct>(["NRML", "MIS"]),
+});
+
 const getApiErrorMessage = (error: unknown, fallbackMessage: string): string => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
@@ -125,10 +134,23 @@ export default function InstrumentPage() {
 
   const selectedEntries = useMemo(() => Object.values(selectedInputs), [selectedInputs]);
 
+  const selectedOnCurrentPageCount = useMemo(
+    () => items.filter((item) => Boolean(selectedInputs[instrumentKey(item)])).length,
+    [items, selectedInputs],
+  );
+
+  const allCurrentPageSelected = useMemo(() => {
+    if (items.length === 0) {
+      return false;
+    }
+
+    return items.every((item) => Boolean(selectedInputs[instrumentKey(item)]));
+  }, [items, selectedInputs]);
+
   const saveValidationError = useMemo(() => {
     for (const entry of selectedEntries) {
       const qty = Number(entry.quantity);
-      if (!Number.isFinite(qty) || qty < 1 || !Number.isInteger(qty)) {
+      if (!Number.isFinite(qty) || qty <= 10 || !Number.isInteger(qty)) {
         return `Invalid quantity for ${normalize(entry.instrument.tradingSymbol)}.`;
       }
 
@@ -137,7 +159,7 @@ export default function InstrumentPage() {
       }
 
       const avg = Number(entry.avgPrice);
-      if (!Number.isFinite(avg) || avg < 0) {
+      if (!Number.isFinite(avg) || avg <= 10) {
         return `Invalid average price for ${normalize(entry.instrument.tradingSymbol)}.`;
       }
     }
@@ -157,12 +179,36 @@ export default function InstrumentPage() {
         ...prev,
         [key]: {
           instrument: item,
-          quantity: "1",
-          avgPrice: "0",
-          side: "LONG",
-          product: "NRML",
+          ...getRandomSelectionDefaults(),
         },
       };
+    });
+  };
+
+  const toggleSelectAllCurrentPage = () => {
+    setSelectedInputs((prev) => {
+      const next = { ...prev };
+
+      if (allCurrentPageSelected) {
+        items.forEach((item) => {
+          delete next[instrumentKey(item)];
+        });
+        return next;
+      }
+
+      items.forEach((item) => {
+        const key = instrumentKey(item);
+        if (next[key]) {
+          return;
+        }
+
+        next[key] = {
+          instrument: item,
+          ...getRandomSelectionDefaults(),
+        };
+      });
+
+      return next;
     });
   };
 
@@ -305,6 +351,33 @@ export default function InstrumentPage() {
               Next
               <FiChevronRight className="h-3.5 w-3.5" />
             </button>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 px-2.5 py-1.5">
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+              {selectedOnCurrentPageCount}/{items.length} visible selected
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleSelectAllCurrentPage}
+                disabled={loading || items.length === 0}
+                className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-medium disabled:opacity-45 disabled:cursor-not-allowed"
+              >
+                {allCurrentPageSelected
+                  ? `Deselect visible (${items.length})`
+                  : `Select visible (${items.length - selectedOnCurrentPageCount})`}
+              </button>
+              {selectedEntries.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedInputs({})}
+                  className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-medium"
+                >
+                  Clear all
+                </button>
+              ) : null}
+            </div>
           </div>
 
         </div>
@@ -546,7 +619,7 @@ export default function InstrumentPage() {
                         <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Quantity</span>
                         <input
                           type="number"
-                          min="1"
+                          min="11"
                           value={entry.quantity}
                           onChange={(event) => updateSelectedInput(key, "quantity", event.target.value)}
                           className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs"
@@ -556,7 +629,7 @@ export default function InstrumentPage() {
                         <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Avg Price</span>
                         <input
                           type="number"
-                          min="0"
+                          min="11"
                           step="0.01"
                           value={entry.avgPrice}
                           onChange={(event) => updateSelectedInput(key, "avgPrice", event.target.value)}
