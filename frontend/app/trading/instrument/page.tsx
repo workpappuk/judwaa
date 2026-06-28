@@ -7,6 +7,7 @@ import { getInstruments } from "@/services/trading-api";
 import { useAppDispatch } from "@/store/hooks";
 import { setDraftPositions } from "@/store/slices/tradingSlice";
 import type { FnOPositionDraft, InstrumentPojo, PositionProduct, PositionSide } from "@/types/trading";
+import { useRouter } from "next/navigation";
 
 const PAGE_SIZE = 50;
 
@@ -182,7 +183,10 @@ export default function InstrumentPage() {
 
     dispatch(setDraftPositions(drafts));
     setShowSelectionModal(false);
+    route.push("/trading/f&o")
   };
+
+  const route = useRouter()
 
   return (
     <main className="min-h-screen bg-[#f4f7ff] text-zinc-900 dark:bg-[#0c1119] dark:text-zinc-100 pb-8 transition-colors">
@@ -466,7 +470,7 @@ export default function InstrumentPage() {
                 disabled={!!saveValidationError}
                 className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium"
               >
-                Save To F&O
+                Save & route F&O
               </button>
             </div>
           </div>

@@ -178,7 +178,7 @@ export default function TradingPositionsPage() {
               <div className="min-w-0">
                 <h2 className="text-[14px] font-semibold leading-tight truncate">{row.label}</h2>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
-                  {row.expiry} • {row.product} • Qty {row.qty}
+                  {row.expiry} • {row.product} • Lots {row.qty}
                 </p>
               </div>
 
