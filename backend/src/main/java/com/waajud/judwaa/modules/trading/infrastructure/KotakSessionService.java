@@ -88,6 +88,7 @@ public class KotakSessionService {
 		try {
 			Path sessionPath = Path.of(props.getSessionFile());
 			Files.deleteIfExists(sessionPath);
+			Files.createDirectories(sessionPath.getParent());
 			String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tradeData);
 			Files.writeString(sessionPath, json, StandardCharsets.UTF_8);
 		} catch (Exception e) {
