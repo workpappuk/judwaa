@@ -1,13 +1,9 @@
 import axios from "axios";
 
 import type { AuthCredentials, AuthResponse } from "@/types/auth";
+import { createApiClient } from "@/services/api-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
-
-const authApi = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 15000,
-});
+const authApi = createApiClient();
 
 function getApiErrorMessage(error: unknown, fallbackMessage: string): string {
   if (axios.isAxiosError(error)) {

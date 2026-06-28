@@ -9,14 +9,9 @@ import type {
   IncentiveSchemeStatus,
   PaginatedResponse,
 } from "@/types/incentive";
+import { createApiClient } from "@/services/api-client";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
-
-const incentiveApi = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 15000,
-});
+const incentiveApi = createApiClient({ withAuth: true });
 
 function ensureValidId(id: string | null | undefined, label: string): string {
   const normalized = (id ?? "").trim();
@@ -26,28 +21,6 @@ function ensureValidId(id: string | null | undefined, label: string): string {
 
   return normalized;
 }
-
-incentiveApi.interceptors.request.use((config) => {
-  if (typeof window === "undefined") {
-    return config;
-  }
-
-  try {
-    const rawSession = window.localStorage.getItem("judwaa.auth.session");
-    if (!rawSession) {
-      return config;
-    }
-
-    const parsed = JSON.parse(rawSession) as { token?: string };
-    if (typeof parsed.token === "string" && parsed.token.length > 0) {
-      config.headers.set("Authorization", `Bearer ${parsed.token}`);
-    }
-  } catch {
-    // Ignore malformed local storage payloads and continue request without auth header.
-  }
-
-  return config;
-});
 
 function getApiErrorMessage(error: unknown, fallbackMessage: string): string {
   if (axios.isAxiosError(error)) {
