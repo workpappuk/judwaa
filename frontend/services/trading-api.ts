@@ -3,6 +3,20 @@ import { createApiClient } from "@/services/api-client";
 
 const tradingApi = createApiClient({ withAuth: true });
 
+export async function loginNeoSession(totp: string): Promise<string> {
+  const response = await tradingApi.post<string>("/api/neo/login", undefined, {
+    params: { totp },
+  });
+
+  return response.data;
+}
+
+export async function downloadNeoScriptMaster(): Promise<string> {
+  const response = await tradingApi.get<string>("/api/neo/script-download");
+
+  return response.data;
+}
+
 export async function getNeoQuotes(
   neoSymbols: string[],
   signal?: AbortSignal,

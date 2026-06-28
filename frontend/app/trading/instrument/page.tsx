@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { FiChevronLeft, FiChevronRight, FiDatabase, FiFileText, FiInfo, FiX } from "react-icons/fi";
 
-import { getInstruments } from "@/services/trading-api";
+import { downloadNeoScriptMaster, getInstruments, loginNeoSession } from "@/services/trading-api";
 import { useAppDispatch } from "@/store/hooks";
 import { setDraftPositions } from "@/store/slices/tradingSlice";
 import type { FnOPositionDraft, InstrumentPojo, PositionProduct, PositionSide } from "@/types/trading";
@@ -42,8 +43,31 @@ interface SelectedInstrumentInput {
 
 const instrumentKey = (item: InstrumentPojo): string => `${item.sourceFile}-${item.rowNumber}`;
 
+const getApiErrorMessage = (error: unknown, fallbackMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+
+    if (typeof data === "string" && data.trim().length > 0) {
+      return data;
+    }
+
+    if (
+      typeof data === "object" &&
+      data !== null &&
+      "message" in data &&
+      typeof data.message === "string" &&
+      data.message.trim().length > 0
+    ) {
+      return data.message;
+    }
+  }
+
+  return fallbackMessage;
+};
+
 export default function InstrumentPage() {
   const dispatch = useAppDispatch();
+  const route = useRouter();
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +79,12 @@ export default function InstrumentPage() {
   const [selected, setSelected] = useState<InstrumentPojo | null>(null);
   const [selectedInputs, setSelectedInputs] = useState<Record<string, SelectedInstrumentInput>>({});
   const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [showNeoActionsModal, setShowNeoActionsModal] = useState(false);
+  const [totp, setTotp] = useState("");
+  const [isNeoLoginLoading, setIsNeoLoginLoading] = useState(false);
+  const [isScriptDownloadLoading, setIsScriptDownloadLoading] = useState(false);
+  const [neoActionError, setNeoActionError] = useState<string | null>(null);
+  const [neoActionSuccess, setNeoActionSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -183,10 +213,45 @@ export default function InstrumentPage() {
 
     dispatch(setDraftPositions(drafts));
     setShowSelectionModal(false);
-    route.push("/trading/f&o")
+    route.push("/trading/f&o");
   };
 
-  const route = useRouter()
+  const handleNeoLogin = async () => {
+    const safeTotp = totp.trim();
+    if (!safeTotp) {
+      setNeoActionSuccess(null);
+      setNeoActionError("TOTP is required.");
+      return;
+    }
+
+    setIsNeoLoginLoading(true);
+    setNeoActionError(null);
+    setNeoActionSuccess(null);
+
+    try {
+      const message = await loginNeoSession(safeTotp);
+      setNeoActionSuccess(message || "Neo login successful.");
+    } catch (err) {
+      setNeoActionError(getApiErrorMessage(err, "Unable to login to Neo right now."));
+    } finally {
+      setIsNeoLoginLoading(false);
+    }
+  };
+
+  const handleScriptDownload = async () => {
+    setIsScriptDownloadLoading(true);
+    setNeoActionError(null);
+    setNeoActionSuccess(null);
+
+    try {
+      const message = await downloadNeoScriptMaster();
+      setNeoActionSuccess(message || "Script download started.");
+    } catch (err) {
+      setNeoActionError(getApiErrorMessage(err, "Unable to download script right now."));
+    } finally {
+      setIsScriptDownloadLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#f4f7ff] text-zinc-900 dark:bg-[#0c1119] dark:text-zinc-100 pb-8 transition-colors">
@@ -202,9 +267,22 @@ export default function InstrumentPage() {
               <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">{rangeLabel}</p>
             </div>
 
-            <span className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-medium">
-              Page {page}{totalPages > 0 ? ` / ${totalPages}` : ""}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setNeoActionError(null);
+                  setNeoActionSuccess(null);
+                  setShowNeoActionsModal(true);
+                }}
+                className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-medium"
+              >
+                Neo Actions
+              </button>
+              <span className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-medium">
+                Page {page}{totalPages > 0 ? ` / ${totalPages}` : ""}
+              </span>
+            </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between gap-2">
@@ -228,6 +306,7 @@ export default function InstrumentPage() {
               <FiChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
+
         </div>
       </section>
 
@@ -361,6 +440,63 @@ export default function InstrumentPage() {
                 <FiFileText className="h-3.5 w-3.5" />
                 Full CSV row fields
               </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showNeoActionsModal ? (
+        <div className="fixed inset-0 z-40 bg-black/55 p-4">
+          <div className="mx-auto mt-10 w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111926]">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+              <h3 className="text-sm font-semibold">Neo Actions</h3>
+              <button
+                type="button"
+                onClick={() => setShowNeoActionsModal(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700"
+                aria-label="Close neo actions"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 p-4">
+              <label className="block text-[11px]">
+                <span className="mb-1 block text-zinc-500 dark:text-zinc-400">TOTP</span>
+                <input
+                  type="text"
+                  value={totp}
+                  onChange={(event) => setTotp(event.target.value)}
+                  placeholder="Enter TOTP"
+                  className="h-9 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 text-xs outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                />
+              </label>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleNeoLogin}
+                  disabled={isNeoLoginLoading || isScriptDownloadLoading}
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 px-3 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isNeoLoginLoading ? "Logging in..." : "Login Neo"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleScriptDownload}
+                  disabled={isScriptDownloadLoading || isNeoLoginLoading}
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 px-3 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isScriptDownloadLoading ? "Downloading..." : "Download Script"}
+                </button>
+              </div>
+
+              {neoActionError ? (
+                <p className="text-[11px] text-rose-600 dark:text-rose-300">{neoActionError}</p>
+              ) : null}
+              {neoActionSuccess ? (
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-300">{neoActionSuccess}</p>
+              ) : null}
             </div>
           </div>
         </div>
