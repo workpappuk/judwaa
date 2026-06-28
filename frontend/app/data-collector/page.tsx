@@ -84,6 +84,9 @@ export default function DataCollectorPage() {
     setCurrentStep(0);
     setFormValues(getDefaultFormValues(selectedConfig));
     setFieldErrors({});
+    setLeftStepSearch("");
+    setStepFieldSearch("");
+    setRightLinkSearch("");
   }, [selectedConfig]);
 
   const progress = useMemo(() => Math.round(((currentStep + 1) / selectedConfig.steps.length) * 100), [currentStep, selectedConfig.steps.length]);
@@ -582,7 +585,8 @@ export default function DataCollectorPage() {
 
       <section className="grid gap-3 lg:h-[calc(100dvh-19rem)] lg:grid-cols-[240px_minmax(0,1fr)_260px]">
         <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">All Steps</h2>
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">{selectedConfig.title}</h2>
+          <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Step Navigator</p>
           <SearchInputWithClear
             value={leftStepSearch}
             onChange={setLeftStepSearch}
@@ -700,7 +704,8 @@ export default function DataCollectorPage() {
         </article>
 
         <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Extra Links</h2>
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">{selectedConfig.title}</h2>
+          <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Related Links</p>
           <SearchInputWithClear
             value={rightLinkSearch}
             onChange={setRightLinkSearch}
