@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowRight, FiCheckCircle, FiChevronLeft, FiChevronRight, FiUploadCloud, FiX } from "react-icons/fi";
 
 import { collectorConfigs, getDefaultFormValues, type CollectorField, type CollectorFieldValue, type CollectorFormValues, type CollectorSection } from "./config";
+import { fetchCollectorDetail, fetchCollectorSummaries, fetchPersistedCollectorData, persistCollectorValues, type CollectorSummary, type PersistedCollectorData, updatePersistedCollectorData } from "@/services/data-collector-api";
 
 type SearchInputWithClearProps = {
   value: string;
@@ -50,24 +51,71 @@ function SearchInputWithClear({
 }
 
 export default function DataCollectorPage() {
+  type SidebarStep = {
+    id: string;
+    title: string;
+    description: string;
+  };
+
+  type SidebarLink = {
+    label: string;
+    href: string;
+    external: boolean;
+  };
+
+  const fallbackSummaries = useMemo<CollectorSummary[]>(
+    () => collectorConfigs.map((config) => ({
+      id: config.id,
+      category: config.category,
+      title: config.title,
+      subtitle: config.subtitle,
+      importButtonLabel: config.importButtonLabel,
+      related: {
+        steps: config.steps.length,
+        sections: config.steps.reduce((count, step) => count + step.sections.length, 0),
+        fields: config.steps.reduce(
+          (count, step) => count + step.sections.reduce((sectionCount, section) => sectionCount + section.fields.length, 0),
+          0,
+        ),
+        links: config.extraLinks.length,
+      },
+      updatedAt: null,
+    })),
+    [],
+  );
+  const [collectorSummaries, setCollectorSummaries] = useState<CollectorSummary[]>(fallbackSummaries);
   const [selectedCollectorId, setSelectedCollectorId] = useState(collectorConfigs[0].id);
   const [collectorSearch, setCollectorSearch] = useState("");
   const [leftStepSearch, setLeftStepSearch] = useState("");
   const [stepFieldSearch, setStepFieldSearch] = useState("");
   const [rightLinkSearch, setRightLinkSearch] = useState("");
+  const [collectorApiError, setCollectorApiError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [apiSidebarSteps, setApiSidebarSteps] = useState<SidebarStep[]>([]);
+  const [apiSidebarLinks, setApiSidebarLinks] = useState<SidebarLink[]>([]);
+  const [showPersistedModal, setShowPersistedModal] = useState(false);
+  const [isPersistedLoading, setIsPersistedLoading] = useState(false);
+  const [persistedViewData, setPersistedViewData] = useState<PersistedCollectorData | null>(null);
+  const [persistedEditorText, setPersistedEditorText] = useState("");
+  const [persistedEditorError, setPersistedEditorError] = useState<string | null>(null);
+  const [isPersistedSaving, setIsPersistedSaving] = useState(false);
   const collectorRailRef = useRef<HTMLDivElement | null>(null);
   const selectedConfig = useMemo(
     () => collectorConfigs.find((config) => config.id === selectedCollectorId) ?? collectorConfigs[0],
     [selectedCollectorId],
   );
+  const selectedSummary = useMemo(
+    () => collectorSummaries.find((collector) => collector.id === selectedCollectorId) ?? null,
+    [collectorSummaries, selectedCollectorId],
+  );
   const filteredCollectorConfigs = useMemo(() => {
     const query = collectorSearch.trim().toLowerCase();
 
     if (!query) {
-      return collectorConfigs;
+      return collectorSummaries;
     }
 
-    return collectorConfigs.filter((config) => {
+    return collectorSummaries.filter((config) => {
       return (
         config.title.toLowerCase().includes(query)
         || config.subtitle.toLowerCase().includes(query)
@@ -75,18 +123,109 @@ export default function DataCollectorPage() {
         || config.id.toLowerCase().includes(query)
       );
     });
-  }, [collectorSearch]);
+  }, [collectorSearch, collectorSummaries]);
   const [currentStep, setCurrentStep] = useState(0);
   const [formValues, setFormValues] = useState<CollectorFormValues>(getDefaultFormValues(collectorConfigs[0]));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const parsePersistedEditorValues = (): CollectorFormValues | null => {
+    try {
+      const parsed = JSON.parse(persistedEditorText) as unknown;
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setPersistedEditorError("Persisted payload must be a JSON object.");
+        return null;
+      }
+
+      const sanitized: CollectorFormValues = {};
+      for (const [key, rawValue] of Object.entries(parsed)) {
+        if (typeof rawValue === "string" || typeof rawValue === "number" || typeof rawValue === "boolean") {
+          sanitized[key] = rawValue;
+          continue;
+        }
+
+        setPersistedEditorError(
+          `Unsupported value type for '${key}'. Only string, number, and boolean are allowed.`,
+        );
+        return null;
+      }
+
+      setPersistedEditorError(null);
+      return sanitized;
+    } catch {
+      setPersistedEditorError("Invalid JSON. Please fix the payload before saving.");
+      return null;
+    }
+  };
+
   useEffect(() => {
+    let cancelled = false;
+
+    const loadCollectorSummaries = async () => {
+      try {
+        const summaries = await fetchCollectorSummaries();
+        if (!cancelled && summaries.length > 0) {
+          setCollectorSummaries(summaries);
+        }
+      } catch {
+        if (!cancelled) {
+          setCollectorApiError("Unable to fetch collector list from backend.");
+        }
+      }
+    };
+
+    void loadCollectorSummaries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     setCurrentStep(0);
     setFormValues(getDefaultFormValues(selectedConfig));
     setFieldErrors({});
     setLeftStepSearch("");
     setStepFieldSearch("");
     setRightLinkSearch("");
+    setSaveStatus(null);
+    setApiSidebarSteps([]);
+    setApiSidebarLinks([]);
+
+    const loadCollectorDetail = async () => {
+      try {
+        const detail = await fetchCollectorDetail(selectedConfig.id);
+        if (cancelled) {
+          return;
+        }
+
+        setCollectorApiError(null);
+        if (detail.persistedValues && Object.keys(detail.persistedValues).length > 0) {
+          setFormValues((prev) => ({
+            ...prev,
+            ...detail.persistedValues,
+          }));
+        }
+        setApiSidebarSteps(detail.steps ?? []);
+        setApiSidebarLinks(detail.links ?? []);
+
+        setCollectorSummaries((prev) =>
+          prev.map((item) => (item.id === detail.id ? { ...item, updatedAt: detail.updatedAt } : item)),
+        );
+      } catch {
+        if (!cancelled) {
+          setCollectorApiError("Unable to fetch collector details from backend.");
+        }
+      }
+    };
+
+    void loadCollectorDetail();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedConfig]);
 
   const progress = useMemo(() => Math.round(((currentStep + 1) / selectedConfig.steps.length) * 100), [currentStep, selectedConfig.steps.length]);
@@ -114,7 +253,11 @@ export default function DataCollectorPage() {
   }, [activeStepFieldItems, stepFieldSearch]);
   const filteredStepItems = useMemo(() => {
     const query = leftStepSearch.trim().toLowerCase();
-    const indexedSteps = selectedConfig.steps.map((step, index) => ({ step, index }));
+    const sourceSteps =
+      apiSidebarSteps.length > 0
+        ? apiSidebarSteps
+        : selectedConfig.steps.map((step) => ({ id: step.id, title: step.title, description: step.description }));
+    const indexedSteps = sourceSteps.map((step, index) => ({ step, index }));
 
     if (!query) {
       return indexedSteps;
@@ -127,18 +270,26 @@ export default function DataCollectorPage() {
         || step.id.toLowerCase().includes(query)
       );
     });
-  }, [leftStepSearch, selectedConfig.steps]);
+  }, [apiSidebarSteps, leftStepSearch, selectedConfig.steps]);
   const filteredRightLinks = useMemo(() => {
     const query = rightLinkSearch.trim().toLowerCase();
+    const sourceLinks =
+      apiSidebarLinks.length > 0
+        ? apiSidebarLinks
+        : selectedConfig.extraLinks.map((item) => ({
+            label: item.label,
+            href: item.href,
+            external: Boolean(item.external),
+          }));
 
     if (!query) {
-      return selectedConfig.extraLinks;
+      return sourceLinks;
     }
 
-    return selectedConfig.extraLinks.filter((item) => {
+    return sourceLinks.filter((item) => {
       return item.label.toLowerCase().includes(query) || item.href.toLowerCase().includes(query);
     });
-  }, [rightLinkSearch, selectedConfig.extraLinks]);
+  }, [apiSidebarLinks, rightLinkSearch, selectedConfig.extraLinks]);
 
   const allFields = useMemo(
     () => selectedConfig.steps.flatMap((step) => step.sections.flatMap((section) => section.fields)),
@@ -419,8 +570,7 @@ export default function DataCollectorPage() {
     );
   };
 
-  const renderExtraLink = (item: (typeof selectedConfig.extraLinks)[number]) => {
-    const LinkIcon = item.icon;
+  const renderExtraLink = (item: SidebarLink) => {
 
     if (item.external) {
       return (
@@ -432,7 +582,7 @@ export default function DataCollectorPage() {
           className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
         >
           {item.label}
-          <LinkIcon className="h-3.5 w-3.5" />
+          <FiArrowRight className="h-3.5 w-3.5" />
         </a>
       );
     }
@@ -444,7 +594,7 @@ export default function DataCollectorPage() {
         className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
       >
         {item.label}
-        <LinkIcon className="h-3.5 w-3.5" />
+        <FiArrowRight className="h-3.5 w-3.5" />
       </Link>
     );
   };
@@ -576,11 +726,45 @@ export default function DataCollectorPage() {
         <div>
           <h1 className="display-face text-2xl font-semibold">{selectedConfig.title}</h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-300">{selectedConfig.subtitle}</p>
+          {selectedSummary?.updatedAt ? (
+            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              Last saved: {new Date(selectedSummary.updatedAt).toLocaleString()}
+            </p>
+          ) : null}
+          {collectorApiError ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{collectorApiError}</p> : null}
+          {saveStatus ? <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-300">{saveStatus}</p> : null}
         </div>
-        <button type="button" className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
-          <FiUploadCloud className="h-3.5 w-3.5" />
-          {selectedConfig.importButtonLabel}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowPersistedModal(true);
+              setIsPersistedLoading(true);
+              setPersistedViewData(null);
+              setPersistedEditorText("");
+              setPersistedEditorError(null);
+              void (async () => {
+                try {
+                  const persistedData = await fetchPersistedCollectorData(selectedConfig.id);
+                  setPersistedViewData(persistedData);
+                  setPersistedEditorText(JSON.stringify(persistedData.values, null, 2));
+                  setCollectorApiError(null);
+                } catch {
+                  setCollectorApiError("No persisted data found for this collector yet.");
+                } finally {
+                  setIsPersistedLoading(false);
+                }
+              })();
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            View Persisted Data
+          </button>
+          <button type="button" className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
+            <FiUploadCloud className="h-3.5 w-3.5" />
+            {selectedConfig.importButtonLabel}
+          </button>
+        </div>
       </div>
 
       <section className="grid gap-3 lg:h-[calc(100dvh-19rem)] lg:grid-cols-[240px_minmax(0,1fr)_260px]">
@@ -597,7 +781,6 @@ export default function DataCollectorPage() {
           />
           <ol className="space-y-2">
             {filteredStepItems.map(({ step, index }) => {
-              const StepIcon = step.icon;
               const isActive = index === currentStep;
               const isDone = index < currentStep;
 
@@ -613,10 +796,7 @@ export default function DataCollectorPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                        <StepIcon className="h-3.5 w-3.5" />
-                        {step.title}
-                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold">{step.title}</span>
                       {isDone ? <FiCheckCircle className="h-3.5 w-3.5 text-emerald-500" /> : null}
                     </div>
                     <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">{step.description}</p>
@@ -693,6 +873,23 @@ export default function DataCollectorPage() {
               ) : (
                 <button
                   type="button"
+                  onClick={() => {
+                    void (async () => {
+                      try {
+                        const response = await persistCollectorValues(selectedConfig.id, formValues);
+                        setCollectorApiError(null);
+                        setSaveStatus("Collector data saved to backend.");
+                        setCollectorSummaries((prev) =>
+                          prev.map((item) =>
+                            item.id === selectedConfig.id ? { ...item, updatedAt: response.updatedAt } : item,
+                          ),
+                        );
+                      } catch {
+                        setCollectorApiError("Unable to save collector data to backend.");
+                        setSaveStatus(null);
+                      }
+                    })();
+                  }}
                   className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
                 >
                   Start Collection
@@ -720,6 +917,98 @@ export default function DataCollectorPage() {
           {filteredRightLinks.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No links match this search.</p> : null}
         </aside>
       </section>
+
+      {showPersistedModal ? (
+        <div className="fixed inset-0 z-40 bg-black/55 p-4">
+          <div className="mx-auto mt-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111926]">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
+              <h3 className="text-sm font-semibold">Persisted Data: {selectedConfig.title}</h3>
+              <button
+                type="button"
+                onClick={() => setShowPersistedModal(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700"
+                aria-label="Close persisted data modal"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 p-4">
+              {isPersistedLoading ? (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading persisted data...</p>
+              ) : null}
+
+              {!isPersistedLoading && persistedViewData ? (
+                <>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Last updated: {persistedViewData.updatedAt ? new Date(persistedViewData.updatedAt).toLocaleString() : "N/A"}
+                  </p>
+                  <textarea
+                    value={persistedEditorText}
+                    onChange={(event) => {
+                      setPersistedEditorText(event.target.value);
+                      if (persistedEditorError) {
+                        setPersistedEditorError(null);
+                      }
+                    }}
+                    className="min-h-80 max-h-[60vh] w-full overflow-auto rounded border border-zinc-300 bg-zinc-950 p-3 text-[11px] text-zinc-200 outline-none focus:border-blue-500 dark:border-zinc-700"
+                  />
+                  {persistedEditorError ? (
+                    <p className="text-[11px] text-rose-600 dark:text-rose-300">{persistedEditorError}</p>
+                  ) : null}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextValues = parsePersistedEditorValues();
+                        if (!nextValues) {
+                          return;
+                        }
+
+                        setIsPersistedSaving(true);
+                        void (async () => {
+                          try {
+                            const response = await updatePersistedCollectorData(selectedConfig.id, nextValues);
+                            setPersistedViewData((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    values: nextValues,
+                                    updatedAt: response.updatedAt,
+                                  }
+                                : prev,
+                            );
+                            setCollectorSummaries((prev) =>
+                              prev.map((item) =>
+                                item.id === selectedConfig.id ? { ...item, updatedAt: response.updatedAt } : item,
+                              ),
+                            );
+                            setFormValues((prev) => ({ ...prev, ...nextValues }));
+                            setCollectorApiError(null);
+                            setSaveStatus("Persisted data updated.");
+                          } catch {
+                            setPersistedEditorError("Unable to save persisted data updates.");
+                          } finally {
+                            setIsPersistedSaving(false);
+                          }
+                        })();
+                      }}
+                      disabled={isPersistedSaving}
+                      className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isPersistedSaving ? "Saving..." : "Save Updates"}
+                    </button>
+                  </div>
+                </>
+              ) : null}
+
+              {!isPersistedLoading && !persistedViewData ? (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">No persisted data available.</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

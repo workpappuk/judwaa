@@ -75,19 +75,6 @@ type StepDefaults = {
   dedupeEnabled: boolean;
 };
 
-const largeGeneratedFields: CollectorField[] = Array.from({ length: 100 }, (_, index) => {
-  const number = index + 1;
-  const padded = String(number).padStart(3, "0");
-
-  return {
-    key: `customField${padded}`,
-    label: `Custom Field ${number}`,
-    type: "text",
-    defaultValue: "",
-    placeholder: `Enter value ${number}`,
-  };
-});
-
 const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
   {
     id: "source",
@@ -330,12 +317,6 @@ const buildSteps = (defaults: StepDefaults): CollectorStep[] => [
           },
         ],
       },
-      {
-        id: "validation-large-form",
-        title: "Extended Attributes (100 Fields)",
-        description: "Large form block for stress-testing and bulk configuration capture.",
-        fields: largeGeneratedFields,
-      },
     ],
   },
   {
@@ -353,18 +334,6 @@ const defaultExtraLinks: ExtraLink[] = [
   { label: "Instrument Library", href: "/trading/instrument", icon: FiSettings },
   { label: "Collector Logging Guide", href: "https://docs.python.org/3/library/logging.html", icon: FiHelpCircle, external: true },
 ];
-
-const generatedExtraLinks: ExtraLink[] = Array.from({ length: 100 }, (_, index) => {
-  const number = index + 1;
-  return {
-    label: `Reference Link ${number}`,
-    href: `https://example.com/data-collector/reference/${number}`,
-    icon: FiLink2,
-    external: true,
-  };
-});
-
-const allExtraLinks: ExtraLink[] = [...defaultExtraLinks, ...generatedExtraLinks];
 
 const baseCollectorConfigs: CollectorConfig[] = [
   {
@@ -385,7 +354,7 @@ const baseCollectorConfigs: CollectorConfig[] = [
       notifyChannel: "#data-alerts",
       dedupeEnabled: true,
     }),
-    extraLinks: allExtraLinks,
+    extraLinks: defaultExtraLinks,
   },
   {
     id: "fo-intraday",
@@ -405,7 +374,7 @@ const baseCollectorConfigs: CollectorConfig[] = [
       notifyChannel: "#fo-data-alerts",
       dedupeEnabled: true,
     }),
-    extraLinks: allExtraLinks,
+    extraLinks: defaultExtraLinks,
   },
   {
     id: "client-master",
@@ -425,39 +394,11 @@ const baseCollectorConfigs: CollectorConfig[] = [
       notifyChannel: "#master-sync-alerts",
       dedupeEnabled: false,
     }),
-    extraLinks: allExtraLinks,
+    extraLinks: defaultExtraLinks,
   },
 ];
 
-const generatedCollectorConfigs: CollectorConfig[] = Array.from({ length: 97 }, (_, index) => {
-  const number = index + 4;
-  const padded = String(number).padStart(3, "0");
-  const sourceTypeOptions = ["S3 Bucket", "REST API", "Kafka Topic", "FTP Server"] as const;
-  const sourceType = sourceTypeOptions[index % sourceTypeOptions.length];
-
-  return {
-    id: `collector-${padded}`,
-    category: "AUTO",
-    title: `Auto Collector ${number}`,
-    subtitle: `Auto-generated configuration for collector ${number}.`,
-    importButtonLabel: `Import Config ${number}`,
-    steps: buildSteps({
-      collectorName: `Auto Collector ${number}`,
-      sourceType,
-      schedule: `*/${(index % 10) + 1} * * * *`,
-      ownerTeam: `Data Team ${((index % 5) + 1)}`,
-      primaryKey: `primary_key_${padded}`,
-      timestampField: `timestamp_${padded}`,
-      timezone: index % 2 === 0 ? "Asia/Kolkata" : "UTC",
-      nullThreshold: String((index % 5) + 1),
-      notifyChannel: `#collector-alert-${padded}`,
-      dedupeEnabled: index % 2 === 0,
-    }),
-    extraLinks: allExtraLinks,
-  };
-});
-
-export const collectorConfigs: CollectorConfig[] = [...baseCollectorConfigs, ...generatedCollectorConfigs];
+export const collectorConfigs: CollectorConfig[] = baseCollectorConfigs;
 
 export const getDefaultFormValues = (config: CollectorConfig): CollectorFormValues => {
   return config.steps.reduce<CollectorFormValues>((values, step) => {
