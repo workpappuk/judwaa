@@ -1,6 +1,6 @@
 #FileLock
-#Sun Jun 28 11:27:15 IST 2026
-hostName=bgmb143868
-id=19f0ccdaad92516afcad9e8d6543667b614dd2111c7
+#Sun Jun 28 11:41:19 IST 2026
+hostName=localhost
+id=19f0cda8b2d100866819171f4a61b1a222821a99868
 method=file
-server=192.168.1.2\:59552
+server=localhost\:64843
