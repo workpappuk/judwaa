@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { store } from "@/store";
 import type { RootState } from "@/store";
 import { setSession } from "@/store/slices/authSlice";
-import { setDraftPositions } from "@/store/slices/tradingSlice";
+import { markDraftPositionsHydrated, setDraftPositions } from "@/store/slices/tradingSlice";
 import type { AuthSession } from "@/types/auth";
 import type { FnOPositionDraft } from "@/types/trading";
 
@@ -22,6 +22,7 @@ interface ProvidersProps {
 function DraftPositionsPersistence() {
   const dispatch = useDispatch();
   const draftPositions = useSelector((state: RootState) => state.trading.draftPositions);
+  const hydrated = useSelector((state: RootState) => state.trading.hydrated);
 
   useEffect(() => {
     try {
@@ -36,12 +37,18 @@ function DraftPositionsPersistence() {
       }
     } catch {
       window.localStorage.removeItem(DRAFTS_STORAGE_KEY);
+    } finally {
+      dispatch(markDraftPositionsHydrated());
     }
   }, [dispatch]);
 
   useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
     window.localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(draftPositions));
-  }, [draftPositions]);
+  }, [draftPositions, hydrated]);
 
   return null;
 }

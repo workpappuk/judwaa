@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   FiArrowDownRight,
   FiArrowUpRight,
@@ -8,52 +9,14 @@ import {
   FiClipboard,
   FiDollarSign,
   FiHash,
+  FiPlusCircle,
   FiTrendingUp,
 } from "react-icons/fi";
 
 import { useNeoQuotes } from "@/hooks/use-neo-quotes";
 import { useAppSelector } from "@/store/hooks";
-import type { FnOPositionDraft, FnOPositionView } from "@/types/trading";
+import type { FnOPositionView } from "@/types/trading";
 import Tabs from "@/components/tab";
-
-const POSITIONS: FnOPositionDraft[] = [
-  {
-    id: "p1",
-    neoSymbol: "nse_fo|103204",
-    label: "NIFTY 24300 CE",
-    qty: 50,
-    avgPrice: 122.4,
-    side: "LONG",
-    product: "NRML",
-    expiry: "26 Jun 2026",
-    strike: 24300,
-    optionType: "CE",
-  },
-  {
-    id: "p2",
-    neoSymbol: "nse_fo|103272",
-    label: "BANKNIFTY 52500 PE",
-    qty: 15,
-    avgPrice: 208.1,
-    side: "SHORT",
-    product: "MIS",
-    expiry: "26 Jun 2026",
-    strike: 52500,
-    optionType: "PE",
-  },
-  {
-    id: "p3",
-    neoSymbol: "nse_fo|109901",
-    label: "FINNIFTY 24150 CE",
-    qty: 40,
-    avgPrice: 76.7,
-    side: "LONG",
-    product: "NRML",
-    expiry: "26 Jun 2026",
-    strike: 24150,
-    optionType: "CE",
-  },
-];
 
 const toNumber = (value: string | undefined): number => {
   const parsed = Number(value ?? "0");
@@ -85,7 +48,9 @@ const formatCompact = (value: number): string => {
 
 export default function TradingPositionsPage() {
   const draftPositions = useAppSelector((state) => state.trading.draftPositions);
-  const positions = draftPositions.length > 0 ? draftPositions : POSITIONS;
+  const draftsHydrated = useAppSelector((state) => state.trading.hydrated);
+
+  const positions = draftsHydrated ? draftPositions : [];
 
   const symbols = useMemo(() => positions.map((position) => position.neoSymbol), [positions]);
   const { quotes, error, refresh } = useNeoQuotes(symbols);
@@ -128,6 +93,33 @@ export default function TradingPositionsPage() {
 
   const positionTabContent = (
     <>
+      {!draftsHydrated ? (
+        <section className="pt-3">
+          <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+            Restoring saved positions...
+          </article>
+        </section>
+      ) : null}
+      {draftsHydrated && rows.length === 0 ? (
+        <section className="pt-3">
+          <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors">
+            <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+              <FiPlusCircle className="h-4 w-4" />
+            </div>
+            <h2 className="mt-2 text-sm font-semibold">No positions selected</h2>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Go to Instruments and select contracts with quantity and average price.
+            </p>
+            <Link
+              href="/trading/instrument"
+              className="mt-3 inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1.5 text-xs font-medium"
+            >
+              <FiPlusCircle className="h-3.5 w-3.5" />
+              Select Instruments
+            </Link>
+          </article>
+        </section>
+      ) : null}
       <div className="grid grid-cols-1 gap-2 mt-3" >
         <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
           <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
