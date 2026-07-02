@@ -6,6 +6,9 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @MappedSuperclass
 public abstract class BaseEntity implements Serializable {
 	@Id
@@ -39,20 +42,33 @@ public abstract class BaseEntity implements Serializable {
 		this.createdAt = Instant.now();
 		this.updatedAt = Instant.now();
 		this.id = UuidCreator.getTimeOrderedEpoch();
+		String actor = resolveActor();
 		if (this.createdBy == null || this.createdBy.isBlank()) {
-			this.createdBy = "SYSTEM";
+			this.createdBy = actor;
 		}
 		if (this.updatedBy == null || this.updatedBy.isBlank()) {
-			this.updatedBy = "SYSTEM";
+			this.updatedBy = actor;
 		}
 	}
 
 	@PreUpdate
 	protected void onUpdate() {
 		this.updatedAt = Instant.now();
-		if (this.updatedBy == null || this.updatedBy.isBlank()) {
-			this.updatedBy = "SYSTEM";
+		this.updatedBy = resolveActor();
+	}
+
+	private String resolveActor() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || !authentication.isAuthenticated()) {
+			return "SYSTEM";
 		}
+
+		String name = authentication.getName();
+		if (name == null || name.isBlank() || "anonymousUser".equalsIgnoreCase(name)) {
+			return "SYSTEM";
+		}
+
+		return name;
 	}
 
 	public UUID getId() {
