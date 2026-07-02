@@ -35,14 +35,12 @@ const formatSignedPercent = (value: number): string =>
   `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 
 const formatCompact = (value: number): string => {
-  const absolute = Math.abs(value);
-  if (absolute >= 1_00_000) {
-    return `${value >= 0 ? "+" : "-"}${(absolute / 1_00_000).toFixed(2)}L`;
-  }
-  if (absolute >= 1_000) {
-    return `${value >= 0 ? "+" : "-"}${(absolute / 1_000).toFixed(1)}K`;
-  }
-  return `${value >= 0 ? "+" : "-"}${absolute.toFixed(0)}`;
+  const formatted = new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Math.abs(value));
+
+  return `${value >= 0 ? "+" : "-"}${formatted}`;
 };
 
 type OrderRow = {
@@ -165,12 +163,11 @@ export default function TradingPositionsPage() {
             : "border-rose-200 dark:border-rose-900 bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/40 dark:to-zinc-900"
             }`}
         >
-          <p className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/80 dark:bg-zinc-900/70 text-[13px] leading-none">₹</span>
+          <p className="inline-flex w-full items-center justify-center gap-1.5 text-[11px] uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300 text-center">
             Day P&L
           </p>
           <p
-            className={`mt-1 text-2xl font-extrabold leading-none ${totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
+            className={`mt-1 text-center text-2xl font-extrabold leading-none ${totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
               }`}
           >
             {formatCompact(totalPnl)}
