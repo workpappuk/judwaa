@@ -1,4 +1,4 @@
-import type { NeoQuoteResponse, PaginatedInstrumentResponse } from "@/types/trading";
+import type { FnOPositionDraft, NeoQuoteResponse, PaginatedInstrumentResponse } from "@/types/trading";
 import { createApiClient } from "@/services/api-client";
 
 const tradingApi = createApiClient({ withAuth: true });
@@ -43,4 +43,9 @@ export async function getInstruments(
   });
 
   return response.data;
+}
+
+export async function replaceOrders(orders: FnOPositionDraft[]): Promise<number> {
+  const response = await tradingApi.post<{ savedCount?: number }>("/api/neo/orders/replace", orders);
+  return response.data?.savedCount ?? 0;
 }

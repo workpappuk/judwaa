@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { FiChevronLeft, FiChevronRight, FiDatabase, FiFileText, FiInfo, FiX } from "react-icons/fi";
 
-import { downloadNeoScriptMaster, getInstruments, loginNeoSession } from "@/services/trading-api";
+import { downloadNeoScriptMaster, getInstruments, loginNeoSession, replaceOrders } from "@/services/trading-api";
 import { useAppDispatch } from "@/store/hooks";
 import { setDraftPositions } from "@/store/slices/tradingSlice";
 import type { FnOPositionDraft, InstrumentPojo, PositionProduct, PositionSide } from "@/types/trading";
@@ -94,6 +94,8 @@ export default function InstrumentPage() {
   const [isScriptDownloadLoading, setIsScriptDownloadLoading] = useState(false);
   const [neoActionError, setNeoActionError] = useState<string | null>(null);
   const [neoActionSuccess, setNeoActionSuccess] = useState<string | null>(null);
+  const [isSavingOrders, setIsSavingOrders] = useState(false);
+  const [saveOrdersError, setSaveOrdersError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -233,7 +235,7 @@ export default function InstrumentPage() {
     });
   };
 
-  const saveDraftPositions = () => {
+  const saveDraftPositions = async () => {
     if (saveValidationError) {
       return;
     }
@@ -257,9 +259,19 @@ export default function InstrumentPage() {
       };
     });
 
-    dispatch(setDraftPositions(drafts));
-    setShowSelectionModal(false);
-    route.push("/trading/f&o");
+    setIsSavingOrders(true);
+    setSaveOrdersError(null);
+
+    try {
+      await replaceOrders(drafts);
+      dispatch(setDraftPositions(drafts));
+      setShowSelectionModal(false);
+      route.push("/trading/f&o");
+    } catch (err) {
+      setSaveOrdersError(getApiErrorMessage(err, "Unable to store orders in H2 right now."));
+    } finally {
+      setIsSavingOrders(false);
+    }
   };
 
   const handleNeoLogin = async () => {
@@ -672,14 +684,19 @@ export default function InstrumentPage() {
                 {saveValidationError ? (
                   <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{saveValidationError}</p>
                 ) : null}
+                {saveOrdersError ? (
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{saveOrdersError}</p>
+                ) : null}
               </div>
               <button
                 type="button"
-                onClick={saveDraftPositions}
-                disabled={!!saveValidationError}
+                onClick={() => {
+                  void saveDraftPositions();
+                }}
+                disabled={!!saveValidationError || isSavingOrders}
                 className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium"
               >
-                Save & route F&O
+                {isSavingOrders ? "Saving orders..." : "Save & route F&O"}
               </button>
             </div>
           </div>

@@ -158,22 +158,27 @@ export default function TradingPositionsPage() {
           </article>
         </section>
       ) : null}
-      <div className="grid grid-cols-1 gap-2 mt-3" >
-        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
-          <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            <span className="text-[12px] leading-none font-semibold">₹</span>
+      <div className="grid grid-cols-1 gap-2 mt-3">
+        <article
+          className={`rounded-2xl border px-4 py-3 transition-colors shadow-sm ${totalPnl >= 0
+            ? "border-emerald-200 dark:border-emerald-900 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/40 dark:to-zinc-900"
+            : "border-rose-200 dark:border-rose-900 bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/40 dark:to-zinc-900"
+            }`}
+        >
+          <p className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/80 dark:bg-zinc-900/70 text-[13px] leading-none">₹</span>
             Day P&L
           </p>
           <p
-            className={`text-sm font-semibold ${totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
+            className={`mt-1 text-2xl font-extrabold leading-none ${totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
               }`}
           >
             {formatCompact(totalPnl)}
           </p>
         </article>
-      </div >
+      </div>
       <section className="  pt-3 space-y-2.5">
-        {error ? (
+        {false ? (
           <div className="rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-2.5 text-xs text-rose-700 dark:text-rose-300">
             {error}
           </div>

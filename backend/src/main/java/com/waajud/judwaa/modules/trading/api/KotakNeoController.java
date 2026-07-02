@@ -1,12 +1,16 @@
 package com.waajud.judwaa.modules.trading.api;
 
+import java.util.LinkedHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import com.waajud.judwaa.modules.trading.application.TradingOrderService;
+import com.waajud.judwaa.modules.trading.application.TradingOrderService.TradingOrderRequest;
 import com.waajud.judwaa.modules.trading.infrastructure.*;
 import com.waajud.judwaa.modules.trading.infrastructure.KotakNeoQuoteService.QuoteResponse;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/neo")
@@ -25,6 +29,9 @@ public class KotakNeoController {
 
 	@Autowired
 	private KotakInstrumentService kotakInstrumentService;
+
+	@Autowired
+	private TradingOrderService tradingOrderService;
 
 	@PostMapping("/login")
 	public String login(@RequestParam String totp) {
@@ -48,6 +55,14 @@ public class KotakNeoController {
 	public KotakInstrumentService.PaginatedInstrumentResponse fetchInstruments(
 			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "100") int size) {
 		return kotakInstrumentService.readAllCsvAsPojoPaginated(page, size);
+	}
+
+	@PostMapping("/orders/replace")
+	public Map<String, Object> replaceOrders(@RequestBody List<TradingOrderRequest> orders) {
+		int savedCount = tradingOrderService.replaceOrders(orders);
+		Map<String, Object> response = new LinkedHashMap<>();
+		response.put("savedCount", savedCount);
+		return response;
 	}
 
 }
