@@ -50,7 +50,7 @@ export default function Tabs({
   return (
     <div className={className}>
       <div
-        className="inline-flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-1"
+        className="flex w-full items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-1"
         role="tablist"
         aria-label={ariaLabel}
       >
@@ -63,7 +63,7 @@ export default function Tabs({
             aria-selected={active.id === tab.id}
             aria-controls={`${tabsId}-${tab.id}-panel`}
             id={`${tabsId}-${tab.id}-tab`}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+            className={`flex-1 rounded-lg px-3 py-1.5 text-center text-xs font-semibold transition-colors ${
               activeId === tab.id
                 ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm"
                 : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
