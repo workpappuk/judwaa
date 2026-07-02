@@ -108,6 +108,10 @@ export function Navbar() {
     }
   };
 
+  if (isFullscreen) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f141c]/95 backdrop-blur-sm transition-colors">
       <audio
