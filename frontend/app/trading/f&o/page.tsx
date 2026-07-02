@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   FiArrowDownRight,
   FiArrowUpRight,
   FiBarChart2,
   FiClipboard,
-  FiDollarSign,
+  FiEye,
   FiHash,
   FiPlusCircle,
   FiTrendingUp,
+  FiX,
 } from "react-icons/fi";
 
 import { useNeoQuotes } from "@/hooks/use-neo-quotes";
@@ -44,13 +45,30 @@ const formatCompact = (value: number): string => {
   return `${value >= 0 ? "+" : "-"}${absolute.toFixed(0)}`;
 };
 
+type OrderRow = {
+  id: string;
+  symbol: string;
+  neoSymbol: string;
+  side: "LONG" | "SHORT";
+  qty: number;
+  product: "MIS" | "NRML";
+  limitPrice: number;
+  expiry: string;
+  strike: number;
+  optionType: "CE" | "PE";
+  notional: number;
+};
+
 
 
 export default function TradingPositionsPage() {
   const draftPositions = useAppSelector((state) => state.trading.draftPositions);
   const draftsHydrated = useAppSelector((state) => state.trading.hydrated);
 
-  const positions = draftsHydrated ? draftPositions : [];
+  const positions = useMemo(
+    () => (draftsHydrated ? draftPositions : []),
+    [draftPositions, draftsHydrated],
+  );
 
   const symbols = useMemo(() => positions.map((position) => position.neoSymbol), [positions]);
   const { quotes, error, refresh } = useNeoQuotes(symbols);
@@ -89,6 +107,26 @@ export default function TradingPositionsPage() {
     });
   }, [positions, quotes]);
 
+  const orderRows: OrderRow[] = useMemo(
+    () =>
+      positions.map((position) => ({
+        id: `order-${position.id}`,
+        symbol: position.label,
+        neoSymbol: position.neoSymbol,
+        side: position.side,
+        qty: position.qty,
+        product: position.product,
+        limitPrice: position.avgPrice,
+        expiry: position.expiry,
+        strike: position.strike,
+        optionType: position.optionType,
+        notional: position.avgPrice * position.qty,
+      })),
+    [positions],
+  );
+
+  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+
   const totalPnl = rows.reduce((acc, row) => acc + row.pnl, 0);
 
   const positionTabContent = (
@@ -123,7 +161,7 @@ export default function TradingPositionsPage() {
       <div className="grid grid-cols-1 gap-2 mt-3" >
         <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 transition-colors">
           <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            <FiDollarSign className="h-3 w-3" />
+            <span className="text-[12px] leading-none font-semibold">₹</span>
             Day P&L
           </p>
           <p
@@ -204,15 +242,84 @@ export default function TradingPositionsPage() {
 
   const ordersTabContent = (
     <section className=" pt-3 space-y-2.5">
-      <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors">
-        <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-          <FiClipboard className="h-4 w-4" />
-        </div>
-        <h2 className="mt-2 text-sm font-semibold">Orders</h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          No open orders right now.
-        </p>
-      </article>
+      {!draftsHydrated ? (
+        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+          Restoring selected instruments...
+        </article>
+      ) : null}
+
+      {draftsHydrated && orderRows.length === 0 ? (
+        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors">
+          <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
+            <FiClipboard className="h-4 w-4" />
+          </div>
+          <h2 className="mt-2 text-sm font-semibold">No orders created</h2>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Select instruments first to generate order entries.
+          </p>
+          <Link
+            href="/trading/instrument"
+            className="mt-3 inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1.5 text-xs font-medium"
+          >
+            <FiPlusCircle className="h-3.5 w-3.5" />
+            Select Instruments
+          </Link>
+        </article>
+      ) : null}
+
+      {draftsHydrated && orderRows.length > 0 ? (
+        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 transition-colors overflow-hidden">
+          <div>
+            <table className="w-full table-fixed text-[12px]">
+              <thead className="bg-zinc-50 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-300">
+                <tr>
+                  <th className="px-2 py-2 text-left font-semibold w-[42%]">Symbol</th>
+                  <th className="px-2 py-2 text-left font-semibold w-[16%]">Side</th>
+                  <th className="px-2 py-2 text-right font-semibold w-[12%]">Qty</th>
+                  <th className="px-2 py-2 text-right font-semibold w-[18%]">Limit</th>
+                  <th className="px-2 py-2 text-center font-semibold w-[12%]">View</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderRows.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-t border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100"
+                  >
+                    <td className="px-2 py-2">
+                      <p className="font-medium leading-tight truncate">{order.symbol}</p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                        {order.expiry} • {order.product}
+                      </p>
+                    </td>
+                    <td className="px-2 py-2">
+                      <span
+                        className={`inline-flex rounded border px-2 py-0.5 text-[10px] ${order.side === "LONG"
+                          ? "border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
+                          : "border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30"
+                          }`}
+                      >
+                        {order.side === "LONG" ? "BUY" : "SELL"}
+                      </span>
+                    </td>
+                    <td className="px-2 py-2 text-right">{order.qty}</td>
+                    <td className="px-2 py-2 text-right font-medium">{formatMoney(order.limitPrice)}</td>
+                    <td className="px-2 py-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedOrder(order)}
+                        className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-[10px] font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      >
+                        <FiEye className="h-3 w-3" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      ) : null}
     </section>
   );
 
@@ -238,6 +345,67 @@ export default function TradingPositionsPage() {
 
         </div >
       </section >
+
+      {selectedOrder ? (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/50 p-3 sm:p-4">
+          <article className="w-full max-w-md rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">Order Details</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  {selectedOrder.symbol}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                aria-label="Close order details"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-[12px]">
+              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
+                <dt className="text-zinc-500 dark:text-zinc-400">Symbol</dt>
+                <dd className="font-medium">{selectedOrder.neoSymbol}</dd>
+              </div>
+              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
+                <dt className="text-zinc-500 dark:text-zinc-400">Side</dt>
+                <dd className="font-medium">{selectedOrder.side === "LONG" ? "BUY" : "SELL"}</dd>
+              </div>
+              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
+                <dt className="text-zinc-500 dark:text-zinc-400">Product</dt>
+                <dd className="font-medium">{selectedOrder.product}</dd>
+              </div>
+              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
+                <dt className="text-zinc-500 dark:text-zinc-400">Quantity</dt>
+                <dd className="font-medium">{selectedOrder.qty}</dd>
+              </div>
+              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
+                <dt className="text-zinc-500 dark:text-zinc-400">Expiry</dt>
+                <dd className="font-medium">{selectedOrder.expiry}</dd>
+              </div>
+              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
+                <dt className="text-zinc-500 dark:text-zinc-400">Strike / Type</dt>
+                <dd className="font-medium">
+                  {selectedOrder.strike} {selectedOrder.optionType}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="mt-3 flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-800 px-2.5 py-2 text-[12px]">
+              <span className="text-zinc-500 dark:text-zinc-400">Limit Price</span>
+              <span className="font-semibold">{formatMoney(selectedOrder.limitPrice)}</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-800 px-2.5 py-2 text-[12px]">
+              <span className="text-zinc-500 dark:text-zinc-400">Total Order Value</span>
+              <span className="font-semibold">{formatMoney(selectedOrder.notional)}</span>
+            </div>
+          </article>
+        </div>
+      ) : null}
 
 
     </main >
