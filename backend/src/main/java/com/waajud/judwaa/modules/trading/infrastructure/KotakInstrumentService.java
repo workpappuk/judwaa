@@ -17,48 +17,34 @@ import java.util.stream.Stream;
 
 @Service
 public class KotakInstrumentService {
+	private static final int MAX_PAGE_SIZE = 200;
 
 	private final KotakProperties props;
-	private final Object cacheLock = new Object();
-
-	private volatile List<InstrumentPojo> cachedInstruments = List.of();
-	private volatile String cachedSnapshotKey = "";
 
 	public KotakInstrumentService(KotakProperties props) {
 		this.props = props;
 	}
 
 	public List<InstrumentPojo> readAllCsvAsPojo() {
-		Path latestFolder = resolveLatestDownloadFolder();
-		List<Path> csvFiles = listCsvFiles(latestFolder);
-		String currentSnapshotKey = buildSnapshotKey(latestFolder, csvFiles);
-
-		if (currentSnapshotKey.equals(cachedSnapshotKey)) {
-			return cachedInstruments;
-		}
-
-		synchronized (cacheLock) {
-			if (currentSnapshotKey.equals(cachedSnapshotKey)) {
-				return cachedInstruments;
-			}
-
-			List<InstrumentPojo> instruments = new ArrayList<>();
-			for (Path csv : csvFiles) {
-				instruments.addAll(parseCsv(csv));
-			}
-
-			cachedInstruments = List.copyOf(instruments);
-			cachedSnapshotKey = currentSnapshotKey;
-			return cachedInstruments;
-		}
+		return readAllCsvAsPojoPaginated(1, MAX_PAGE_SIZE).content;
 	}
 
 	public PaginatedInstrumentResponse readAllCsvAsPojoPaginated(int page, int size) {
 		int safePage = Math.max(1, page);
-		int safeSize = Math.max(1, size);
+		int safeSize = Math.min(MAX_PAGE_SIZE, Math.max(1, size));
+		int fromIndex = (safePage - 1) * safeSize;
+		int toExclusive = fromIndex + safeSize;
 
-		List<InstrumentPojo> all = readAllCsvAsPojo();
-		int totalElements = all.size();
+		Path latestFolder = resolveLatestDownloadFolder();
+		List<Path> csvFiles = listCsvFiles(latestFolder);
+
+		List<InstrumentPojo> pageContent = new ArrayList<>(safeSize);
+		int totalElements = 0;
+
+		for (Path csv : csvFiles) {
+			totalElements += appendPageRows(csv, fromIndex, toExclusive, totalElements, pageContent);
+		}
+
 		int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / safeSize);
 
 		if (totalElements == 0) {
@@ -66,19 +52,52 @@ public class KotakInstrumentService {
 					false);
 		}
 
-		int fromIndex = (safePage - 1) * safeSize;
 		if (fromIndex >= totalElements) {
 			return new PaginatedInstrumentResponse(List.of(), safePage, safeSize, totalElements, totalPages,
 					safePage > 1, false);
 		}
 
-		int toIndex = Math.min(fromIndex + safeSize, totalElements);
-		List<InstrumentPojo> pageContent = all.subList(fromIndex, toIndex);
 		boolean hasPrevious = safePage > 1;
 		boolean hasNext = safePage < totalPages;
 
 		return new PaginatedInstrumentResponse(pageContent, safePage, safeSize, totalElements, totalPages, hasPrevious,
 				hasNext);
+	}
+
+	private int appendPageRows(Path csvPath, int fromIndex, int toExclusive, int runningOffset,
+			List<InstrumentPojo> pageContent) {
+		try (BufferedReader reader = Files.newBufferedReader(csvPath)) {
+			String headerLine = reader.readLine();
+			if (headerLine == null || headerLine.isBlank()) {
+				return 0;
+			}
+
+			List<String> headers = parseCsvLine(headerLine).stream().map(this::normalizeHeader).toList();
+			String line;
+			int rowNumber = 0;
+			int rowsInFile = 0;
+
+			while ((line = reader.readLine()) != null) {
+				if (line.isBlank()) {
+					continue;
+				}
+
+				rowNumber++;
+				int globalIndex = runningOffset + rowsInFile;
+
+				if (globalIndex >= fromIndex && globalIndex < toExclusive) {
+					List<String> values = parseCsvLine(line);
+					Map<String, String> fieldMap = toFieldMap(headers, values);
+					pageContent.add(toPojo(csvPath.getFileName().toString(), rowNumber, fieldMap));
+				}
+
+				rowsInFile++;
+			}
+
+			return rowsInFile;
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to parse CSV: " + csvPath, e);
+		}
 	}
 
 	private List<Path> listCsvFiles(Path folder) {
@@ -88,21 +107,6 @@ public class KotakInstrumentService {
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to read CSV files from: " + folder, e);
 		}
-	}
-
-	private String buildSnapshotKey(Path folder, List<Path> csvFiles) {
-		StringBuilder key = new StringBuilder(folder.toAbsolutePath().toString());
-
-		for (Path csv : csvFiles) {
-			try {
-				key.append('|').append(csv.getFileName()).append(':').append(Files.size(csv)).append(':')
-						.append(Files.getLastModifiedTime(csv).toMillis());
-			} catch (IOException e) {
-				throw new RuntimeException("Failed to inspect CSV file metadata: " + csv, e);
-			}
-		}
-
-		return key.toString();
 	}
 
 	private Path resolveLatestDownloadFolder() {
@@ -117,35 +121,6 @@ public class KotakInstrumentService {
 					.orElseThrow(() -> new IllegalStateException("No dated folder found in: " + downloadRoot));
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to inspect download root: " + downloadRoot, e);
-		}
-	}
-
-	private List<InstrumentPojo> parseCsv(Path csvPath) {
-		try (BufferedReader reader = Files.newBufferedReader(csvPath)) {
-			String headerLine = reader.readLine();
-			if (headerLine == null || headerLine.isBlank()) {
-				return List.of();
-			}
-
-			List<String> headers = parseCsvLine(headerLine).stream().map(this::normalizeHeader).toList();
-
-			List<InstrumentPojo> rows = new ArrayList<>();
-			String line;
-			int rowNumber = 0;
-
-			while ((line = reader.readLine()) != null) {
-				if (line.isBlank()) {
-					continue;
-				}
-
-				rowNumber++;
-				List<String> values = parseCsvLine(line);
-				Map<String, String> fieldMap = toFieldMap(headers, values);
-				rows.add(toPojo(csvPath.getFileName().toString(), rowNumber, fieldMap));
-			}
-			return rows;
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to parse CSV: " + csvPath, e);
 		}
 	}
 
