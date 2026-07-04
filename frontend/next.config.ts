@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 const apiTargets = {
   development: "http://localhost:8080",
-  staging: "https://staging-api.yourdomain.com",
-  production: "https://api.yourdomain.com",
+  staging: "http://backend:8080",
+  production: "http://backend:8080",
 } as const;
 
 

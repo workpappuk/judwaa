@@ -1,0 +1,25 @@
+services:
+  backend:
+    container_name: judwaa-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    working_dir: /app/backend
+    volumes:
+      - ./extras:/app/extras
+    restart: unless-stopped
+
+  frontend:
+    container_name: judwaa-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:8080
+    depends_on:
+      - backend
+    restart: unless-stopped
