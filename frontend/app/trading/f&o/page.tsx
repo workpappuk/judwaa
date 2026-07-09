@@ -78,7 +78,7 @@ export default function TradingPositionsPage() {
 
     const timer = setInterval(() => {
       void refresh();
-    }, 12000);
+    }, 1000);
 
     return () => {
       clearTimeout(initialLoad);
