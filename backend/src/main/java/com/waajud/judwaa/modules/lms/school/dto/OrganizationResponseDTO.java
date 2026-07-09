@@ -1,20 +1,15 @@
 package com.waajud.judwaa.modules.lms.school.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
 import java.util.UUID;
 
-public class SchoolRequestDTO {
-	@NotNull
-	private UUID organizationId;
-
-	@NotBlank
+public class OrganizationResponseDTO {
+	private UUID id;
 	private String code;
-
-	@NotBlank
 	private String name;
-
-	private String board;
+	private RecordStatus status;
+	private String contactEmail;
+	private String contactPhone;
 	private String addressLine1;
 	private String addressLine2;
 	private String city;
@@ -22,12 +17,12 @@ public class SchoolRequestDTO {
 	private String country;
 	private String pincode;
 
-	public UUID getOrganizationId() {
-		return organizationId;
+	public UUID getId() {
+		return id;
 	}
 
-	public void setOrganizationId(UUID organizationId) {
-		this.organizationId = organizationId;
+	public void setId(UUID id) {
+		this.id = id;
 	}
 
 	public String getCode() {
@@ -46,12 +41,28 @@ public class SchoolRequestDTO {
 		this.name = name;
 	}
 
-	public String getBoard() {
-		return board;
+	public RecordStatus getStatus() {
+		return status;
 	}
 
-	public void setBoard(String board) {
-		this.board = board;
+	public void setStatus(RecordStatus status) {
+		this.status = status;
+	}
+
+	public String getContactEmail() {
+		return contactEmail;
+	}
+
+	public void setContactEmail(String contactEmail) {
+		this.contactEmail = contactEmail;
+	}
+
+	public String getContactPhone() {
+		return contactPhone;
+	}
+
+	public void setContactPhone(String contactPhone) {
+		this.contactPhone = contactPhone;
 	}
 
 	public String getAddressLine1() {

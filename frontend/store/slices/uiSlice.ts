@@ -6,12 +6,14 @@ interface UiState {
   themeMode: ThemeMode;
   isFullscreen: boolean;
   isAudioPlaying: boolean;
+  isSidebarOpen: boolean;
 }
 
 const initialState: UiState = {
   themeMode: "light",
   isFullscreen: false,
   isAudioPlaying: false,
+  isSidebarOpen: false,
 };
 
 const uiSlice = createSlice({
@@ -33,8 +35,14 @@ const uiSlice = createSlice({
     setIsAudioPlaying: (state, action: PayloadAction<boolean>) => {
       state.isAudioPlaying = action.payload;
     },
+    setIsSidebarOpen: (state, action: PayloadAction<boolean>) => {
+      state.isSidebarOpen = action.payload;
+    },
+    toggleSidebar: (state) => {
+      state.isSidebarOpen = !state.isSidebarOpen;
+    },
   },
 });
 
-export const { setThemeMode, toggleThemeMode, setIsFullscreen, toggleFullscreenState, setIsAudioPlaying } = uiSlice.actions;
+export const { setThemeMode, toggleThemeMode, setIsFullscreen, toggleFullscreenState, setIsAudioPlaying, setIsSidebarOpen, toggleSidebar } = uiSlice.actions;
 export default uiSlice.reducer;

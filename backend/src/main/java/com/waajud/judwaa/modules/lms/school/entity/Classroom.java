@@ -1,11 +1,8 @@
 package com.waajud.judwaa.modules.lms.school.entity;
 
-import com.waajud.judwaa.modules.auth.entity.BaseEntity;
-import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
+import com.waajud.judwaa.modules.lms.common.entity.LmsBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
@@ -17,7 +14,7 @@ import jakarta.persistence.Table;
 @Table(name = "classrooms", indexes = {
 		@Index(name = "idx_classrooms_school", columnList = "school_id"),
 		@Index(name = "idx_classrooms_school_year_grade_section", columnList = "school_id,academic_year,grade,section", unique = true)})
-public class Classroom extends BaseEntity {
+public class Classroom extends LmsBaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "school_id", nullable = false, foreignKey = @ForeignKey(name = "fk_classrooms_school"))
 	private School school;
@@ -33,10 +30,6 @@ public class Classroom extends BaseEntity {
 
 	@Column(name = "class_teacher_name", length = 200)
 	private String classTeacherName;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private RecordStatus status = RecordStatus.ACTIVE;
 
 	public School getSchool() {
 		return school;
@@ -78,11 +71,4 @@ public class Classroom extends BaseEntity {
 		this.classTeacherName = classTeacherName;
 	}
 
-	public RecordStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(RecordStatus status) {
-		this.status = status;
-	}
 }

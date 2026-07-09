@@ -2,7 +2,7 @@
 "use client";
 
 import type { IconType } from "react-icons";
-import { FiArrowUpRight, FiBookOpen, FiCheckCircle, FiDatabase, FiLock, FiLogOut, FiShield, FiTrendingUp, FiUserCheck } from "react-icons/fi";
+import { FiArrowUpRight, FiBookOpen, FiCheckCircle, FiDatabase, FiLock, FiLogOut, FiShield, FiTrendingUp, FiUserCheck, FiUsers } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 
@@ -52,6 +52,7 @@ export default function Home() {
     { id: 4, title: "Admin", content: "Admin dashboard", url: "/judwaa/admin", icon: FiShield, requiresAuth: true },
     { id: 5, title: "Incentive", content: "Scheme and rule manager", url: "/incentive", icon: FiLogOut, requiresAuth: true },
     { id: 6, title: "Data Collector", content: "Step-based ingestion setup", url: "/data-collector", icon: FiDatabase, requiresAuth: true },
+    { id: 7, title: "LMS", content: "School and student onboarding", url: "/lms", icon: FiUsers, requiresAuth: true },
   ];
 
   const handleCardClick = (card: Card) => {

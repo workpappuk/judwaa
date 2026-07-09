@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Navbar } from "@/components/navbar";
+import { AppShell } from "@/components/app-shell";
 
 import { Providers } from "./providers";
 import "./globals.css";
@@ -23,12 +23,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
-          <div className="min-h-full flex flex-col">
-            <Navbar />
-            <div className="container mx-auto ">
-              {children}
-            </div>
-          </div>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

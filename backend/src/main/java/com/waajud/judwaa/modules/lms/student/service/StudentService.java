@@ -3,10 +3,10 @@ package com.waajud.judwaa.modules.lms.student.service;
 import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
 import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
 import com.waajud.judwaa.modules.lms.school.entity.Classroom;
-import com.waajud.judwaa.modules.lms.school.entity.Organization;
+import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.School;
 import com.waajud.judwaa.modules.lms.school.repository.ClassroomRepository;
-import com.waajud.judwaa.modules.lms.school.repository.OrganizationRepository;
+import com.waajud.judwaa.modules.lms.school.repository.SchoolOrganizationRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolRepository;
 import com.waajud.judwaa.modules.lms.student.dto.StudentRequestDTO;
 import com.waajud.judwaa.modules.lms.student.dto.StudentResponseDTO;
@@ -26,14 +26,14 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class StudentService {
 	private final StudentRepository studentRepository;
-	private final OrganizationRepository organizationRepository;
+	private final SchoolOrganizationRepository schoolOrganizationRepository;
 	private final SchoolRepository schoolRepository;
 	private final ClassroomRepository classroomRepository;
 
-	public StudentService(StudentRepository studentRepository, OrganizationRepository organizationRepository,
+	public StudentService(StudentRepository studentRepository, SchoolOrganizationRepository organizationRepository,
 			SchoolRepository schoolRepository, ClassroomRepository classroomRepository) {
 		this.studentRepository = studentRepository;
-		this.organizationRepository = organizationRepository;
+		this.schoolOrganizationRepository = organizationRepository;
 		this.schoolRepository = schoolRepository;
 		this.classroomRepository = classroomRepository;
 	}
@@ -167,7 +167,7 @@ public class StudentService {
 		UUID safeSchoolId = Objects.requireNonNull(schoolId, "schoolId is required");
 		UUID safeClassroomId = Objects.requireNonNull(classroomId, "classroomId is required");
 
-		Organization organization = organizationRepository.findById(safeOrgId)
+		SchoolOrganization organization = schoolOrganizationRepository.findById(safeOrgId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
 		School school = schoolRepository.findById(safeSchoolId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
@@ -209,6 +209,6 @@ public class StudentService {
 		return Math.min(200, Math.max(1, size));
 	}
 
-	private record Refs(Organization organization, School school, Classroom classroom) {
+	private record Refs(SchoolOrganization organization, School school, Classroom classroom) {
 	}
 }

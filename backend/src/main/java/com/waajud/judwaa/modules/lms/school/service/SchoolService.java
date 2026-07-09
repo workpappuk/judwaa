@@ -4,9 +4,9 @@ import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
 import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
 import com.waajud.judwaa.modules.lms.school.dto.SchoolRequestDTO;
 import com.waajud.judwaa.modules.lms.school.dto.SchoolResponseDTO;
-import com.waajud.judwaa.modules.lms.school.entity.Organization;
+import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.School;
-import com.waajud.judwaa.modules.lms.school.repository.OrganizationRepository;
+import com.waajud.judwaa.modules.lms.school.repository.SchoolOrganizationRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolRepository;
 import java.util.Objects;
 import java.util.UUID;
@@ -22,16 +22,16 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class SchoolService {
 	private final SchoolRepository schoolRepository;
-	private final OrganizationRepository organizationRepository;
+	private final SchoolOrganizationRepository schoolOrganizationRepository;
 
-	public SchoolService(SchoolRepository schoolRepository, OrganizationRepository organizationRepository) {
+	public SchoolService(SchoolRepository schoolRepository, SchoolOrganizationRepository organizationRepository) {
 		this.schoolRepository = schoolRepository;
-		this.organizationRepository = organizationRepository;
+		this.schoolOrganizationRepository = organizationRepository;
 	}
 
 	@Transactional
 	public SchoolResponseDTO createSchool(SchoolRequestDTO request) {
-		Organization organization = getOrganizationOrThrow(request.getOrganizationId());
+		SchoolOrganization organization = getOrganizationOrThrow(request.getOrganizationId());
 		String normalizedCode = normalizeRequired(request.getCode(), "School code is required");
 		if (schoolRepository.existsByOrganizationIdAndCode(organization.getId(), normalizedCode)) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "School code already exists in organization");
@@ -92,6 +92,7 @@ public class SchoolService {
 		school.setName(normalizeRequired(request.getName(), "School name is required"));
 		school.setBoard(trimToNull(request.getBoard()));
 		school.setAddressLine1(trimToNull(request.getAddressLine1()));
+		school.setAddressLine2(trimToNull(request.getAddressLine2()));
 		school.setCity(trimToNull(request.getCity()));
 		school.setState(trimToNull(request.getState()));
 		school.setCountry(trimToNull(request.getCountry()));
@@ -119,9 +120,9 @@ public class SchoolService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "School not found"));
 	}
 
-	private Organization getOrganizationOrThrow(UUID organizationId) {
+	private SchoolOrganization getOrganizationOrThrow(UUID organizationId) {
 		UUID safeOrgId = Objects.requireNonNull(organizationId, "organizationId is required");
-		return organizationRepository.findById(safeOrgId)
+		return schoolOrganizationRepository.findById(safeOrgId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
 	}
 
@@ -133,6 +134,7 @@ public class SchoolService {
 		dto.setName(school.getName());
 		dto.setBoard(school.getBoard());
 		dto.setAddressLine1(school.getAddressLine1());
+		dto.setAddressLine2(school.getAddressLine2());
 		dto.setCity(school.getCity());
 		dto.setState(school.getState());
 		dto.setCountry(school.getCountry());

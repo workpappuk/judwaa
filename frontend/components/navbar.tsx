@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { FiHome, FiLogOut, FiMaximize, FiMinimize, FiMoon, FiPause, FiPlay, FiSun, FiUser } from "react-icons/fi";
+import { FiHome, FiLogOut, FiMaximize, FiMenu, FiMinimize, FiMoon, FiPause, FiPlay, FiSun, FiUser } from "react-icons/fi";
 import { useTheme } from "next-themes";
 
 import { logoutUser } from "@/services/auth-api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearSession } from "@/store/slices/authSlice";
-import { setIsAudioPlaying, setIsFullscreen, setThemeMode, type ThemeMode } from "@/store/slices/uiSlice";
+import { setIsAudioPlaying, setIsFullscreen, setThemeMode, toggleSidebar, type ThemeMode } from "@/store/slices/uiSlice";
 
 export function Navbar() {
   const dispatch = useAppDispatch();
@@ -129,10 +129,16 @@ export function Navbar() {
             Judwaa
           </Link>
           <nav className="flex items-center gap-4  font-medium text-zinc-600 dark:text-zinc-300">
-            <Link href="/" className="text-sm inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
-              <FiHome className="h-3.5 w-3.5" />
-              Home
-            </Link>
+            <button
+              type="button"
+              onClick={() => dispatch(toggleSidebar())}
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
+              aria-label="Toggle navigation sidebar"
+              title="Toggle sidebar"
+            >
+              <FiMenu className="h-4 w-4" />
+            </button>
+
             {!authSession ? (
               <Link href="/auth" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
                 <FiUser className="h-3.5 w-3.5" />
@@ -154,6 +160,7 @@ export function Navbar() {
               Logout
             </button>
           ) : null}
+
 
           <button
             type="button"

@@ -1,14 +1,11 @@
 package com.waajud.judwaa.modules.lms.student.entity;
 
-import com.waajud.judwaa.modules.auth.entity.BaseEntity;
-import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
+import com.waajud.judwaa.modules.lms.common.entity.LmsBaseEntity;
 import com.waajud.judwaa.modules.lms.school.entity.Classroom;
-import com.waajud.judwaa.modules.lms.school.entity.Organization;
+import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.School;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Index;
@@ -23,10 +20,10 @@ import java.time.LocalDate;
 		@Index(name = "idx_students_classroom", columnList = "classroom_id"),
 		@Index(name = "idx_students_school_admission", columnList = "school_id,admission_no", unique = true),
 		@Index(name = "idx_students_school_roll", columnList = "school_id,roll_no", unique = true)})
-public class Student extends BaseEntity {
+public class Student extends LmsBaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_students_org"))
-	private Organization organization;
+	private SchoolOrganization organization;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "school_id", nullable = false, foreignKey = @ForeignKey(name = "fk_students_school"))
@@ -63,15 +60,11 @@ public class Student extends BaseEntity {
 	@Column(name = "enrolled_at")
 	private LocalDate enrolledAt;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private RecordStatus status = RecordStatus.ACTIVE;
-
-	public Organization getOrganization() {
+	public SchoolOrganization getOrganization() {
 		return organization;
 	}
 
-	public void setOrganization(Organization organization) {
+	public void setOrganization(SchoolOrganization organization) {
 		this.organization = organization;
 	}
 
@@ -163,11 +156,4 @@ public class Student extends BaseEntity {
 		this.enrolledAt = enrolledAt;
 	}
 
-	public RecordStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(RecordStatus status) {
-		this.status = status;
-	}
 }
