@@ -43,10 +43,10 @@ public abstract class BaseEntity implements Serializable {
 		this.updatedAt = Instant.now();
 		this.id = UuidCreator.getTimeOrderedEpoch();
 		String actor = resolveActor();
-		if (this.createdBy == null || this.createdBy.isBlank()) {
+		if (this.createdBy == null || this.createdBy.isEmpty()) {
 			this.createdBy = actor;
 		}
-		if (this.updatedBy == null || this.updatedBy.isBlank()) {
+		if (this.updatedBy == null || this.updatedBy.isEmpty()) {
 			this.updatedBy = actor;
 		}
 	}
@@ -64,7 +64,7 @@ public abstract class BaseEntity implements Serializable {
 		}
 
 		String name = authentication.getName();
-		if (name == null || name.isBlank() || "anonymousUser".equalsIgnoreCase(name)) {
+		if (name == null || name.isEmpty() || "anonymousUser".equalsIgnoreCase(name)) {
 			return "SYSTEM";
 		}
 

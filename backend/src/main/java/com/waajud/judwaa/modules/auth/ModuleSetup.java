@@ -2,12 +2,11 @@ package com.waajud.judwaa.modules.auth;
 
 import com.waajud.judwaa.modules.auth.entity.*;
 import com.waajud.judwaa.modules.auth.enums.*;
-import com.waajud.judwaa.modules.auth.mapper.*;
 import com.waajud.judwaa.modules.auth.repository.*;
 import com.waajud.judwaa.modules.auth.service.*;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -21,9 +20,18 @@ public class ModuleSetup {
 	public CommandLineRunner createAdminUser(UserService userService, RoleRepository roleRepository,
 			PermissionRepository permissionRepository, PasswordEncoder passwordEncoder) {
 		return args -> {
-			Map<ERole, Set<EPermission>> rolePermissions = Map.of(ERole.ADMIN,
-					Set.of(EPermission.READ, EPermission.WRITE, EPermission.DELETE, EPermission.UPDATE), ERole.USER,
-					Set.of(EPermission.READ));
+			Map<ERole, Set<EPermission>> rolePermissions = new HashMap<>();
+			Set<EPermission> set1 = new HashSet<>();
+			set1.add(EPermission.READ); 
+			set1.add(EPermission.WRITE);
+			set1.add( EPermission.DELETE);
+			set1.add( EPermission.UPDATE);
+			rolePermissions.put(ERole.ADMIN, set1);
+
+			Set<EPermission> set2 = new HashSet<>();
+			set2.add(EPermission.READ); 
+			rolePermissions.put(ERole.USER, set2);
+
 
 			/*
 			 * 1. Create permissions if they don't exist 2. Create roles and assign
@@ -58,7 +66,9 @@ public class ModuleSetup {
 				admin.setUsername(adminUsername);
 				admin.setPassword(passwordEncoder.encode(adminPassword));
 				Role adminRole = roleRepository.findByName(ERole.ADMIN.name()).get();
-				admin.setRoles(Set.of(adminRole));
+				Set<Role> roles = new HashSet<>();
+				roles.add(adminRole);
+				admin.setRoles(roles);
 				userService.save(admin);
 				System.out.println("Admin user created: username=admin, password=admin");
 			} else {

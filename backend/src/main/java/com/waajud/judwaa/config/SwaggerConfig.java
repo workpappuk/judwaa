@@ -8,7 +8,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 
-import java.util.List;
+import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +26,7 @@ public class SwaggerConfig {
 				.schemaRequirement("bearerAuth",
 						new SecurityScheme().name("Authorization").type(SecurityScheme.Type.HTTP).scheme("bearer")
 								.bearerFormat("JWT"))
-				.servers(List.of(new Server().url(baseUrl)))
+				.servers(Arrays.asList(new Server().url(baseUrl)))
 				.info(new Info().title("TPSBE API").version("1.0.0").description("Trading Platform Backend API")
 						.contact(new Contact().name("Support").email("support@example.com")).license(new License()
 								.name("Apache 2.0").url("https://www.apache.org/licenses/LICENSE-2.0.html")));

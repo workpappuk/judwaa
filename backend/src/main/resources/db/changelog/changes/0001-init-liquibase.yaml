@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0001-init-liquibase
+      author: copilot
+      changes:
+        - sql:
+            sql: SELECT 1;

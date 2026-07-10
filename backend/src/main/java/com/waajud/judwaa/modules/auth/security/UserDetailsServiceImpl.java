@@ -1,5 +1,6 @@
 package com.waajud.judwaa.modules.auth.security;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 				.orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 		Set<GrantedAuthority> authorities = user.getRoles() != null
 				? user.getRoles().stream().map(r -> new SimpleGrantedAuthority(r.getName())).collect(Collectors.toSet())
-				: Set.of();
+				: new HashSet<>();
 		return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
 				authorities);
 	}
