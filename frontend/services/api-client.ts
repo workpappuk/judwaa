@@ -7,6 +7,21 @@ type CreateApiClientOptions = {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const API_TIMEOUT_MS = 15000;
 
+type JudwaaEnvelope = {
+  data?: unknown;
+  message?: unknown;
+  status?: unknown;
+  timestamp?: unknown;
+};
+
+function isJudwaaEnvelope(value: unknown): value is JudwaaEnvelope {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  return "status" in value && "timestamp" in value && "message" in value;
+}
+
 export function createApiClient(options: CreateApiClientOptions = {}): AxiosInstance {
   const { withAuth = false } = options;
 
@@ -37,6 +52,26 @@ export function createApiClient(options: CreateApiClientOptions = {}): AxiosInst
       return config;
     });
   }
+
+  client.interceptors.response.use((response) => {
+    if (!isJudwaaEnvelope(response.data)) {
+      return response;
+    }
+
+    const payload = response.data.data;
+    if (payload !== undefined && payload !== null) {
+      response.data = payload;
+      return response;
+    }
+
+    if (typeof response.data.message === "string") {
+      response.data = response.data.message;
+      return response;
+    }
+
+    response.data = null;
+    return response;
+  });
 
   return client;
 }
