@@ -1,16 +1,16 @@
 package com.waajud.judwaa.modules.incentive.dto.response;
 
+import com.waajud.judwaa.shared.RecordStatus;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
-
-import com.waajud.judwaa.modules.incentive.enums.IncentiveSchemeStatus;
 
 public class IncentiveSchemeResponseDTO {
 	private UUID id;
 	private String name;
 	private String description;
-	private IncentiveSchemeStatus status;
+	private RecordStatus status;
 	private LocalDate startDate;
 	private LocalDate endDate;
 	private int version;
@@ -41,11 +41,11 @@ public class IncentiveSchemeResponseDTO {
 		this.description = description;
 	}
 
-	public IncentiveSchemeStatus getStatus() {
+	public RecordStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(IncentiveSchemeStatus status) {
+	public void setStatus(RecordStatus status) {
 		this.status = status;
 	}
 

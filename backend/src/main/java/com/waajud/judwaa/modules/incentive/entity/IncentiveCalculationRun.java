@@ -2,8 +2,7 @@ package com.waajud.judwaa.modules.incentive.entity;
 
 import java.time.Instant;
 
-import com.waajud.judwaa.modules.auth.entity.BaseEntity;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveRunStatus;
+import com.waajud.judwaa.shared.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,10 +25,6 @@ public class IncentiveCalculationRun extends BaseEntity {
 
 	@Column(name = "run_at", nullable = false)
 	private Instant runAt;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private IncentiveRunStatus status = IncentiveRunStatus.RUNNING;
 
 	@Column(nullable = false)
 	private long distributors;
@@ -54,14 +49,6 @@ public class IncentiveCalculationRun extends BaseEntity {
 
 	public void setRunAt(Instant runAt) {
 		this.runAt = runAt;
-	}
-
-	public IncentiveRunStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(IncentiveRunStatus status) {
-		this.status = status;
 	}
 
 	public long getDistributors() {

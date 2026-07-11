@@ -1,5 +1,7 @@
 package com.waajud.judwaa.modules.auth.entity;
 
+import com.waajud.judwaa.shared.BaseEntity;
+import com.waajud.judwaa.shared.RecordStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

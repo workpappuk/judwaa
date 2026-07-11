@@ -2,8 +2,7 @@ package com.waajud.judwaa.modules.incentive.dto.request;
 
 import java.time.LocalDate;
 
-import com.waajud.judwaa.modules.incentive.enums.IncentiveSchemeStatus;
-
+import com.waajud.judwaa.shared.RecordStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -14,7 +13,7 @@ public class IncentiveSchemeRequestDTO {
 	private String description;
 
 	@NotNull
-	private IncentiveSchemeStatus status;
+	private RecordStatus status;
 
 	@NotNull
 	private LocalDate startDate;
@@ -38,11 +37,11 @@ public class IncentiveSchemeRequestDTO {
 		this.description = description;
 	}
 
-	public IncentiveSchemeStatus getStatus() {
+	public RecordStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(IncentiveSchemeStatus status) {
+	public void setStatus(RecordStatus status) {
 		this.status = status;
 	}
 

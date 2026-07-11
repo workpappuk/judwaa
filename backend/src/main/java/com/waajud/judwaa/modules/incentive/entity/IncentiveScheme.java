@@ -3,8 +3,7 @@ package com.waajud.judwaa.modules.incentive.entity;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import com.waajud.judwaa.modules.auth.entity.BaseEntity;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveSchemeStatus;
+import com.waajud.judwaa.shared.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,10 +23,6 @@ public class IncentiveScheme extends BaseEntity {
 	@Column(length = 1000)
 	private String description;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private IncentiveSchemeStatus status = IncentiveSchemeStatus.DRAFT;
-
 	@Column(name = "start_date", nullable = false)
 	private LocalDate startDate;
 
@@ -43,15 +38,6 @@ public class IncentiveScheme extends BaseEntity {
 	@Column(name = "last_run_at")
 	private Instant lastRunAt;
 
-	@PrePersist
-	public void initializeDefaults() {
-		if (version < 1) {
-			version = 1;
-		}
-		if (totalRules < 0) {
-			totalRules = 0;
-		}
-	}
 
 	public String getName() {
 		return name;
@@ -67,14 +53,6 @@ public class IncentiveScheme extends BaseEntity {
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public IncentiveSchemeStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(IncentiveSchemeStatus status) {
-		this.status = status;
 	}
 
 	public LocalDate getStartDate() {

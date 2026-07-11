@@ -1,6 +1,6 @@
 package com.waajud.judwaa.modules.lms.school.dto;
 
-import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
+import com.waajud.judwaa.shared.RecordStatus;
 import java.util.UUID;
 
 public class SchoolResponseDTO {

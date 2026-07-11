@@ -1,4 +1,4 @@
-package com.waajud.judwaa.modules.auth.entity;
+package com.waajud.judwaa.shared;
 
 import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.*;
@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -26,15 +27,21 @@ public abstract class BaseEntity implements Serializable {
 	@Column(name = "updated_by")
 	private String updatedBy = "SYSTEM";
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 200)
+	@ColumnDefault("'ACTIVE'")
+	private RecordStatus status;
+
 	public BaseEntity() {
 	}
 
-	public BaseEntity(UUID id, Instant createdAt, Instant updatedAt, String createdBy, String updatedBy) {
+	public BaseEntity(UUID id, Instant createdAt, Instant updatedAt, String createdBy, String updatedBy, RecordStatus status) {
 		this.id = id;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 		this.createdBy = createdBy;
 		this.updatedBy = updatedBy;
+		this.status = status;
 	}
 
 	@PrePersist
@@ -48,6 +55,9 @@ public abstract class BaseEntity implements Serializable {
 		}
 		if (this.updatedBy == null || this.updatedBy.isEmpty()) {
 			this.updatedBy = actor;
+		}
+		if (this.status == null) {
+			this.status = RecordStatus.ACTIVE;
 		}
 	}
 
@@ -109,5 +119,13 @@ public abstract class BaseEntity implements Serializable {
 
 	public void setUpdatedBy(String updatedBy) {
 		this.updatedBy = updatedBy;
+	}
+
+	public RecordStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(RecordStatus status) {
+		this.status = status;
 	}
 }

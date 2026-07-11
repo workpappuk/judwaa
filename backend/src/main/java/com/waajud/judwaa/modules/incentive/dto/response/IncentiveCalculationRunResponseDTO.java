@@ -1,15 +1,15 @@
 package com.waajud.judwaa.modules.incentive.dto.response;
 
+import com.waajud.judwaa.shared.RecordStatus;
+
 import java.time.Instant;
 import java.util.UUID;
-
-import com.waajud.judwaa.modules.incentive.enums.IncentiveRunStatus;
 
 public class IncentiveCalculationRunResponseDTO {
 	private UUID id;
 	private UUID schemeId;
 	private Instant runAt;
-	private IncentiveRunStatus status;
+	private RecordStatus status;
 	private long distributors;
 	private long totalPayout;
 	private long durationMs;
@@ -38,11 +38,11 @@ public class IncentiveCalculationRunResponseDTO {
 		this.runAt = runAt;
 	}
 
-	public IncentiveRunStatus getStatus() {
+	public RecordStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(IncentiveRunStatus status) {
+	public void setStatus(RecordStatus status) {
 		this.status = status;
 	}
 

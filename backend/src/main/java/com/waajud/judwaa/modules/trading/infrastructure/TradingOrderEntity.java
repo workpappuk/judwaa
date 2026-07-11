@@ -1,6 +1,6 @@
 package com.waajud.judwaa.modules.trading.infrastructure;
 
-import com.waajud.judwaa.modules.auth.entity.BaseEntity;
+import com.waajud.judwaa.shared.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

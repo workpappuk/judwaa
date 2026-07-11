@@ -1,8 +1,8 @@
 package com.waajud.judwaa.modules.lms.school.entity;
 
-import com.waajud.judwaa.modules.lms.common.entity.LmsBaseEntity;
 import com.waajud.judwaa.modules.lms.common.entity.AddressInfo;
 import com.waajud.judwaa.modules.lms.common.entity.ContactInfo;
+import com.waajud.judwaa.shared.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -16,7 +16,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "schools", indexes = {@Index(name = "idx_schools_org", columnList = "organization_id"),
 		@Index(name = "idx_schools_org_code", columnList = "organization_id,code", unique = true)})
-public class School extends LmsBaseEntity {
+public class School extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_schools_org"))
 	private SchoolOrganization organization;

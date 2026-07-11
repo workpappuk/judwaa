@@ -1,7 +1,7 @@
 package com.waajud.judwaa.modules.lms.student.service;
 
 import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
-import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
+import com.waajud.judwaa.shared.RecordStatus;
 import com.waajud.judwaa.modules.lms.school.entity.Classroom;
 import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.School;

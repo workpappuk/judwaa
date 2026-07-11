@@ -1,6 +1,6 @@
 package com.waajud.judwaa.modules.lms.student.dto;
 
-import com.waajud.judwaa.modules.lms.common.enums.RecordStatus;
+import com.waajud.judwaa.shared.RecordStatus;
 import java.time.LocalDate;
 import java.util.UUID;
 

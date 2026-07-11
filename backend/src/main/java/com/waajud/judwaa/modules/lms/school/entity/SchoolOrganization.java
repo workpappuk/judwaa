@@ -1,8 +1,8 @@
 package com.waajud.judwaa.modules.lms.school.entity;
 
-import com.waajud.judwaa.modules.lms.common.entity.LmsBaseEntity;
 import com.waajud.judwaa.modules.lms.common.entity.AddressInfo;
 import com.waajud.judwaa.modules.lms.common.entity.ContactInfo;
+import com.waajud.judwaa.shared.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "school_organizations", indexes = {@Index(name = "idx_school_organizations_code", columnList = "code", unique = true)})
-public class SchoolOrganization extends LmsBaseEntity {
+public class SchoolOrganization extends BaseEntity {
 	@Column(nullable = false, length = 40, unique = true)
 	private String code;
 

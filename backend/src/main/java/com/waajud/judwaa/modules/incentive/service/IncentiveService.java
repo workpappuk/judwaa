@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.waajud.judwaa.shared.RecordStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,8 +23,6 @@ import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
 import com.waajud.judwaa.modules.incentive.entity.IncentiveCalculationRun;
 import com.waajud.judwaa.modules.incentive.entity.IncentiveRule;
 import com.waajud.judwaa.modules.incentive.entity.IncentiveScheme;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveRunStatus;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveSchemeStatus;
 import com.waajud.judwaa.modules.incentive.repository.IncentiveCalculationRunRepository;
 import com.waajud.judwaa.modules.incentive.repository.IncentiveRuleRepository;
 import com.waajud.judwaa.modules.incentive.repository.IncentiveSchemeRepository;
@@ -43,8 +42,8 @@ public class IncentiveService {
 	}
 
 	@Transactional(readOnly = true)
-	public PaginatedResponseDTO<IncentiveSchemeResponseDTO> listSchemes(IncentiveSchemeStatus status, int page,
-			int size) {
+	public PaginatedResponseDTO<IncentiveSchemeResponseDTO> listSchemes(RecordStatus status, int page,
+	                                                                    int size) {
 		Pageable pageable = PageRequest.of(normalizePage(page), normalizeSize(size),
 				Sort.by(Sort.Direction.DESC, "createdAt"));
 		Page<IncentiveScheme> pageData = status == null
@@ -122,7 +121,7 @@ public class IncentiveService {
 		IncentiveCalculationRun run = new IncentiveCalculationRun();
 		run.setScheme(scheme);
 		run.setRunAt(Instant.now());
-		run.setStatus(IncentiveRunStatus.COMPLETED);
+		run.setStatus(RecordStatus.COMPLETED);
 		run.setDistributors(distributors);
 		run.setTotalPayout(totalPayout);
 		run.setDurationMs(durationMs);

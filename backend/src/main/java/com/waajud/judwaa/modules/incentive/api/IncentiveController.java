@@ -2,6 +2,7 @@ package com.waajud.judwaa.modules.incentive.api;
 
 import java.util.UUID;
 
+import com.waajud.judwaa.shared.RecordStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,7 +23,6 @@ import com.waajud.judwaa.modules.incentive.dto.response.IncentiveCalculationRunR
 import com.waajud.judwaa.modules.incentive.dto.response.IncentiveRuleResponseDTO;
 import com.waajud.judwaa.modules.incentive.dto.response.IncentiveSchemeResponseDTO;
 import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveSchemeStatus;
 import com.waajud.judwaa.modules.incentive.service.IncentiveService;
 
 import jakarta.validation.Valid;
@@ -40,7 +40,7 @@ public class IncentiveController {
 
 	@GetMapping("/schemes")
 	public PaginatedResponseDTO<IncentiveSchemeResponseDTO> listSchemes(
-			@RequestParam(required = false) IncentiveSchemeStatus status, @RequestParam(defaultValue = "1") int page,
+			@RequestParam(required = false) RecordStatus status, @RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size) {
 		return incentiveService.listSchemes(status, page, size);
 	}

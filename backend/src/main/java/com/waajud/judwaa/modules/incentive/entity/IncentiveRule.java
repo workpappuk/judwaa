@@ -1,8 +1,7 @@
 package com.waajud.judwaa.modules.incentive.entity;
 
-import com.waajud.judwaa.modules.auth.entity.BaseEntity;
+import com.waajud.judwaa.shared.BaseEntity;
 import com.waajud.judwaa.modules.incentive.enums.IncentiveConflictStrategy;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveRuleStatus;
 import com.waajud.judwaa.modules.incentive.enums.IncentiveRuleType;
 
 import jakarta.persistence.Column;
@@ -34,10 +33,6 @@ public class IncentiveRule extends BaseEntity {
 
 	@Column(nullable = false)
 	private int priority;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private IncentiveRuleStatus status = IncentiveRuleStatus.ACTIVE;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "conflict_strategy", nullable = false, length = 20)
@@ -81,14 +76,6 @@ public class IncentiveRule extends BaseEntity {
 
 	public void setPriority(int priority) {
 		this.priority = priority;
-	}
-
-	public IncentiveRuleStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(IncentiveRuleStatus status) {
-		this.status = status;
 	}
 
 	public IncentiveConflictStrategy getConflictStrategy() {

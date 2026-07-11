@@ -1,5 +1,6 @@
 package com.waajud.judwaa.modules.auth;
 
+import com.waajud.judwaa.config.GlobalExceptionHandler;
 import com.waajud.judwaa.modules.auth.entity.*;
 import com.waajud.judwaa.modules.auth.enums.*;
 import com.waajud.judwaa.modules.auth.repository.*;
@@ -8,6 +9,9 @@ import com.waajud.judwaa.modules.auth.service.*;
 import java.util.*;
 import java.util.HashSet;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class ModuleSetup {
+	private static final Logger logger = LoggerFactory.getLogger(ModuleSetup.class);
 
 	@Bean
 	public CommandLineRunner createAdminUser(UserService userService, RoleRepository roleRepository,
@@ -70,9 +75,9 @@ public class ModuleSetup {
 				roles.add(adminRole);
 				admin.setRoles(roles);
 				userService.save(admin);
-				System.out.println("Admin user created: username=admin, password=admin");
+				logger.info("#### Admin user created: username=admin, password=admin");
 			} else {
-				System.out.println("Admin user already exists");
+				logger.info("#### Admin user already exists: username=admin, password=admin");
 			}
 		};
 	}

@@ -1,5 +1,6 @@
 package com.waajud.judwaa.modules.auth.entity;
 
+import com.waajud.judwaa.shared.BaseEntity;
 import jakarta.persistence.*;
 import java.util.Set;
 

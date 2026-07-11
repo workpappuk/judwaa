@@ -1,9 +1,9 @@
 package com.waajud.judwaa.modules.incentive.dto.request;
 
 import com.waajud.judwaa.modules.incentive.enums.IncentiveConflictStrategy;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveRuleStatus;
 import com.waajud.judwaa.modules.incentive.enums.IncentiveRuleType;
 
+import com.waajud.judwaa.shared.RecordStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +19,7 @@ public class IncentiveRuleRequestDTO {
 	private int priority;
 
 	@NotNull
-	private IncentiveRuleStatus status;
+	private RecordStatus status;
 
 	@NotNull
 	private IncentiveConflictStrategy conflictStrategy;
@@ -53,13 +53,10 @@ public class IncentiveRuleRequestDTO {
 		this.priority = priority;
 	}
 
-	public IncentiveRuleStatus getStatus() {
+	public RecordStatus getStatus() {
 		return status;
 	}
-
-	public void setStatus(IncentiveRuleStatus status) {
-		this.status = status;
-	}
+	public void setStatus(RecordStatus status) {}
 
 	public IncentiveConflictStrategy getConflictStrategy() {
 		return conflictStrategy;

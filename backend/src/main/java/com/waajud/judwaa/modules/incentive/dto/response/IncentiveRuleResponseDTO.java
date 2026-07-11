@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.waajud.judwaa.modules.incentive.enums.IncentiveConflictStrategy;
-import com.waajud.judwaa.modules.incentive.enums.IncentiveRuleStatus;
 import com.waajud.judwaa.modules.incentive.enums.IncentiveRuleType;
+import com.waajud.judwaa.shared.RecordStatus;
 
 public class IncentiveRuleResponseDTO {
 	private UUID id;
@@ -13,7 +13,7 @@ public class IncentiveRuleResponseDTO {
 	private String name;
 	private IncentiveRuleType type;
 	private int priority;
-	private IncentiveRuleStatus status;
+	private RecordStatus status;
 	private IncentiveConflictStrategy conflictStrategy;
 	private String conditionsJson;
 	private String slabsJson;
@@ -59,11 +59,10 @@ public class IncentiveRuleResponseDTO {
 		this.priority = priority;
 	}
 
-	public IncentiveRuleStatus getStatus() {
+	public RecordStatus getStatus() {
 		return status;
 	}
-
-	public void setStatus(IncentiveRuleStatus status) {
+	public void setStatus(RecordStatus status) {
 		this.status = status;
 	}
 

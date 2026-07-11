@@ -1,9 +1,9 @@
 package com.waajud.judwaa.modules.lms.student.entity;
 
-import com.waajud.judwaa.modules.lms.common.entity.LmsBaseEntity;
 import com.waajud.judwaa.modules.lms.school.entity.Classroom;
 import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.School;
+import com.waajud.judwaa.shared.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,7 +20,7 @@ import java.time.LocalDate;
 		@Index(name = "idx_students_classroom", columnList = "classroom_id"),
 		@Index(name = "idx_students_school_admission", columnList = "school_id,admission_no", unique = true),
 		@Index(name = "idx_students_school_roll", columnList = "school_id,roll_no", unique = true)})
-public class Student extends LmsBaseEntity {
+public class Student extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_students_org"))
 	private SchoolOrganization organization;
