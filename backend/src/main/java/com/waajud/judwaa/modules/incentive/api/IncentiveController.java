@@ -2,9 +2,9 @@ package com.waajud.judwaa.modules.incentive.api;
 
 import java.util.UUID;
 
+import com.waajud.judwaa.shared.JudwaaResponse;
 import com.waajud.judwaa.shared.RecordStatus;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,56 +39,60 @@ public class IncentiveController {
 	}
 
 	@GetMapping("/schemes")
-	public PaginatedResponseDTO<IncentiveSchemeResponseDTO> listSchemes(
+	public JudwaaResponse<PaginatedResponseDTO<IncentiveSchemeResponseDTO>, String> listSchemes(
 			@RequestParam(required = false) RecordStatus status, @RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size) {
-		return incentiveService.listSchemes(status, page, size);
+		return JudwaaResponse.build(
+				incentiveService.listSchemes(status, page, size),
+				HttpStatus.OK.getReasonPhrase(),
+				HttpStatus.OK
+		);
 	}
 
 	@PostMapping("/schemes")
-	public ResponseEntity<IncentiveSchemeResponseDTO> createScheme(
+	public JudwaaResponse<IncentiveSchemeResponseDTO, String> createScheme(
 			@RequestBody @Valid IncentiveSchemeRequestDTO request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(incentiveService.createScheme(request));
+		return JudwaaResponse.build(incentiveService.createScheme(request), HttpStatus.CREATED.getReasonPhrase(), HttpStatus.CREATED);
 	}
 
 	@PutMapping("/schemes/{schemeId}")
-	public IncentiveSchemeResponseDTO updateScheme(@PathVariable UUID schemeId,
+	public JudwaaResponse<IncentiveSchemeResponseDTO, String> updateScheme(@PathVariable UUID schemeId,
 			@RequestBody @Valid IncentiveSchemeRequestDTO request) {
-		return incentiveService.updateScheme(schemeId, request);
+		return JudwaaResponse.build(incentiveService.updateScheme(schemeId, request), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/schemes/{schemeId}/rules")
-	public PaginatedResponseDTO<IncentiveRuleResponseDTO> listRules(@PathVariable UUID schemeId,
+	public JudwaaResponse<PaginatedResponseDTO<IncentiveRuleResponseDTO>, String> listRules(@PathVariable UUID schemeId,
 			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size) {
-		return incentiveService.listRules(schemeId, page, size);
+		return JudwaaResponse.build(incentiveService.listRules(schemeId, page, size), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@PostMapping("/schemes/{schemeId}/rules")
-	public ResponseEntity<IncentiveRuleResponseDTO> createRule(@PathVariable UUID schemeId,
+	public JudwaaResponse<IncentiveRuleResponseDTO, String> createRule(@PathVariable UUID schemeId,
 			@RequestBody @Valid IncentiveRuleRequestDTO request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(incentiveService.createRule(schemeId, request));
+		return JudwaaResponse.build(incentiveService.createRule(schemeId, request), HttpStatus.CREATED.getReasonPhrase(), HttpStatus.CREATED);
 	}
 
 	@PutMapping("/rules/{ruleId}")
-	public IncentiveRuleResponseDTO updateRule(@PathVariable UUID ruleId,
+	public JudwaaResponse<IncentiveRuleResponseDTO, String> updateRule(@PathVariable UUID ruleId,
 			@RequestBody @Valid IncentiveRuleRequestDTO request) {
-		return incentiveService.updateRule(ruleId, request);
+		return JudwaaResponse.build(incentiveService.updateRule(ruleId, request), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@DeleteMapping("/rules/{ruleId}")
-	public ResponseEntity<Void> deleteRule(@PathVariable UUID ruleId) {
+	public JudwaaResponse<Object, String> deleteRule(@PathVariable UUID ruleId) {
 		incentiveService.deleteRule(ruleId);
-		return ResponseEntity.noContent().build();
+		return JudwaaResponse.build(null, "Rule deleted", HttpStatus.OK);
 	}
 
 	@PostMapping("/schemes/{schemeId}/runs")
-	public ResponseEntity<IncentiveCalculationRunResponseDTO> runCalculation(@PathVariable UUID schemeId) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(incentiveService.runSchemeCalculation(schemeId));
+	public JudwaaResponse<IncentiveCalculationRunResponseDTO, String> runCalculation(@PathVariable UUID schemeId) {
+		return JudwaaResponse.build(incentiveService.runSchemeCalculation(schemeId), HttpStatus.CREATED.getReasonPhrase(), HttpStatus.CREATED);
 	}
 
 	@GetMapping("/schemes/{schemeId}/runs")
-	public PaginatedResponseDTO<IncentiveCalculationRunResponseDTO> listRuns(@PathVariable UUID schemeId,
+	public JudwaaResponse<PaginatedResponseDTO<IncentiveCalculationRunResponseDTO>, String> listRuns(@PathVariable UUID schemeId,
 			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size) {
-		return incentiveService.listRuns(schemeId, page, size);
+		return JudwaaResponse.build(incentiveService.listRuns(schemeId, page, size), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 }

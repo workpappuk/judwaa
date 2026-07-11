@@ -1,7 +1,9 @@
 package com.waajud.judwaa.modules.trading.api;
 
 import java.util.LinkedHashMap;
+import com.waajud.judwaa.shared.JudwaaResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import com.waajud.judwaa.modules.trading.application.TradingOrderService;
@@ -34,35 +36,35 @@ public class KotakNeoController {
 	private TradingOrderService tradingOrderService;
 
 	@PostMapping("/login")
-	public String login(@RequestParam String totp) {
+	public JudwaaResponse<Object, String> login(@RequestParam String totp) {
 		kotakSessionService.activateTradeSession(totp);
-		return "Login successful with TOTP: " + totp;
+		return JudwaaResponse.build(null, "Login successful with TOTP: " + totp, HttpStatus.OK);
 	}
 
 	@GetMapping("/script-download")
-	public String downloadScript() {
+	public JudwaaResponse<Object, String> downloadScript() {
 		scripMasterDownloadService.downloadAll();
 
-		return "Script downloaded successfully";
+		return JudwaaResponse.build(null, "Script downloaded successfully", HttpStatus.OK);
 	}
 
 	@GetMapping("/quotes")
-	public List<QuoteResponse> fetchQuotes(@RequestParam List<String> neoSymbols) {
-		return kotakNeoQuoteService.fetchQuotes(neoSymbols);
+	public JudwaaResponse<List<QuoteResponse>, String> fetchQuotes(@RequestParam List<String> neoSymbols) {
+		return JudwaaResponse.build(kotakNeoQuoteService.fetchQuotes(neoSymbols), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/instruments")
-	public KotakInstrumentService.PaginatedInstrumentResponse fetchInstruments(
+	public JudwaaResponse<KotakInstrumentService.PaginatedInstrumentResponse, String> fetchInstruments(
 			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "100") int size) {
-		return kotakInstrumentService.readAllCsvAsPojoPaginated(page, size);
+		return JudwaaResponse.build(kotakInstrumentService.readAllCsvAsPojoPaginated(page, size), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@PostMapping("/orders/replace")
-	public Map<String, Object> replaceOrders(@RequestBody List<TradingOrderRequest> orders) {
+	public JudwaaResponse<Map<String, Object>, String> replaceOrders(@RequestBody List<TradingOrderRequest> orders) {
 		int savedCount = tradingOrderService.replaceOrders(orders);
 		Map<String, Object> response = new LinkedHashMap<>();
 		response.put("savedCount", savedCount);
-		return response;
+		return JudwaaResponse.build(response, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 }

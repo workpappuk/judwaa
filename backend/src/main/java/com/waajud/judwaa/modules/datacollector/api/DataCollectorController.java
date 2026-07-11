@@ -6,9 +6,9 @@ import com.waajud.judwaa.modules.datacollector.dto.DataCollectorPersistedRecordD
 import com.waajud.judwaa.modules.datacollector.dto.DataCollectorPersistResponseDTO;
 import com.waajud.judwaa.modules.datacollector.dto.DataCollectorSummaryResponseDTO;
 import com.waajud.judwaa.modules.datacollector.service.DataCollectorService;
+import com.waajud.judwaa.shared.JudwaaResponse;
 import java.util.List;
-import java.util.Map;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,67 +32,67 @@ public class DataCollectorController {
 	}
 
 	@GetMapping
-	public List<DataCollectorSummaryResponseDTO> listCollectors() {
-		return dataCollectorService.listCollectors();
+	public JudwaaResponse<List<DataCollectorSummaryResponseDTO>, String> listCollectors() {
+		return JudwaaResponse.build(dataCollectorService.listCollectors(), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/persisted")
-	public List<DataCollectorPersistedRecordDTO> listPersistedCollectorData() {
-		return dataCollectorService.listPersistedCollectorData();
+	public JudwaaResponse<List<DataCollectorPersistedRecordDTO>, String> listPersistedCollectorData() {
+		return JudwaaResponse.build(dataCollectorService.listPersistedCollectorData(), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<?> getCollector(@PathVariable String id) {
+	public JudwaaResponse<DataCollectorDetailResponseDTO, String> getCollector(@PathVariable String id) {
 		DataCollectorDetailResponseDTO response = dataCollectorService.getCollector(id);
 		if (response == null) {
-			return ResponseEntity.notFound().build();
+			return JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND);
 		}
 
-		return ResponseEntity.ok(response);
+		return JudwaaResponse.build(response, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/{id}/persisted")
-	public ResponseEntity<?> getPersistedCollectorData(@PathVariable String id) {
+	public JudwaaResponse<DataCollectorPersistedRecordDTO, String> getPersistedCollectorData(@PathVariable String id) {
 		DataCollectorPersistedRecordDTO response = dataCollectorService.getPersistedCollectorData(id);
 		if (response == null) {
-			return ResponseEntity.notFound().build();
+			return JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND);
 		}
 
-		return ResponseEntity.ok(response);
+		return JudwaaResponse.build(response, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@PutMapping("/{id}/persisted")
-	public ResponseEntity<?> updatePersistedCollectorData(@PathVariable String id,
+	public JudwaaResponse<Object, String> updatePersistedCollectorData(@PathVariable String id,
 			@RequestBody DataCollectorPersistRequestDTO request) {
 		if (request == null || request.values() == null) {
-			return ResponseEntity.badRequest().body(Map.of("message", "Invalid values payload"));
+			return JudwaaResponse.build(null, "Invalid values payload", HttpStatus.BAD_REQUEST);
 		}
 
 		DataCollectorPersistResponseDTO saveResponse = dataCollectorService.saveCollectorValues(id, request.values());
 		if (saveResponse == null) {
-			return ResponseEntity.notFound().build();
+			return JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND);
 		}
 
 		DataCollectorPersistedRecordDTO persisted = dataCollectorService.getPersistedCollectorData(id);
 		if (persisted == null) {
-			return ResponseEntity.notFound().build();
+			return JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND);
 		}
 
-		return ResponseEntity.ok(persisted);
+		return JudwaaResponse.build(persisted, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<?> persistCollector(@PathVariable String id,
+	public JudwaaResponse<Object, String> persistCollector(@PathVariable String id,
 			@RequestBody DataCollectorPersistRequestDTO request) {
 		if (request == null || request.values() == null) {
-			return ResponseEntity.badRequest().body(Map.of("message", "Invalid values payload"));
+			return JudwaaResponse.build(null, "Invalid values payload", HttpStatus.BAD_REQUEST);
 		}
 
 		DataCollectorPersistResponseDTO response = dataCollectorService.saveCollectorValues(id, request.values());
 		if (response == null) {
-			return ResponseEntity.notFound().build();
+			return JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND);
 		}
 
-		return ResponseEntity.ok(response);
+		return JudwaaResponse.build(response, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 }

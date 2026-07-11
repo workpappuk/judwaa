@@ -5,6 +5,7 @@ import com.waajud.judwaa.modules.auth.dto.response.*;
 import com.waajud.judwaa.modules.auth.entity.*;
 import com.waajud.judwaa.modules.auth.jwt.JwtUtil;
 import com.waajud.judwaa.modules.auth.service.*;
+import com.waajud.judwaa.shared.JudwaaResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,11 +17,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,47 +46,51 @@ public class AuthController {
 			@ApiResponse(responseCode = "200", description = "JWT token returned"),
 			@ApiResponse(responseCode = "401", description = "Invalid credentials")})
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody @Valid AuthRequestDTO request) {
+	public JudwaaResponse<AuthResponseDTO, String> login(@RequestBody @Valid AuthRequestDTO request) {
 		Authentication authentication = authenticationManager
 				.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-		Set<String> roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+		Set<String> roles = userDetails.getAuthorities().stream().map(authority -> authority.getAuthority())
 				.collect(Collectors.toSet());
 		String token = JwtUtil.generateToken(userDetails.getUsername(), roles);
-		return ResponseEntity.ok(new AuthResponseDTO(token));
+		return JudwaaResponse.build(new AuthResponseDTO(token), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@Operation(summary = "Register a new user", description = "Creates a new user account.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = RegisterRequestDTO.class))), responses = {
 			@ApiResponse(responseCode = "200", description = "User registered successfully"),
 			@ApiResponse(responseCode = "400", description = "Username already exists")})
 	@PostMapping("/register")
-	public ResponseEntity<?> register(@RequestBody @Valid RegisterRequestDTO request) {
+	public JudwaaResponse<Object, String> register(@RequestBody @Valid RegisterRequestDTO request) {
 		if (userService.existsByUsername(request.getUsername())) {
-			return ResponseEntity.badRequest().body("Username already exists");
+			return JudwaaResponse.build(null, "Username already exists", HttpStatus.BAD_REQUEST);
 		}
 		User user = new User();
 		user.setUsername(request.getUsername());
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 		userService.save(user);
-		return ResponseEntity.ok("User registered successfully");
+		return JudwaaResponse.build(null, "User registered successfully", HttpStatus.OK);
 	}
 
 	@Operation(summary = "Logout user", description = "Blacklists the current JWT and clears the current security context.", responses = {
 			@ApiResponse(responseCode = "200", description = "User logged out successfully"),
 			@ApiResponse(responseCode = "400", description = "Invalid or missing token")})
 	@PostMapping("/logout")
-	public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+	public JudwaaResponse<Object, String> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
 		String token = extractBearerToken(authHeader);
 		if (token == null) {
-			return ResponseEntity.badRequest().body("Authorization header with Bearer token is required");
+			return JudwaaResponse.build(
+					null,
+					"Authorization header with Bearer token is required",
+					HttpStatus.BAD_REQUEST
+			);
 		}
 
 		try {
 			tokenBlacklistService.blacklistToken(token);
 			SecurityContextHolder.clearContext();
-			return ResponseEntity.ok("User logged out successfully");
+			return JudwaaResponse.build(null, "User logged out successfully", HttpStatus.OK);
 		} catch (Exception ex) {
-			return ResponseEntity.badRequest().body("Invalid token");
+			return JudwaaResponse.build(null, "Invalid token", HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -96,24 +99,24 @@ public class AuthController {
 			@ApiResponse(responseCode = "400", description = "Invalid token"),
 			@ApiResponse(responseCode = "403", description = "Forbidden")})
 	@PostMapping("/force-logout")
-	public ResponseEntity<?> forceLogout(@RequestBody @Valid ForceLogoutRequestDTO request,
+	public JudwaaResponse<Object, String> forceLogout(@RequestBody @Valid ForceLogoutRequestDTO request,
 			Authentication authentication) {
 		boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
 				.anyMatch(authority -> "ADMIN".equals(authority.getAuthority()));
 		if (!isAdmin) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin can force logout tokens");
+			return JudwaaResponse.build(null, "Only admin can force logout tokens", HttpStatus.FORBIDDEN);
 		}
 
 		String token = normalizeToken(request.getToken());
 		if (token == null) {
-			return ResponseEntity.badRequest().body("Token is required");
+			return JudwaaResponse.build(null, "Token is required", HttpStatus.BAD_REQUEST);
 		}
 
 		try {
 			tokenBlacklistService.blacklistToken(token);
-			return ResponseEntity.ok("Token forcefully logged out successfully");
+			return JudwaaResponse.build(null, "Token forcefully logged out successfully", HttpStatus.OK);
 		} catch (Exception ex) {
-			return ResponseEntity.badRequest().body("Invalid token");
+			return JudwaaResponse.build(null, "Invalid token", HttpStatus.BAD_REQUEST);
 		}
 	}
 

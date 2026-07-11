@@ -4,10 +4,10 @@ import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
 import com.waajud.judwaa.modules.lms.school.dto.OrganizationRequestDTO;
 import com.waajud.judwaa.modules.lms.school.dto.OrganizationResponseDTO;
 import com.waajud.judwaa.modules.lms.school.service.OrganizationService;
+import com.waajud.judwaa.shared.JudwaaResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,36 +31,36 @@ public class OrganizationController {
 	}
 
 	@PostMapping
-	public ResponseEntity<OrganizationResponseDTO> createOrganization(@RequestBody @Valid OrganizationRequestDTO request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(organizationService.createOrganization(request));
+	public JudwaaResponse<OrganizationResponseDTO, String> createOrganization(@RequestBody @Valid OrganizationRequestDTO request) {
+		return JudwaaResponse.build(organizationService.createOrganization(request), HttpStatus.CREATED.getReasonPhrase(), HttpStatus.CREATED);
 	}
 
 	@PutMapping("/{organizationId}")
-	public OrganizationResponseDTO updateOrganization(@PathVariable UUID organizationId,
+	public JudwaaResponse<OrganizationResponseDTO, String> updateOrganization(@PathVariable UUID organizationId,
 			@RequestBody @Valid OrganizationRequestDTO request) {
-		return organizationService.updateOrganization(organizationId, request);
+		return JudwaaResponse.build(organizationService.updateOrganization(organizationId, request), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/{organizationId}")
-	public OrganizationResponseDTO getOrganization(@PathVariable UUID organizationId) {
-		return organizationService.getOrganization(organizationId);
+	public JudwaaResponse<OrganizationResponseDTO, String> getOrganization(@PathVariable UUID organizationId) {
+		return JudwaaResponse.build(organizationService.getOrganization(organizationId), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping
-	public PaginatedResponseDTO<OrganizationResponseDTO> listOrganizations(@RequestParam(defaultValue = "1") int page,
+	public JudwaaResponse<PaginatedResponseDTO<OrganizationResponseDTO>, String> listOrganizations(@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "20") int size) {
-		return organizationService.listOrganizations(page, size);
+		return JudwaaResponse.build(organizationService.listOrganizations(page, size), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@PutMapping("/{organizationId}/deactivate")
-	public ResponseEntity<Void> deactivateOrganization(@PathVariable UUID organizationId) {
+	public JudwaaResponse<Object, String> deactivateOrganization(@PathVariable UUID organizationId) {
 		organizationService.deactivateOrganization(organizationId);
-		return ResponseEntity.noContent().build();
+		return JudwaaResponse.build(null, "Organization deactivated", HttpStatus.OK);
 	}
 
 	@PutMapping("/{organizationId}/activate")
-	public ResponseEntity<Void> activateOrganization(@PathVariable UUID organizationId) {
+	public JudwaaResponse<Object, String> activateOrganization(@PathVariable UUID organizationId) {
 		organizationService.activateOrganization(organizationId);
-		return ResponseEntity.noContent().build();
+		return JudwaaResponse.build(null, "Organization activated", HttpStatus.OK);
 	}
 }

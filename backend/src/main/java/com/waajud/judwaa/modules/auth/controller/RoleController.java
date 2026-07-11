@@ -3,10 +3,9 @@ package com.waajud.judwaa.modules.auth.controller;
 import com.waajud.judwaa.modules.auth.dto.request.*;
 import com.waajud.judwaa.modules.auth.dto.response.*;
 import com.waajud.judwaa.modules.auth.entity.*;
-import com.waajud.judwaa.modules.auth.jwt.JwtUtil;
 import com.waajud.judwaa.modules.auth.repository.*;
-import com.waajud.judwaa.modules.auth.service.*;
 import com.waajud.judwaa.modules.auth.mapper.*;
+import com.waajud.judwaa.shared.JudwaaResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Roles", description = "Role management endpoints")
@@ -30,31 +29,35 @@ public class RoleController {
 
 	@Operation(summary = "Get all roles", description = "Returns a list of all roles.")
 	@GetMapping
-	public List<RoleResponseDTO> getAll() {
-		return roleRepository.findAll().stream().map(RoleMapper::toResponseDTO).collect(Collectors.toList());
+	public JudwaaResponse<List<RoleResponseDTO>, String> getAll() {
+		List<RoleResponseDTO> roles = roleRepository.findAll().stream().map(RoleMapper::toResponseDTO)
+				.collect(Collectors.toList());
+		return JudwaaResponse.build(roles, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@Operation(summary = "Get role by ID", description = "Returns a role by its ID.")
 	@GetMapping("/{id}")
-	public ResponseEntity<RoleResponseDTO> get(@PathVariable UUID id) {
-		return roleRepository.findById(id).map(RoleMapper::toResponseDTO).map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+	public JudwaaResponse<RoleResponseDTO, String> get(@PathVariable UUID id) {
+		return roleRepository.findById(id)
+				.map(RoleMapper::toResponseDTO)
+				.map(role -> JudwaaResponse.build(role, HttpStatus.OK.getReasonPhrase(), HttpStatus.OK))
+				.orElse(JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND));
 	}
 
 	@Operation(summary = "Create a new role", description = "Creates a new role.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = RoleRequestDTO.class))))
 	@PostMapping
-	public RoleResponseDTO create(@RequestBody RoleRequestDTO dto) {
+	public JudwaaResponse<RoleResponseDTO, String> create(@RequestBody RoleRequestDTO dto) {
 		Role role = RoleMapper.toEntity(dto,
 				dto.getPermissionIds() != null
 						? permissionRepository.findAllById(dto.getPermissionIds()).stream().collect(Collectors.toSet())
 						: null);
 		role = roleRepository.save(role);
-		return RoleMapper.toResponseDTO(role);
+		return JudwaaResponse.build(RoleMapper.toResponseDTO(role), HttpStatus.CREATED.getReasonPhrase(), HttpStatus.CREATED);
 	}
 
 	@Operation(summary = "Update a role", description = "Updates an existing role.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = RoleRequestDTO.class))))
 	@PutMapping("/{id}")
-	public ResponseEntity<RoleResponseDTO> update(@PathVariable UUID id, @RequestBody RoleRequestDTO dto) {
+	public JudwaaResponse<RoleResponseDTO, String> update(@PathVariable UUID id, @RequestBody RoleRequestDTO dto) {
 		return roleRepository.findById(id).map(role -> {
 			RoleMapper.updateEntity(role, dto,
 					dto.getPermissionIds() != null
@@ -62,16 +65,17 @@ public class RoleController {
 									.collect(Collectors.toSet())
 							: null);
 			role = roleRepository.save(role);
-			return ResponseEntity.ok(RoleMapper.toResponseDTO(role));
-		}).orElse(ResponseEntity.notFound().build());
+			return JudwaaResponse.build(RoleMapper.toResponseDTO(role), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
+		}).orElse(JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND));
 	}
 
 	@Operation(summary = "Delete a role", description = "Deletes a role by ID.")
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> delete(@PathVariable UUID id) {
-		if (!roleRepository.existsById(id))
-			return ResponseEntity.notFound().build();
+	public JudwaaResponse<Object, String> delete(@PathVariable UUID id) {
+		if (!roleRepository.existsById(id)) {
+			return JudwaaResponse.build(null, HttpStatus.NOT_FOUND.getReasonPhrase(), HttpStatus.NOT_FOUND);
+		}
 		roleRepository.deleteById(id);
-		return ResponseEntity.noContent().build();
+		return JudwaaResponse.build(null, "Role deleted", HttpStatus.OK);
 	}
 }

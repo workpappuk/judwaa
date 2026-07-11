@@ -4,10 +4,10 @@ import com.waajud.judwaa.modules.incentive.dto.response.PaginatedResponseDTO;
 import com.waajud.judwaa.modules.lms.student.dto.StudentRequestDTO;
 import com.waajud.judwaa.modules.lms.student.dto.StudentResponseDTO;
 import com.waajud.judwaa.modules.lms.student.service.StudentService;
+import com.waajud.judwaa.shared.JudwaaResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,36 +31,36 @@ public class StudentController {
 	}
 
 	@PostMapping
-	public ResponseEntity<StudentResponseDTO> createStudent(@RequestBody @Valid StudentRequestDTO request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(studentService.createStudent(request));
+	public JudwaaResponse<StudentResponseDTO, String> createStudent(@RequestBody @Valid StudentRequestDTO request) {
+		return JudwaaResponse.build(studentService.createStudent(request), HttpStatus.CREATED.getReasonPhrase(), HttpStatus.CREATED);
 	}
 
 	@PutMapping("/{studentId}")
-	public StudentResponseDTO updateStudent(@PathVariable UUID studentId, @RequestBody @Valid StudentRequestDTO request) {
-		return studentService.updateStudent(studentId, request);
+	public JudwaaResponse<StudentResponseDTO, String> updateStudent(@PathVariable UUID studentId, @RequestBody @Valid StudentRequestDTO request) {
+		return JudwaaResponse.build(studentService.updateStudent(studentId, request), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping("/{studentId}")
-	public StudentResponseDTO getStudent(@PathVariable UUID studentId) {
-		return studentService.getStudent(studentId);
+	public JudwaaResponse<StudentResponseDTO, String> getStudent(@PathVariable UUID studentId) {
+		return JudwaaResponse.build(studentService.getStudent(studentId), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@GetMapping
-	public PaginatedResponseDTO<StudentResponseDTO> listStudents(@RequestParam(required = false) UUID organizationId,
+	public JudwaaResponse<PaginatedResponseDTO<StudentResponseDTO>, String> listStudents(@RequestParam(required = false) UUID organizationId,
 			@RequestParam(required = false) UUID schoolId, @RequestParam(required = false) UUID classroomId,
 			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size) {
-		return studentService.listStudents(organizationId, schoolId, classroomId, page, size);
+		return JudwaaResponse.build(studentService.listStudents(organizationId, schoolId, classroomId, page, size), HttpStatus.OK.getReasonPhrase(), HttpStatus.OK);
 	}
 
 	@PutMapping("/{studentId}/deactivate")
-	public ResponseEntity<Void> deactivateStudent(@PathVariable UUID studentId) {
+	public JudwaaResponse<Object, String> deactivateStudent(@PathVariable UUID studentId) {
 		studentService.deactivateStudent(studentId);
-		return ResponseEntity.noContent().build();
+		return JudwaaResponse.build(null, "Student deactivated", HttpStatus.OK);
 	}
 
 	@PutMapping("/{studentId}/activate")
-	public ResponseEntity<Void> activateStudent(@PathVariable UUID studentId) {
+	public JudwaaResponse<Object, String> activateStudent(@PathVariable UUID studentId) {
 		studentService.activateStudent(studentId);
-		return ResponseEntity.noContent().build();
+		return JudwaaResponse.build(null, "Student activated", HttpStatus.OK);
 	}
 }
