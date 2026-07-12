@@ -1,6 +1,5 @@
 package com.waajud.judwaa.modules.auth;
 
-import com.waajud.judwaa.config.GlobalExceptionHandler;
 import com.waajud.judwaa.modules.auth.entity.*;
 import com.waajud.judwaa.modules.auth.enums.*;
 import com.waajud.judwaa.modules.auth.repository.*;
@@ -18,13 +17,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-public class ModuleSetup {
-	private static final Logger logger = LoggerFactory.getLogger(ModuleSetup.class);
+public class AuthModuleSetup {
+	private static final Logger logger = LoggerFactory.getLogger(AuthModuleSetup.class);
 
 	@Bean
-	public CommandLineRunner createAdminUser(UserService userService, RoleRepository roleRepository,
+	public CommandLineRunner seedAuth(UserService userService, UserRepository userRepository, RoleRepository roleRepository,
 			PermissionRepository permissionRepository, PasswordEncoder passwordEncoder) {
 		return args -> {
+			logger.info("AuthModuleSetup start!");
+
+			userRepository.deleteAll();
+			roleRepository.deleteAll();
+			permissionRepository.deleteAll();
+
+
 			Map<ERole, Set<EPermission>> rolePermissions = new HashMap<>();
 			Set<EPermission> set1 = new HashSet<>();
 			set1.add(EPermission.READ); 
@@ -79,6 +85,15 @@ public class ModuleSetup {
 			} else {
 				logger.info("#### Admin user already exists: username=admin, password=admin");
 			}
+
+			logger.info(
+					"Seed Summary -> Permissions: {}, Roles: {}, Users: {}",
+					permissionRepository.count(),
+					roleRepository.count(),
+					userRepository.count()
+			);
 		};
+
+
 	}
 }

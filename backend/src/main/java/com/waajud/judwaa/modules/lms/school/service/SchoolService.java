@@ -8,6 +8,8 @@ import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.School;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolOrganizationRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolRepository;
+
+import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -90,7 +92,7 @@ public class SchoolService {
 	private void applyRequest(School school, SchoolRequestDTO request, String normalizedCode) {
 		school.setCode(normalizedCode);
 		school.setName(normalizeRequired(request.getName(), "School name is required"));
-		school.setBoard(trimToNull(request.getBoard()));
+		school.setBoards(request.getBoards());
 		school.setAddressLine1(trimToNull(request.getAddressLine1()));
 		school.setAddressLine2(trimToNull(request.getAddressLine2()));
 		school.setCity(trimToNull(request.getCity()));
@@ -132,7 +134,7 @@ public class SchoolService {
 		dto.setOrganizationId(school.getOrganization().getId());
 		dto.setCode(school.getCode());
 		dto.setName(school.getName());
-		dto.setBoard(school.getBoard());
+		dto.setBoards(school.getBoards());
 		dto.setAddressLine1(school.getAddressLine1());
 		dto.setAddressLine2(school.getAddressLine2());
 		dto.setCity(school.getCity());

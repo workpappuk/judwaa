@@ -13,6 +13,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.util.List;
+import java.util.Set;
+
 @Entity
 @Table(name = "schools", indexes = {@Index(name = "idx_schools_org", columnList = "organization_id"),
 		@Index(name = "idx_schools_org_code", columnList = "organization_id,code", unique = true)})
@@ -28,7 +31,7 @@ public class School extends BaseEntity {
 	private String name;
 
 	@Column(length = 80)
-	private String board;
+	private Set<String> boards;
 
 	@Embedded
 	private AddressInfo address = new AddressInfo();
@@ -60,12 +63,11 @@ public class School extends BaseEntity {
 		this.name = name;
 	}
 
-	public String getBoard() {
-		return board;
+	public Set<String> getBoards() {
+		return boards;
 	}
-
-	public void setBoard(String board) {
-		this.board = board;
+	public void setBoards(Set<String> boards) {
+		this.boards = boards;
 	}
 
 	public String getAddressLine1() {
