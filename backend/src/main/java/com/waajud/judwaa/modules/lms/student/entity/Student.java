@@ -22,6 +22,10 @@ import java.time.LocalDate;
 		@Index(name = "idx_students_school_roll", columnList = "school_id,roll_no", unique = true)})
 public class Student extends BaseEntity {
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "organization_id", foreignKey = @ForeignKey(name = "fk_students_org"))
+	private SchoolOrganization organization;
+
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "school_id", nullable = false, foreignKey = @ForeignKey(name = "fk_students_school"))
 	private School school;
@@ -56,6 +60,14 @@ public class Student extends BaseEntity {
 
 	@Column(name = "enrolled_at")
 	private LocalDate enrolledAt;
+
+	public SchoolOrganization getOrganization() {
+		return organization;
+	}
+
+	public void setOrganization(SchoolOrganization organization) {
+		this.organization = organization;
+	}
 
 	public School getSchool() {
 		return school;

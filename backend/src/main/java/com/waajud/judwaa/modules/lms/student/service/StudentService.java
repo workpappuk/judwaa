@@ -48,6 +48,7 @@ public class StudentService {
 		}
 
 		Student student = new Student();
+		student.setOrganization(refs.organization());
 		student.setSchool(refs.school());
 		student.setClassroom(refs.classroom());
 		applyRequest(student, request, normalizedAdmission);
@@ -71,6 +72,7 @@ public class StudentService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Roll number already exists in school");
 		}
 
+		student.setOrganization(refs.organization());
 		student.setSchool(refs.school());
 		student.setClassroom(refs.classroom());
 		applyRequest(student, request, normalizedAdmission);
@@ -87,10 +89,7 @@ public class StudentService {
 			int page, int size) {
 		Pageable pageable = PageRequest.of(normalizePage(page), normalizeSize(size),
 				Sort.by(Sort.Direction.ASC, "firstName").and(Sort.by(Sort.Direction.ASC, "lastName")));
-		Page<Student> pageData = null;
-		if (organizationId == null) {
-			pageData = studentRepository.findAll(pageable);
-		}
+		Page<Student> pageData = studentRepository.findAll(pageable);
 		return PaginatedResponseDTO.fromPage(pageData.map(this::toResponse));
 	}
 
@@ -176,6 +175,7 @@ public class StudentService {
 	private StudentResponseDTO toResponse(Student student) {
 		StudentResponseDTO dto = new StudentResponseDTO();
 		dto.setId(student.getId());
+		dto.setOrganizationId(student.getOrganization().getId());
 		dto.setSchoolId(student.getSchool().getId());
 		dto.setClassroomId(student.getClassroom().getId());
 		dto.setAdmissionNo(student.getAdmissionNo());
