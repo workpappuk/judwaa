@@ -15,15 +15,12 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "students", indexes = {@Index(name = "idx_students_org", columnList = "organization_id"),
+@Table(name = "students", indexes = {
 		@Index(name = "idx_students_school", columnList = "school_id"),
 		@Index(name = "idx_students_classroom", columnList = "classroom_id"),
 		@Index(name = "idx_students_school_admission", columnList = "school_id,admission_no", unique = true),
 		@Index(name = "idx_students_school_roll", columnList = "school_id,roll_no", unique = true)})
 public class Student extends BaseEntity {
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_students_org"))
-	private SchoolOrganization organization;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "school_id", nullable = false, foreignKey = @ForeignKey(name = "fk_students_school"))
@@ -59,14 +56,6 @@ public class Student extends BaseEntity {
 
 	@Column(name = "enrolled_at")
 	private LocalDate enrolledAt;
-
-	public SchoolOrganization getOrganization() {
-		return organization;
-	}
-
-	public void setOrganization(SchoolOrganization organization) {
-		this.organization = organization;
-	}
 
 	public School getSchool() {
 		return school;

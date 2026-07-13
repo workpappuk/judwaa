@@ -7,12 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StudentRepository extends JpaRepository<Student, UUID> {
-	Page<Student> findByOrganizationId(UUID organizationId, Pageable pageable);
-
-	Page<Student> findByOrganizationIdAndSchoolId(UUID organizationId, UUID schoolId, Pageable pageable);
-
-	Page<Student> findByOrganizationIdAndSchoolIdAndClassroomId(UUID organizationId, UUID schoolId, UUID classroomId,
-			Pageable pageable);
 
 	boolean existsBySchoolIdAndAdmissionNo(UUID schoolId, String admissionNo);
 

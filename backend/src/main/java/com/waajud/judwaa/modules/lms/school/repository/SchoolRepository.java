@@ -12,4 +12,6 @@ public interface SchoolRepository extends JpaRepository<School, UUID> {
 	boolean existsByOrganizationIdAndCode(UUID organizationId, String code);
 
 	boolean existsByOrganizationIdAndCodeAndIdNot(UUID organizationId, String code, UUID id);
+
+    School findByCode(String schoolCode);
 }
