@@ -1,5 +1,6 @@
 package com.waajud.judwaa.modules.lms;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.waajud.judwaa.modules.lms.school.entity.Classroom;
@@ -10,6 +11,7 @@ import com.waajud.judwaa.modules.lms.school.repository.ClassroomRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolOrganizationRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SubjectRepository;
+import com.waajud.judwaa.modules.lms.student.repository.StudentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -24,22 +26,44 @@ import java.util.concurrent.ThreadLocalRandom;
 public class LMSModuleSetup {
     private static final Logger logger = LoggerFactory.getLogger(LMSModuleSetup.class);
 
+    private final ObjectMapper objectMapper;
+    private final SchoolOrganizationRepository schoolOrganizationRepository;
+    private final  SchoolRepository schoolRepository;
+    private final  ClassroomRepository classroomRepository;
+    private final  SubjectRepository subjectRepository;
+    private final StudentRepository studentRepository;
+
+    public LMSModuleSetup(ObjectMapper objectMapper, SchoolOrganizationRepository schoolOrganizationRepository, SchoolRepository schoolRepository, ClassroomRepository classroomRepository, SubjectRepository subjectRepository, StudentRepository studentRepository) {
+        this.objectMapper = objectMapper;
+        this.schoolOrganizationRepository = schoolOrganizationRepository;
+        this.schoolRepository = schoolRepository;
+        this.classroomRepository = classroomRepository;
+        this.subjectRepository = subjectRepository;
+        this.studentRepository = studentRepository;
+    }
+
     @Bean
     public CommandLineRunner seedLMS(
-            ObjectMapper objectMapper,
-            SchoolOrganizationRepository schoolOrganizationRepository,
-            SchoolRepository schoolRepository,
-            ClassroomRepository classroomRepository,
-            SubjectRepository subjectRepository
+
     ) {
         return args -> {
-            logger.info("LMS Module Setup start!");
-            subjectRepository.deleteAll();
-            classroomRepository.deleteAll();
-            schoolRepository.deleteAll();
-            schoolOrganizationRepository.deleteAll();
-            String classroomJSON = """
-[
+          schoolOrgSetup();
+          enrollStudents();
+        };
+    }
+
+    private void enrollStudents() {
+    }
+
+    private void schoolOrgSetup(
+
+    ) throws JsonProcessingException {
+        logger.info("LMS Module Setup start!");
+        subjectRepository.deleteAll();
+        classroomRepository.deleteAll();
+        schoolRepository.deleteAll();
+        schoolOrganizationRepository.deleteAll();
+        String classroomJSON = """
   {
     "name": "LKG",
     "section": "A",
@@ -214,7 +238,7 @@ public class LMSModuleSetup {
   }
 ]
 """;
-            String json = """
+        String json = """
                     [
                        {
                          "name": "St. John's Educational Trust",
@@ -344,63 +368,62 @@ public class LMSModuleSetup {
                        }
                      ]
                     """.formatted( classroomJSON, classroomJSON, classroomJSON, classroomJSON,
-                    classroomJSON, classroomJSON, classroomJSON,
-                    classroomJSON, classroomJSON, classroomJSON,
-                    classroomJSON, classroomJSON, classroomJSON,
-                    classroomJSON, classroomJSON, classroomJSON);
+                classroomJSON, classroomJSON, classroomJSON,
+                classroomJSON, classroomJSON, classroomJSON,
+                classroomJSON, classroomJSON, classroomJSON,
+                classroomJSON, classroomJSON, classroomJSON);
 
-            List<Trust> trusts = objectMapper.readValue(json, new TypeReference<List<Trust>>() {
-            });
+        List<Trust> trusts = objectMapper.readValue(json, new TypeReference<List<Trust>>() {
+        });
 
-            trusts.forEach(trust -> {
-                SchoolOrganization schoolOrganization = new SchoolOrganization();
-                schoolOrganization.setName(trust.getName());
-                schoolOrganization.setCode(trust.getCode());
-                SchoolOrganization organization = schoolOrganizationRepository.save(schoolOrganization);
+        trusts.forEach(trust -> {
+            SchoolOrganization schoolOrganization = new SchoolOrganization();
+            schoolOrganization.setName(trust.getName());
+            schoolOrganization.setCode(trust.getCode());
+            SchoolOrganization organization = schoolOrganizationRepository.save(schoolOrganization);
 
-                trust.getSchools()
-                        .forEach(jsonSchool -> {
-                            School school = new School();
-                            school.setCode(jsonSchool.getCode());
-                            school.setName(jsonSchool.getName());
-                            school.setBoards(jsonSchool.getBoard());
-                            school.setOrganization(organization);
-                            School save = schoolRepository.save(school);
+            trust.getSchools()
+                    .forEach(jsonSchool -> {
+                        School school = new School();
+                        school.setCode(jsonSchool.getCode());
+                        school.setName(jsonSchool.getName());
+                        school.setBoards(jsonSchool.getBoard());
+                        school.setOrganization(organization);
+                        School save = schoolRepository.save(school);
 
-                            jsonSchool.getClassrooms()
-                                    .forEach(jsonClassroom -> {
-                                        Classroom  classroom= new Classroom();
-                                        classroom.setSchool(save);
-                                        classroom.setAcademicYear(jsonClassroom.getAcademicYear());
-                                        classroom.setGrade(jsonClassroom.getName());
-                                        classroom.setSection(jsonClassroom.getSection());
+                        jsonSchool.getClassrooms()
+                                .forEach(jsonClassroom -> {
+                                    Classroom  classroom= new Classroom();
+                                    classroom.setSchool(save);
+                                    classroom.setAcademicYear(jsonClassroom.getAcademicYear());
+                                    classroom.setGrade(jsonClassroom.getName());
+                                    classroom.setSection(jsonClassroom.getSection());
 
-                                        Classroom classroom1 = classroomRepository.save(classroom);
+                                    Classroom classroom1 = classroomRepository.save(classroom);
 
-                                        jsonClassroom
-                                                .getSubjects()
-                                                .forEach(jsonSubjects -> {
-                                                    Subject subject = new Subject();
-                                                    subject.setClassroom(classroom1);
-                                                    subject.setCode(String.valueOf(ThreadLocalRandom.current().nextInt(10000, 100000)));
-                                                    subject.setName(jsonSubjects);
-                                                    subjectRepository.save(subject);
-                                                });
+                                    jsonClassroom
+                                            .getSubjects()
+                                            .forEach(jsonSubjects -> {
+                                                Subject subject = new Subject();
+                                                subject.setClassroom(classroom1);
+                                                subject.setCode(String.valueOf(ThreadLocalRandom.current().nextInt(10000, 100000)));
+                                                subject.setName(jsonSubjects);
+                                                subjectRepository.save(subject);
+                                            });
 
-                                    });
-                        });
+                                });
+                    });
 
-            });
+        });
 
-            logger.info(
-                    "Seed Summary -> Organisations: {}, Schools: {}, Classrooms: {}, Subjects: {}",
-                    schoolOrganizationRepository.count(),
-                    schoolRepository.count(),
-                    classroomRepository.count(),
-                    subjectRepository.count()
-            );
+        logger.info(
+                "Seed Summary -> Organisations: {}, Schools: {}, Classrooms: {}, Subjects: {}",
+                schoolOrganizationRepository.count(),
+                schoolRepository.count(),
+                classroomRepository.count(),
+                subjectRepository.count()
+        );
 
-        };
     }
 
 
