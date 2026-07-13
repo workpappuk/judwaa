@@ -3,10 +3,28 @@ package com.waajud.judwaa.modules.lms;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.waajud.judwaa.modules.lms.exam.entity.Exam;
+import com.waajud.judwaa.modules.lms.exam.entity.ExamEnrollment;
+import com.waajud.judwaa.modules.lms.exam.entity.ExamSection;
+import com.waajud.judwaa.modules.lms.exam.entity.ExamType;
+import com.waajud.judwaa.modules.lms.exam.entity.Question;
+import com.waajud.judwaa.modules.lms.exam.entity.QuestionOption;
+import com.waajud.judwaa.modules.lms.exam.entity.QuestionType;
+import com.waajud.judwaa.modules.lms.exam.repository.ExamEnrollmentRepository;
+import com.waajud.judwaa.modules.lms.exam.repository.ExamRepository;
 import com.waajud.judwaa.modules.lms.school.entity.Classroom;
 import com.waajud.judwaa.modules.lms.school.entity.School;
 import com.waajud.judwaa.modules.lms.school.entity.SchoolOrganization;
 import com.waajud.judwaa.modules.lms.school.entity.Subject;
+import com.waajud.judwaa.modules.lms.seed.CurrentClass;
+import com.waajud.judwaa.modules.lms.seed.JsonClassroom;
+import com.waajud.judwaa.modules.lms.seed.JsonExamEnrollmentSeed;
+import com.waajud.judwaa.modules.lms.seed.JsonExamSectionSeed;
+import com.waajud.judwaa.modules.lms.seed.JsonExamSeed;
+import com.waajud.judwaa.modules.lms.seed.JsonQuestionOptionSeed;
+import com.waajud.judwaa.modules.lms.seed.JsonQuestionSeed;
+import com.waajud.judwaa.modules.lms.seed.JsonStudent;
+import com.waajud.judwaa.modules.lms.seed.Trust;
 import com.waajud.judwaa.modules.lms.school.repository.ClassroomRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolOrganizationRepository;
 import com.waajud.judwaa.modules.lms.school.repository.SchoolRepository;
@@ -18,14 +36,24 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class LMSModuleSetup {
     private static final Logger logger = LoggerFactory.getLogger(LMSModuleSetup.class);
+    private static final String EXAM_SEED_FILE = "lms/seeds/exams.json";
+    private static final String EXAM_ENROLLMENT_SEED_FILE = "lms/seeds/exam-enrollments.json";
+  private static final String STUDENT_SEED_FILE = "lms/seeds/students.json";
+  private static final String CLASSROOM_SEED_FILE = "lms/seeds/classrooms.json";
+  private static final String TRUST_SEED_FILE = "lms/seeds/trusts.json";
 
     private final ObjectMapper objectMapper;
     private final SchoolOrganizationRepository schoolOrganizationRepository;
@@ -33,14 +61,20 @@ public class LMSModuleSetup {
     private final  ClassroomRepository classroomRepository;
     private final  SubjectRepository subjectRepository;
     private final StudentRepository studentRepository;
+    private final ExamRepository examRepository;
+    private final ExamEnrollmentRepository examEnrollmentRepository;
 
-    public LMSModuleSetup(ObjectMapper objectMapper, SchoolOrganizationRepository schoolOrganizationRepository, SchoolRepository schoolRepository, ClassroomRepository classroomRepository, SubjectRepository subjectRepository, StudentRepository studentRepository) {
+    public LMSModuleSetup(ObjectMapper objectMapper, SchoolOrganizationRepository schoolOrganizationRepository, SchoolRepository schoolRepository,
+                ClassroomRepository classroomRepository, SubjectRepository subjectRepository, StudentRepository studentRepository,
+                ExamRepository examRepository, ExamEnrollmentRepository examEnrollmentRepository) {
         this.objectMapper = objectMapper;
         this.schoolOrganizationRepository = schoolOrganizationRepository;
         this.schoolRepository = schoolRepository;
         this.classroomRepository = classroomRepository;
         this.subjectRepository = subjectRepository;
         this.studentRepository = studentRepository;
+      this.examRepository = examRepository;
+      this.examEnrollmentRepository = examEnrollmentRepository;
     }
 
     @Bean
@@ -50,125 +84,172 @@ public class LMSModuleSetup {
         return args -> {
           schoolOrgSetup();
           enrollStudents();
-            enrollStudentsForExam();
+          seedExamWithQuestions();
+                        enrollStudentsForExam();
+			logger.info(
+					"LMS final seed summary -> Organisations: {}, Schools: {}, Classrooms: {}, Subjects: {}, Students: {}, Exams: {}, Enrollments: {}",
+					schoolOrganizationRepository.count(),
+					schoolRepository.count(),
+					classroomRepository.count(),
+					subjectRepository.count(),
+					studentRepository.count(),
+					examRepository.count(),
+					examEnrollmentRepository.count());
         };
     }
 
-    private void enrollStudents() throws JsonProcessingException {
-        String json = """
-[
-  {"schoolCode":"S001","currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1001", "rollNo": "R-001", "firstName": "Aarav", "lastName": "Sharma", "gender": "Male", "dateOfBirth": "2010-01-01", "guardianName": "Rajesh Sharma", "guardianPhone": "9876543001", "enrolledAt": "2023-04-01"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1002", "rollNo": "R-002", "firstName": "Aanya", "lastName": "Verma", "gender": "Female", "dateOfBirth": "2010-01-02", "guardianName": "Suresh Verma", "guardianPhone": "9876543002", "enrolledAt": "2023-04-01"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1003", "rollNo": "R-003", "firstName": "Vivaan", "lastName": "Gupta", "gender": "Male", "dateOfBirth": "2010-01-03", "guardianName": "Anil Gupta", "guardianPhone": "9876543003", "enrolledAt": "2023-04-01"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1004", "rollNo": "R-004", "firstName": "Diya", "lastName": "Singh", "gender": "Female", "dateOfBirth": "2010-01-04", "guardianName": "Ravi Singh", "guardianPhone": "9876543004", "enrolledAt": "2023-04-01"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1005", "rollNo": "R-005", "firstName": "Aditya", "lastName": "Kumar", "gender": "Male", "dateOfBirth": "2010-01-05", "guardianName": "Sunil Kumar", "guardianPhone": "9876543005", "enrolledAt": "2023-04-01"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1006", "rollNo": "R-006", "firstName": "Pihu", "lastName": "Patel", "gender": "Female", "dateOfBirth": "2010-01-06", "guardianName": "Manoj Patel", "guardianPhone": "9876543006", "enrolledAt": "2023-04-02"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1007", "rollNo": "R-007", "firstName": "Vihaan", "lastName": "Reddy", "gender": "Male", "dateOfBirth": "2010-01-07", "guardianName": "Vijay Reddy", "guardianPhone": "9876543007", "enrolledAt": "2023-04-02"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1008", "rollNo": "R-008", "firstName": "Saanvi", "lastName": "Joshi", "gender": "Female", "dateOfBirth": "2010-01-08", "guardianName": "Prakash Joshi", "guardianPhone": "9876543008", "enrolledAt": "2023-04-02"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1009", "rollNo": "R-009", "firstName": "Arjun", "lastName": "Nair", "gender": "Male", "dateOfBirth": "2010-01-09", "guardianName": "Rahul Nair", "guardianPhone": "9876543009", "enrolledAt": "2023-04-02"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1010", "rollNo": "R-010", "firstName": "Kiara", "lastName": "Das", "gender": "Female", "dateOfBirth": "2010-01-10", "guardianName": "Amit Das", "guardianPhone": "9876543010", "enrolledAt": "2023-04-02"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1011", "rollNo": "R-011", "firstName": "Sai", "lastName": "Chopra", "gender": "Male", "dateOfBirth": "2010-01-11", "guardianName": "Vinay Chopra", "guardianPhone": "9876543011", "enrolledAt": "2023-04-03"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1012", "rollNo": "R-012", "firstName": "Prisha", "lastName": "Mehta", "gender": "Female", "dateOfBirth": "2010-01-12", "guardianName": "Sanjay Mehta", "guardianPhone": "9876543012", "enrolledAt": "2023-04-03"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1013", "rollNo": "R-013", "firstName": "Reyansh", "lastName": "Bose", "gender": "Male", "dateOfBirth": "2010-01-13", "guardianName": "Arun Bose", "guardianPhone": "9876543013", "enrolledAt": "2023-04-03"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1014", "rollNo": "R-014", "firstName": "Ananya", "lastName": "Kapoor", "gender": "Female", "dateOfBirth": "2010-01-14", "guardianName": "Vikram Kapoor", "guardianPhone": "9876543014", "enrolledAt": "2023-04-03"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1015", "rollNo": "R-015", "firstName": "Ayaan", "lastName": "Yadav", "gender": "Male", "dateOfBirth": "2010-01-15", "guardianName": "Ashok Yadav", "guardianPhone": "9876543015", "enrolledAt": "2023-04-03"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1016", "rollNo": "R-016", "firstName": "Avni", "lastName": "Rao", "gender": "Female", "dateOfBirth": "2010-01-16", "guardianName": "Rajiv Rao", "guardianPhone": "9876543016", "enrolledAt": "2023-04-04"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1017", "rollNo": "R-017", "firstName": "Krishna", "lastName": "Menon", "gender": "Male", "dateOfBirth": "2010-01-17", "guardianName": "Gopal Menon", "guardianPhone": "9876543017", "enrolledAt": "2023-04-04"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1018", "rollNo": "R-018", "firstName": "Shruti", "lastName": "Iyer", "gender": "Female", "dateOfBirth": "2010-01-18", "guardianName": "Karthik Iyer", "guardianPhone": "9876543018", "enrolledAt": "2023-04-04"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1019", "rollNo": "R-019", "firstName": "Ishaan", "lastName": "Pillai", "gender": "Male", "dateOfBirth": "2010-01-19", "guardianName": "Hari Pillai", "guardianPhone": "9876543019", "enrolledAt": "2023-04-04"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1020", "rollNo": "R-020", "firstName": "Myra", "lastName": "Sen", "gender": "Female", "dateOfBirth": "2010-01-20", "guardianName": "Ratan Sen", "guardianPhone": "9876543020", "enrolledAt": "2023-04-04"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1021", "rollNo": "R-021", "firstName": "Shaurya", "lastName": "Malhotra", "gender": "Male", "dateOfBirth": "2010-01-21", "guardianName": "Deepak Malhotra", "guardianPhone": "9876543021", "enrolledAt": "2023-04-05"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1022", "rollNo": "R-022", "firstName": "Kavya", "lastName": "Ahuja", "gender": "Female", "dateOfBirth": "2010-01-22", "guardianName": "Neeraj Ahuja", "guardianPhone": "9876543022", "enrolledAt": "2023-04-05"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1023", "rollNo": "R-023", "firstName": "Atharv", "lastName": "Bhatia", "gender": "Male", "dateOfBirth": "2010-01-23", "guardianName": "Nitin Bhatia", "guardianPhone": "9876543023", "enrolledAt": "2023-04-05"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1024", "rollNo": "R-024", "firstName": "Navya", "lastName": "Jain", "gender": "Female", "dateOfBirth": "2010-01-24", "guardianName": "Pankaj Jain", "guardianPhone": "9876543024", "enrolledAt": "2023-04-05"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1025", "rollNo": "R-025", "firstName": "Kabir", "lastName": "Garg", "gender": "Male", "dateOfBirth": "2010-01-25", "guardianName": "Rishabh Garg", "guardianPhone": "9876543025", "enrolledAt": "2023-04-05"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1026", "rollNo": "R-026", "firstName": "Riya", "lastName": "Agarwal", "gender": "Female", "dateOfBirth": "2010-01-26", "guardianName": "Tarun Agarwal", "guardianPhone": "9876543026", "enrolledAt": "2023-04-06"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1027", "rollNo": "R-027", "firstName": "Aarush", "lastName": "Kaur", "gender": "Male", "dateOfBirth": "2010-01-27", "guardianName": "Manjit Kaur", "guardianPhone": "9876543027", "enrolledAt": "2023-04-06"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1028", "rollNo": "R-028", "firstName": "Zara", "lastName": "Sheikh", "gender": "Female", "dateOfBirth": "2010-01-28", "guardianName": "Imran Sheikh", "guardianPhone": "9876543028", "enrolledAt": "2023-04-06"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1029", "rollNo": "R-029", "firstName": "Dhruv", "lastName": "Chaudhary", "gender": "Male", "dateOfBirth": "2010-01-29", "guardianName": "Lalit Chaudhary", "guardianPhone": "9876543029", "enrolledAt": "2023-04-06"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1030", "rollNo": "R-030", "firstName": "Tanya", "lastName": "Dubey", "gender": "Female", "dateOfBirth": "2010-01-30", "guardianName": "Naveen Dubey", "guardianPhone": "9876543030", "enrolledAt": "2023-04-06"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1031", "rollNo": "R-031", "firstName": "Kian", "lastName": "Tiwari", "gender": "Male", "dateOfBirth": "2010-01-31", "guardianName": "Shyam Tiwari", "guardianPhone": "9876543031", "enrolledAt": "2023-04-07"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1032", "rollNo": "R-032", "firstName": "Isha", "lastName": "Mishra", "gender": "Female", "dateOfBirth": "2010-02-01", "guardianName": "Kamal Mishra", "guardianPhone": "9876543032", "enrolledAt": "2023-04-07"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1033", "rollNo": "R-033", "firstName": "Yash", "lastName": "Pandey", "gender": "Male", "dateOfBirth": "2010-02-02", "guardianName": "Prasad Pandey", "guardianPhone": "9876543033", "enrolledAt": "2023-04-07"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1034", "rollNo": "R-034", "firstName": "Meera", "lastName": "Dixit", "gender": "Female", "dateOfBirth": "2010-02-03", "guardianName": "Alok Dixit", "guardianPhone": "9876543034", "enrolledAt": "2023-04-07"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1035", "rollNo": "R-035", "firstName": "Aaryan", "lastName": "Pathak", "gender": "Male", "dateOfBirth": "2010-02-04", "guardianName": "Gaurav Pathak", "guardianPhone": "9876543035", "enrolledAt": "2023-04-07"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1036", "rollNo": "R-036", "firstName": "Nisha", "lastName": "Sinha", "gender": "Female", "dateOfBirth": "2010-02-05", "guardianName": "Mukesh Sinha", "guardianPhone": "9876543036", "enrolledAt": "2023-04-08"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1037", "rollNo": "R-037", "firstName": "Rudra", "lastName": "Thakur", "gender": "Male", "dateOfBirth": "2010-02-06", "guardianName": "Vikash Thakur", "guardianPhone": "9876543037", "enrolledAt": "2023-04-08"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1038", "rollNo": "R-038", "firstName": "Simran", "lastName": "Srivastava", "gender": "Female", "dateOfBirth": "2010-02-07", "guardianName": "Kishore Srivastava", "guardianPhone": "9876543038", "enrolledAt": "2023-04-08"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1039", "rollNo": "R-039", "firstName": "Aryan", "lastName": "Bansal", "gender": "Male", "dateOfBirth": "2010-02-08", "guardianName": "Praveen Bansal", "guardianPhone": "9876543039", "enrolledAt": "2023-04-08"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1040", "rollNo": "R-040", "firstName": "Pooja", "lastName": "Chauhan", "gender": "Female", "dateOfBirth": "2010-02-09", "guardianName": "Ajay Chauhan", "guardianPhone": "9876543040", "enrolledAt": "2023-04-08"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1041", "rollNo": "R-041", "firstName": "Lakshya", "lastName": "Bajpai", "gender": "Male", "dateOfBirth": "2010-02-10", "guardianName": "Anand Bajpai", "guardianPhone": "9876543041", "enrolledAt": "2023-04-09"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1042", "rollNo": "R-042", "firstName": "Sneha", "lastName": "Soni", "gender": "Female", "dateOfBirth": "2010-02-11", "guardianName": "Naresh Soni", "guardianPhone": "9876543042", "enrolledAt": "2023-04-09"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1043", "rollNo": "R-043", "firstName": "Neev", "lastName": "Rana", "gender": "Male", "dateOfBirth": "2010-02-12", "guardianName": "Dinesh Rana", "guardianPhone": "9876543043", "enrolledAt": "2023-04-09"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1044", "rollNo": "R-044", "firstName": "Neha", "lastName": "Saxena", "gender": "Female", "dateOfBirth": "2010-02-13", "guardianName": "Brijesh Saxena", "guardianPhone": "9876543044", "enrolledAt": "2023-04-09"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1045", "rollNo": "R-045", "firstName": "Om", "lastName": "Mathur", "gender": "Male", "dateOfBirth": "2010-02-14", "guardianName": "Subhash Mathur", "guardianPhone": "9876543045", "enrolledAt": "2023-04-09"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1046", "rollNo": "R-046", "firstName": "Roshni", "lastName": "Bhatt", "gender": "Female", "dateOfBirth": "2010-02-15", "guardianName": "Siddharth Bhatt", "guardianPhone": "9876543046", "enrolledAt": "2023-04-10"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1047", "rollNo": "R-047", "firstName": "Pranav", "lastName": "Chakraborty", "gender": "Male", "dateOfBirth": "2010-02-16", "guardianName": "Tapan Chakraborty", "guardianPhone": "9876543047", "enrolledAt": "2023-04-10"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1048", "rollNo": "R-048", "firstName": "Shikha", "lastName": "Ghosh", "gender": "Female", "dateOfBirth": "2010-02-17", "guardianName": "Arup Ghosh", "guardianPhone": "9876543048", "enrolledAt": "2023-04-10"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1049", "rollNo": "R-049", "firstName": "Dev", "lastName": "Mukherjee", "gender": "Male", "dateOfBirth": "2010-02-18", "guardianName": "Bimal Mukherjee", "guardianPhone": "9876543049", "enrolledAt": "2023-04-10"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1050", "rollNo": "R-050", "firstName": "Swati", "lastName": "Banerjee", "gender": "Female", "dateOfBirth": "2010-02-19", "guardianName": "Gautam Banerjee", "guardianPhone": "9876543050", "enrolledAt": "2023-04-10"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1051", "rollNo": "R-051", "firstName": "Rohan", "lastName": "Chatterjee", "gender": "Male", "dateOfBirth": "2010-02-20", "guardianName": "Debashis Chatterjee", "guardianPhone": "9876543051", "enrolledAt": "2023-04-11"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1052", "rollNo": "R-052", "firstName": "Kriti", "lastName": "Dasgupta", "gender": "Female", "dateOfBirth": "2010-02-21", "guardianName": "Pradip Dasgupta", "guardianPhone": "9876543052", "enrolledAt": "2023-04-11"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1053", "rollNo": "R-053", "firstName": "Harsh", "lastName": "Nandi", "gender": "Male", "dateOfBirth": "2010-02-22", "guardianName": "Soumitra Nandi", "guardianPhone": "9876543053", "enrolledAt": "2023-04-11"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1054", "rollNo": "R-054", "firstName": "Sonal", "lastName": "Saha", "gender": "Female", "dateOfBirth": "2010-02-23", "guardianName": "Rajat Saha", "guardianPhone": "9876543054", "enrolledAt": "2023-04-11"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1055", "rollNo": "R-055", "firstName": "Ansh", "lastName": "Majumdar", "gender": "Male", "dateOfBirth": "2010-02-24", "guardianName": "Tapas Majumdar", "guardianPhone": "9876543055", "enrolledAt": "2023-04-11"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1056", "rollNo": "R-056", "firstName": "Aarti", "lastName": "Dutta", "gender": "Female", "dateOfBirth": "2010-02-25", "guardianName": "Sukumar Dutta", "guardianPhone": "9876543056", "enrolledAt": "2023-04-12"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1057", "rollNo": "R-057", "firstName": "Armaan", "lastName": "Karmakar", "gender": "Male", "dateOfBirth": "2010-02-26", "guardianName": "Pulak Karmakar", "guardianPhone": "9876543057", "enrolledAt": "2023-04-12"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1058", "rollNo": "R-058", "firstName": "Bhumika", "lastName": "Haldar", "gender": "Female", "dateOfBirth": "2010-02-27", "guardianName": "Ramesh Haldar", "guardianPhone": "9876543058", "enrolledAt": "2023-04-12"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1059", "rollNo": "R-059", "firstName": "Samar", "lastName": "Barman", "gender": "Male", "dateOfBirth": "2010-02-28", "guardianName": "Swapan Barman", "guardianPhone": "9876543059", "enrolledAt": "2023-04-12"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1060", "rollNo": "R-060", "firstName": "Ritika", "lastName": "Mandal", "gender": "Female", "dateOfBirth": "2010-03-01", "guardianName": "Bikash Mandal", "guardianPhone": "9876543060", "enrolledAt": "2023-04-12"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1061", "rollNo": "R-061", "firstName": "Ayan", "lastName": "Bishnoi", "gender": "Male", "dateOfBirth": "2010-03-02", "guardianName": "Kailash Bishnoi", "guardianPhone": "9876543061", "enrolledAt": "2023-04-13"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1062", "rollNo": "R-062", "firstName": "Divya", "lastName": "Punia", "gender": "Female", "dateOfBirth": "2010-03-03", "guardianName": "Rakesh Punia", "guardianPhone": "9876543062", "enrolledAt": "2023-04-13"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1063", "rollNo": "R-063", "firstName": "Karan", "lastName": "Shekhawat", "gender": "Male", "dateOfBirth": "2010-03-04", "guardianName": "Bhawani Shekhawat", "guardianPhone": "9876543063", "enrolledAt": "2023-04-13"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1064", "rollNo": "R-064", "firstName": "Shrishti", "lastName": "Rathore", "gender": "Female", "dateOfBirth": "2010-03-05", "guardianName": "Gajendra Rathore", "guardianPhone": "9876543064", "enrolledAt": "2023-04-13"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1065", "rollNo": "R-065", "firstName": "Rishi", "lastName": "Solanki", "gender": "Male", "dateOfBirth": "2010-03-06", "guardianName": "Narayan Solanki", "guardianPhone": "9876543065", "enrolledAt": "2023-04-13"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1066", "rollNo": "R-066", "firstName": "Jaya", "lastName": "Bhati", "gender": "Female", "dateOfBirth": "2010-03-07", "guardianName": "Surendra Bhati", "guardianPhone": "9876543066", "enrolledAt": "2023-04-14"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1067", "rollNo": "R-067", "firstName": "Gaurav", "lastName": "Chouhan", "gender": "Male", "dateOfBirth": "2010-03-08", "guardianName": "Mahendra Chouhan", "guardianPhone": "9876543067", "enrolledAt": "2023-04-14"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1068", "rollNo": "R-068", "firstName": "Komal", "lastName": "Parihar", "gender": "Female", "dateOfBirth": "2010-03-09", "guardianName": "Sohan Parihar", "guardianPhone": "9876543068", "enrolledAt": "2023-04-14"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1069", "rollNo": "R-069", "firstName": "Akash", "lastName": "Kachhwaha", "gender": "Male", "dateOfBirth": "2010-03-10", "guardianName": "Omprakash Kachhwaha", "guardianPhone": "9876543069", "enrolledAt": "2023-04-14"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1070", "rollNo": "R-070", "firstName": "Pallavi", "lastName": "Gehlot", "gender": "Female", "dateOfBirth": "2010-03-11", "guardianName": "Narendra Gehlot", "guardianPhone": "9876543070", "enrolledAt": "2023-04-14"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1071", "rollNo": "R-071", "firstName": "Mohit", "lastName": "Deora", "gender": "Male", "dateOfBirth": "2010-03-12", "guardianName": "Laxman Deora", "guardianPhone": "9876543071", "enrolledAt": "2023-04-15"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1072", "rollNo": "R-072", "firstName": "Garima", "lastName": "Sisodia", "gender": "Female", "dateOfBirth": "2010-03-13", "guardianName": "Hemant Sisodia", "guardianPhone": "9876543072", "enrolledAt": "2023-04-15"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1073", "rollNo": "R-073", "firstName": "Abhishek", "lastName": "Jhala", "gender": "Male", "dateOfBirth": "2010-03-14", "guardianName": "Govind Jhala", "guardianPhone": "9876543073", "enrolledAt": "2023-04-15"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1074", "rollNo": "R-074", "firstName": "Richa", "lastName": "Khangarot", "gender": "Female", "dateOfBirth": "2010-03-15", "guardianName": "Jagdish Khangarot", "guardianPhone": "9876543074", "enrolledAt": "2023-04-15"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1075", "rollNo": "R-075", "firstName": "Vishal", "lastName": "Ranawat", "gender": "Male", "dateOfBirth": "2010-03-16", "guardianName": "Kishore Ranawat", "guardianPhone": "9876543075", "enrolledAt": "2023-04-15"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1076", "rollNo": "R-076", "firstName": "Neelam", "lastName": "Rajpurohit", "gender": "Female", "dateOfBirth": "2010-03-17", "guardianName": "Madan Rajpurohit", "guardianPhone": "9876543076", "enrolledAt": "2023-04-16"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1077", "rollNo": "R-077", "firstName": "Suraj", "lastName": "Charan", "gender": "Male", "dateOfBirth": "2010-03-18", "guardianName": "Bhanwar Charan", "guardianPhone": "9876543077", "enrolledAt": "2023-04-16"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1078", "rollNo": "R-078", "firstName": "Kiran", "lastName": "Bishnoi", "gender": "Female", "dateOfBirth": "2010-03-19", "guardianName": "Shravan Bishnoi", "guardianPhone": "9876543078", "enrolledAt": "2023-04-16"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1079", "rollNo": "R-079", "firstName": "Prakash", "lastName": "Godara", "gender": "Male", "dateOfBirth": "2010-03-20", "guardianName": "Ramniwas Godara", "guardianPhone": "9876543079", "enrolledAt": "2023-04-16"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1080", "rollNo": "R-080", "firstName": "Sunita", "lastName": "Jat", "gender": "Female", "dateOfBirth": "2010-03-21", "guardianName": "Hanuman Jat", "guardianPhone": "9876543080", "enrolledAt": "2023-04-16"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1081", "rollNo": "R-081", "firstName": "Rahul", "lastName": "Choudhary", "gender": "Male", "dateOfBirth": "2010-03-22", "guardianName": "Kana Choudhary", "guardianPhone": "9876543081", "enrolledAt": "2023-04-17"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1082", "rollNo": "R-082", "firstName": "Priyanka", "lastName": "Saran", "gender": "Female", "dateOfBirth": "2010-03-23", "guardianName": "Teja Saran", "guardianPhone": "9876543082", "enrolledAt": "2023-04-17"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1083", "rollNo": "R-083", "firstName": "Ankit", "lastName": "Bhadu", "gender": "Male", "dateOfBirth": "2010-03-24", "guardianName": "Bhagirath Bhadu", "guardianPhone": "9876543083", "enrolledAt": "2023-04-17"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1084", "rollNo": "R-084", "firstName": "Rekha", "lastName": "Kharra", "gender": "Female", "dateOfBirth": "2010-03-25", "guardianName": "Girdhari Kharra", "guardianPhone": "9876543084", "enrolledAt": "2023-04-17"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1085", "rollNo": "R-085", "firstName": "Vikas", "lastName": "Sihag", "gender": "Male", "dateOfBirth": "2010-03-26", "guardianName": "Kumbha Sihag", "guardianPhone": "9876543085", "enrolledAt": "2023-04-17"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1086", "rollNo": "R-086", "firstName": "Sapna", "lastName": "Kaswan", "gender": "Female", "dateOfBirth": "2010-03-27", "guardianName": "Chetan Kaswan", "guardianPhone": "9876543086", "enrolledAt": "2023-04-18"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1087", "rollNo": "R-087", "firstName": "Sachin", "lastName": "Punia", "gender": "Male", "dateOfBirth": "2010-03-28", "guardianName": "Banwari Punia", "guardianPhone": "9876543087", "enrolledAt": "2023-04-18"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1088", "rollNo": "R-088", "firstName": "Monika", "lastName": "Moond", "gender": "Female", "dateOfBirth": "2010-03-29", "guardianName": "Dharam Moond", "guardianPhone": "9876543088", "enrolledAt": "2023-04-18"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1089", "rollNo": "R-089", "firstName": "Sumit", "lastName": "Dara", "gender": "Male", "dateOfBirth": "2010-03-30", "guardianName": "Hitesh Dara", "guardianPhone": "9876543089", "enrolledAt": "2023-04-18"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1090", "rollNo": "R-090", "firstName": "Jyoti", "lastName": "Tetarwal", "gender": "Female", "dateOfBirth": "2010-03-31", "guardianName": "Ishwar Tetarwal", "guardianPhone": "9876543090", "enrolledAt": "2023-04-18"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1091", "rollNo": "R-091", "firstName": "Ajay", "lastName": "Lomror", "gender": "Male", "dateOfBirth": "2010-04-01", "guardianName": "Jetha Lomror", "guardianPhone": "9876543091", "enrolledAt": "2023-04-19"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1092", "rollNo": "R-092", "firstName": "Anita", "lastName": "Kuri", "gender": "Female", "dateOfBirth": "2010-04-02", "guardianName": "Ladu Kuri", "guardianPhone": "9876543092", "enrolledAt": "2023-04-19"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1093", "rollNo": "R-093", "firstName": "Nitin", "lastName": "Nitharwal", "gender": "Male", "dateOfBirth": "2010-04-03", "guardianName": "Mula Nitharwal", "guardianPhone": "9876543093", "enrolledAt": "2023-04-19"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1094", "rollNo": "R-094", "firstName": "Sushma", "lastName": "Dudi", "gender": "Female", "dateOfBirth": "2010-04-04", "guardianName": "Nanda Dudi", "guardianPhone": "9876543094", "enrolledAt": "2023-04-19"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1095", "rollNo": "R-095", "firstName": "Sandeep", "lastName": "Gora", "gender": "Male", "dateOfBirth": "2010-04-05", "guardianName": "Paburam Gora", "guardianPhone": "9876543095", "enrolledAt": "2023-04-19"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1096", "rollNo": "R-096", "firstName": "Ritu", "lastName": "Bhichar", "gender": "Female", "dateOfBirth": "2010-04-06", "guardianName": "Rupa Bhichar", "guardianPhone": "9876543096", "enrolledAt": "2023-04-20"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1097", "rollNo": "R-097", "firstName": "Praveen", "lastName": "Khileri", "gender": "Male", "dateOfBirth": "2010-04-07", "guardianName": "Sita Khileri", "guardianPhone": "9876543097", "enrolledAt": "2023-04-20"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1098", "rollNo": "R-098", "firstName": "Suman", "lastName": "Barala", "gender": "Female", "dateOfBirth": "2010-04-08", "guardianName": "Tiku Barala", "guardianPhone": "9876543098", "enrolledAt": "2023-04-20"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1099", "rollNo": "R-099", "firstName": "Manish", "lastName": "Doot", "gender": "Male", "dateOfBirth": "2010-04-09", "guardianName": "Uda Doot", "guardianPhone": "9876543099", "enrolledAt": "2023-04-20"},
-  {"schoolCode":"S001", "currentClass": {"grade": "Class 8", "section": "A"}, "admissionNo": "ADM-1100", "rollNo": "R-100", "firstName": "Kavita", "lastName": "Garhwal", "gender": "Female", "dateOfBirth": "2010-04-10", "guardianName": "Vaga Garhwal", "guardianPhone": "9876543100", "enrolledAt": "2023-04-20"}
-]
-""";
-
-
-
-
-        List<JsonStudent> jsonStudents = objectMapper.readValue(json, new TypeReference<List<JsonStudent>>() {
+    private void seedExamWithQuestions() throws JsonProcessingException {
+        List<JsonExamSeed> exams = readJsonResource(EXAM_SEED_FILE, new TypeReference<List<JsonExamSeed>>() {
         });
+
+        int seeded = 0;
+        for (JsonExamSeed examSeed : exams) {
+            School school = schoolRepository.findByCode(examSeed.getSchoolCode());
+            if (school == null) {
+                logger.warn("Skipping exam seed: school {} not found", examSeed.getSchoolCode());
+                continue;
+            }
+
+            SchoolOrganization organization = school.getOrganization();
+            if (examRepository.existsByOrganizationIdAndCode(organization.getId(), examSeed.getCode())) {
+                logger.info("Exam seed skipped: {} already exists", examSeed.getCode());
+                continue;
+            }
+
+            Exam exam = new Exam();
+            exam.setOrganization(organization);
+            exam.setSchool(school);
+            exam.setCode(examSeed.getCode());
+            exam.setTitle(examSeed.getTitle());
+            exam.setDescription(examSeed.getDescription());
+            exam.setExamType(ExamType.valueOf(examSeed.getExamType()));
+            exam.setDurationMinutes(examSeed.getDurationMinutes());
+            exam.setTotalMarks(examSeed.getTotalMarks());
+
+            Instant startsAt = Instant.now().plusSeconds((long) examSeed.getStartAfterMinutes() * 60L);
+            exam.setStartsAt(startsAt);
+            exam.setEndsAt(startsAt.plusSeconds((long) examSeed.getDurationMinutes() * 60L));
+
+            for (JsonExamSectionSeed sectionSeed : examSeed.getSections()) {
+                ExamSection section = new ExamSection();
+                section.setDisplayOrder(sectionSeed.getDisplayOrder());
+                section.setTitle(sectionSeed.getTitle());
+                section.setDescription(sectionSeed.getDescription());
+                section.setMaxMarks(sectionSeed.getMaxMarks());
+
+                for (JsonQuestionSeed questionSeed : sectionSeed.getQuestions()) {
+                    Question question = new Question();
+                    question.setDisplayOrder(questionSeed.getDisplayOrder());
+                    question.setQuestionType(QuestionType.valueOf(questionSeed.getQuestionType()));
+                    question.setQuestionText(questionSeed.getQuestionText());
+                    question.setMarks(questionSeed.getMarks());
+                    question.setMandatory(questionSeed.isMandatory());
+
+                    if (questionSeed.getOptions() != null) {
+                        for (JsonQuestionOptionSeed optionSeed : questionSeed.getOptions()) {
+                            QuestionOption option = new QuestionOption();
+                            option.setDisplayOrder(optionSeed.getDisplayOrder());
+                            option.setOptionText(optionSeed.getOptionText());
+                            option.setCorrect(optionSeed.isCorrect());
+                            question.addOption(option);
+                        }
+                    }
+
+                    section.addQuestion(question);
+                }
+
+                exam.addSection(section);
+            }
+
+            examRepository.save(exam);
+            seeded++;
+            logger.info("Seeded exam {} with {} sections", exam.getCode(), exam.getSections().size());
+        }
+
+        logger.info("Exam seed summary -> New Exams: {}", seeded);
+    }
+
+    private void enrollStudentsForExam() throws JsonProcessingException {
+        List<JsonExamEnrollmentSeed> enrollments = readJsonResource(EXAM_ENROLLMENT_SEED_FILE,
+                new TypeReference<List<JsonExamEnrollmentSeed>>() {
+                });
+
+        int newEnrollments = 0;
+        for (JsonExamEnrollmentSeed enrollmentSeed : enrollments) {
+            School school = schoolRepository.findByCode(enrollmentSeed.getSchoolCode());
+            if (school == null) {
+                logger.warn("Skipping exam enrollment seed: school {} not found", enrollmentSeed.getSchoolCode());
+                continue;
+            }
+
+            Exam exam = examRepository
+                    .findByOrganizationIdAndCode(school.getOrganization().getId(), enrollmentSeed.getExamCode())
+                    .orElse(null);
+            if (exam == null) {
+                logger.warn("Skipping exam enrollment seed: exam {} not found", enrollmentSeed.getExamCode());
+                continue;
+            }
+
+            List<Student> students = studentRepository.findBySchoolId(school.getId());
+            if (students.isEmpty()) {
+                logger.warn("Skipping exam enrollment seed: no students in school {}", school.getCode());
+                continue;
+            }
+
+            Map<String, Student> studentByAdmissionNo = new HashMap<>();
+            for (Student student : students) {
+                studentByAdmissionNo.put(student.getAdmissionNo(), student);
+            }
+
+            for (String admissionNo : enrollmentSeed.getStudentAdmissionNos()) {
+                Student student = studentByAdmissionNo.get(admissionNo);
+                if (student == null) {
+                    logger.warn("Skipping enrollment: student {} not found in school {}", admissionNo, school.getCode());
+                    continue;
+                }
+                if (examEnrollmentRepository.existsByExamIdAndStudentId(exam.getId(), student.getId())) {
+                    continue;
+                }
+
+                ExamEnrollment enrollment = new ExamEnrollment();
+                enrollment.setExam(exam);
+                enrollment.setStudent(student);
+                enrollment.setEnrolledAt(Instant.now());
+                examEnrollmentRepository.save(enrollment);
+                newEnrollments++;
+            }
+
+            logger.info("Exam enrollment seed processed -> Exam: {}, Total Enrollments: {}", enrollmentSeed.getExamCode(),
+                    examEnrollmentRepository.countByExamId(exam.getId()));
+        }
+
+        logger.info("Exam enrollment seed summary -> New Enrollments: {}", newEnrollments);
+    }
+
+      private <T> T readJsonResource(String classpathFile, TypeReference<T> typeReference) throws JsonProcessingException {
+        try (InputStream inputStream = new ClassPathResource(classpathFile).getInputStream()) {
+          return objectMapper.readValue(inputStream, typeReference);
+        } catch (IOException exception) {
+          throw new JsonProcessingException("Failed to read JSON seed file: " + classpathFile, exception) {
+          };
+        }
+      }
+
+    private void enrollStudents() throws JsonProcessingException {
+      List<JsonStudent> jsonStudents = readJsonResource(STUDENT_SEED_FILE, new TypeReference<List<JsonStudent>>() {
+        });
+
+        int[] seeded = {0};
+        int[] skipped = {0};
 
         jsonStudents.forEach(jsonStudent -> {
             CurrentClass currentClass = jsonStudent.getCurrentClass();
             School school = schoolRepository.findByCode(jsonStudent.getSchoolCode());
+                        if (school == null) {
+                skipped[0]++;
+				logger.warn("Skipping student seed: school {} not found", jsonStudent.getSchoolCode());
+				return;
+			}
             Classroom classroom = classroomRepository.findByGradeAndSectionAndSchool(
                     currentClass.getGrade(),
                     currentClass.getSection(),
@@ -191,458 +272,34 @@ public class LMSModuleSetup {
                 student.setAdmissionNo(jsonStudent.getAdmissionNo());
 
                 studentRepository.save(student);
+                seeded[0]++;
 
+            } else {
+                skipped[0]++;
+                logger.warn("Skipping student seed: classroom {}-{} not found in school {}",
+                        currentClass.getGrade(), currentClass.getSection(), school.getCode());
             }
         });
 
-    }
+        logger.info("Student seed summary -> Requested: {}, Seeded: {}, Skipped: {}", jsonStudents.size(), seeded[0], skipped[0]);
 
-    public static class CurrentClass {
-        private String grade;
-        private String section;
-
-        public String getGrade() {
-            return grade;
-        }
-
-        public void setGrade(String grade) {
-            this.grade = grade;
-        }
-
-        public String getSection() {
-            return section;
-        }
-
-        public void setSection(String section) {
-            this.section = section;
-        }
-    }
-
-    public static class JsonStudent {
-        private String schoolCode;
-        private CurrentClass currentClass;
-        private String admissionNo;
-        private String rollNo;
-        private String firstName;
-        private String lastName;
-        private String gender;
-        private String dateOfBirth;
-        private String guardianName;
-        private String guardianPhone;
-        private String enrolledAt;
-
-        // Getters and setters
-
-
-        public String getSchoolCode() {
-            return schoolCode;
-        }
-
-        public void setSchoolCode(String schoolCode) {
-            this.schoolCode = schoolCode;
-        }
-
-        public CurrentClass getCurrentClass() {
-            return currentClass;
-        }
-
-        public void setCurrentClass(CurrentClass currentClass) {
-            this.currentClass = currentClass;
-        }
-
-        public String getAdmissionNo() {
-            return admissionNo;
-        }
-
-        public void setAdmissionNo(String admissionNo) {
-            this.admissionNo = admissionNo;
-        }
-
-        public String getRollNo() {
-            return rollNo;
-        }
-
-        public void setRollNo(String rollNo) {
-            this.rollNo = rollNo;
-        }
-
-        public String getFirstName() {
-            return firstName;
-        }
-
-        public void setFirstName(String firstName) {
-            this.firstName = firstName;
-        }
-
-        public String getLastName() {
-            return lastName;
-        }
-
-        public void setLastName(String lastName) {
-            this.lastName = lastName;
-        }
-
-        public String getGender() {
-            return gender;
-        }
-
-        public void setGender(String gender) {
-            this.gender = gender;
-        }
-
-        public String getDateOfBirth() {
-            return dateOfBirth;
-        }
-
-        public void setDateOfBirth(String dateOfBirth) {
-            this.dateOfBirth = dateOfBirth;
-        }
-
-        public String getGuardianName() {
-            return guardianName;
-        }
-
-        public void setGuardianName(String guardianName) {
-            this.guardianName = guardianName;
-        }
-
-        public String getGuardianPhone() {
-            return guardianPhone;
-        }
-
-        public void setGuardianPhone(String guardianPhone) {
-            this.guardianPhone = guardianPhone;
-        }
-
-        public String getEnrolledAt() {
-            return enrolledAt;
-        }
-
-        public void setEnrolledAt(String enrolledAt) {
-            this.enrolledAt = enrolledAt;
-        }
     }
 
     private void schoolOrgSetup(
 
     ) throws JsonProcessingException {
         logger.info("LMS Module Setup start!");
+      examEnrollmentRepository.deleteAll();
+      examRepository.deleteAll();
+      studentRepository.deleteAll();
         subjectRepository.deleteAll();
         classroomRepository.deleteAll();
         schoolRepository.deleteAll();
         schoolOrganizationRepository.deleteAll();
-        String classroomJSON = """
-[
-  {
-    "name": "LKG",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Rhymes",
-      "Drawing"
-    ]
-  },
-  {
-    "name": "UKG",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "EVS",
-      "Drawing"
-    ]
-  },
-  {
-    "name": "Class 1",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "EVS",
-      "Hindi"
-    ]
-  },
-  {
-    "name": "Class 2",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "EVS",
-      "Hindi"
-    ]
-  },
-  {
-    "name": "Class 3",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Studies",
-      "Hindi"
-    ]
-  },
-  {
-    "name": "Class 4",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Studies",
-      "Hindi"
-    ]
-  },
-  {
-    "name": "Class 5",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Studies",
-      "Computer"
-    ]
-  },
-  {
-    "name": "Class 6",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Science",
-      "Computer",
-      "Hindi"
-    ]
-  },
-  {
-    "name": "Class 7",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Science",
-      "Computer",
-      "Hindi"
-    ]
-  },
-  {
-    "name": "Class 8",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Physics",
-      "Chemistry",
-      "Biology",
-      "History",
-      "Geography",
-      "Computer"
-    ]
-  },
-  {
-    "name": "Class 9",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Physics",
-      "Chemistry",
-      "Biology",
-      "History",
-      "Geography",
-      "Computer"
-    ]
-  },
-  {
-    "name": "Class 10",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Science",
-      "Computer"
-    ]
-  },
-  {
-    "name": "Class 11",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Physics",
-      "Chemistry",
-      "Mathematics",
-      "Computer Science"
-    ]
-  },
-  {
-    "name": "Class 12",
-    "section": "A",
-    "academicYear": "2026-2027",
-    "subjects": [
-      "English",
-      "Physics",
-      "Chemistry",
-      "Mathematics",
-      "Computer Science"
-    ]
-  }
-]
-""";
-        String json = """
-                    [
-                       {
-                         "name": "St. John's Educational Trust",
-                         "code": "T001",
-                         "schools": [
-                           {
-                             "name": "St. John's Senior Secondary School, Chennai",
-                             "code": "S001",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "St. John's English School & Junior College, Chennai",
-                             "code": "S002",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "St. John's Matriculation Higher Secondary School, Alwarthirunagar",
-                             "code": "S003",
-                             "board": ["State Board"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "St. John's International Residential School, Chennai",
-                             "code": "S004",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           }
-                         ]
-                       },
-                       {
-                         "name": "Delhi Public School Society",
-                         "code": "T002",
-                         "schools": [
-                           {
-                             "name": "Delhi Public School, RK Puram",
-                             "code": "S005",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "Delhi Public School, Vasant Kunj",
-                             "code": "S006",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "Delhi Public School, Bangalore East",
-                             "code": "S007",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           }
-                         ]
-                       },
-                       {
-                         "name": "Ryan International Group of Institutions",
-                         "code": "T003",
-                         "schools": [
-                           {
-                             "name": "Ryan International School, Vasant Kunj",
-                             "code": "S008",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "Ryan International School, Noida",
-                             "code": "S009",
-                             "board": ["CBSE", "ICSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "Ryan International School, HSR Layout",
-                             "code": "S010",
-                             "board": ["ICSE"],
-                             "classrooms": %s
-                           }
-                         ]
-                       },
-                       {
-                         "name": "National Public School Trust",
-                         "code": "T004",
-                         "schools": [
-                           {
-                             "name": "National Public School, Rajajinagar",
-                             "code": "S011",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "National Public School, Indiranagar",
-                             "code": "S012",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "National Public School, Koramangala",
-                             "code": "S013",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           }
-                         ]
-                       },
-                       {
-                         "name": "DAV College Managing Committee",
-                         "code": "T005",
-                         "schools": [
-                           {
-                             "name": "DAV Public School, Chandrasekharpur",
-                             "code": "S014",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "DAV Public School, Nerul",
-                             "code": "S015",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           },
-                           {
-                             "name": "DAV Public School, Aundh",
-                             "code": "S016",
-                             "board": ["CBSE"],
-                             "classrooms": %s
-                           }
-                         ]
-                       }
-                     ]
-                    """.formatted( classroomJSON, classroomJSON, classroomJSON, classroomJSON,
-                classroomJSON, classroomJSON, classroomJSON,
-                classroomJSON, classroomJSON, classroomJSON,
-                classroomJSON, classroomJSON, classroomJSON,
-                classroomJSON, classroomJSON, classroomJSON);
-
-        List<Trust> trusts = objectMapper.readValue(json, new TypeReference<List<Trust>>() {
+        List<JsonClassroom> defaultClassrooms = readJsonResource(CLASSROOM_SEED_FILE,
+                new TypeReference<List<JsonClassroom>>() {
+                });
+        List<Trust> trusts = readJsonResource(TRUST_SEED_FILE, new TypeReference<List<Trust>>() {
         });
 
         trusts.forEach(trust -> {
@@ -653,6 +310,11 @@ public class LMSModuleSetup {
 
             trust.getSchools()
                     .forEach(jsonSchool -> {
+                  List<JsonClassroom> schoolClassrooms = jsonSchool.getClassrooms();
+                  if (schoolClassrooms == null || schoolClassrooms.isEmpty()) {
+                    schoolClassrooms = defaultClassrooms;
+                  }
+
                         School school = new School();
                         school.setCode(jsonSchool.getCode());
                         school.setName(jsonSchool.getName());
@@ -660,7 +322,7 @@ public class LMSModuleSetup {
                         school.setOrganization(organization);
                         School save = schoolRepository.save(school);
 
-                        jsonSchool.getClassrooms()
+                  schoolClassrooms
                                 .forEach(jsonClassroom -> {
                                     Classroom  classroom= new Classroom();
                                     classroom.setSchool(save);
@@ -693,117 +355,5 @@ public class LMSModuleSetup {
         );
 
     }
-
-
-    public static class JsonSchool {
-        private String name;
-        private String code;
-        private Set<String> board;
-        private List<JsonClassroom> classrooms;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(String code) {
-            this.code = code;
-        }
-
-        public Set<String> getBoard() {
-            return board;
-        }
-
-        public void setBoard(Set<String> board) {
-            this.board = board;
-        }
-
-        public List<JsonClassroom> getClassrooms() {
-            return classrooms;
-        }
-
-        public void setClassrooms(List<JsonClassroom> classrooms) {
-            this.classrooms = classrooms;
-        }
-    }
-
-    public static class Trust {
-        private String name;
-        private String code;
-        private List<JsonSchool> schools;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        public void setCode(String code) {
-            this.code = code;
-        }
-
-        public List<JsonSchool> getSchools() {
-            return schools;
-        }
-
-        public void setSchools(List<JsonSchool> schools) {
-            this.schools = schools;
-        }
-
-
-    }
-
-    public static class JsonClassroom {
-        private String name;
-        private List<String> subjects;
-        private String section;
-        private String academicYear;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public List<String> getSubjects() {
-            return subjects;
-        }
-
-        public void setSubjects(List<String> subjects) {
-            this.subjects = subjects;
-        }
-
-        public String getSection() {
-            return section;
-        }
-
-        public void setSection(String section) {
-            this.section = section;
-        }
-
-        public String getAcademicYear() {
-            return academicYear;
-        }
-
-        public void setAcademicYear(String academicYear) {
-            this.academicYear = academicYear;
-        }
-    }
-
 
 }
