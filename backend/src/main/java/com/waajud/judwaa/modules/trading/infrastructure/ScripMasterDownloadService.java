@@ -2,8 +2,11 @@ package com.waajud.judwaa.modules.trading.infrastructure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.waajud.judwaa.config.GlobalExceptionHandler;
 import com.waajud.judwaa.modules.trading.domain.KotakProperties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -17,6 +20,7 @@ import java.util.List;
 
 @Service
 public class ScripMasterDownloadService {
+	private static final Logger logger = LoggerFactory.getLogger(ScripMasterDownloadService.class);
 
 	private final RestTemplate restTemplate;
 	private final KotakProperties props;
@@ -35,24 +39,24 @@ public class ScripMasterDownloadService {
 		Path downloadDir = Path.of(props.getDownloadRoot(), LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE));
 		createDir(downloadDir);
 
-		System.out.println("Found " + fileUrls.size() + " files");
-		System.out.println("Downloading into: " + downloadDir);
+		logger.info("Found " + fileUrls.size() + " files");
+		logger.info("Downloading into: " + downloadDir);
 
 		for (String fileUrl : fileUrls) {
 			String fileName = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
 			Path target = downloadDir.resolve(fileName);
 
 			if (Files.exists(target)) {
-				System.out.println("Skipping existing file: " + fileName);
+				logger.info("Skipping existing file: " + fileName);
 				continue;
 			}
 
-			System.out.println("Downloading: " + fileName);
+			logger.info("Downloading: " + fileName);
 			downloadFile(fileUrl, target);
-			System.out.println("Saved: " + target);
+			logger.info("Saved: " + target);
 		}
 
-		System.out.println("\nAll downloads completed.");
+		logger.info("All downloads completed.");
 	}
 
 	private SessionInfo loadSessionInfo() {
@@ -80,25 +84,19 @@ public class ScripMasterDownloadService {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		HttpEntity<Void> entity = new HttpEntity<>(headers);
-		ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.GET, entity, JsonNode.class);
+		try {
+			ResponseEntity<ScripMasterFilesResponse> response =
+					restTemplate.exchange(url, HttpMethod.GET, entity, ScripMasterFilesResponse.class);
 
-		System.out.println("Status: " + response.getStatusCode().value());
+			List<String> urls = response.getBody().getData().getFilesPaths();
 
-		JsonNode body = response.getBody();
-		if (body == null) {
-			throw new IllegalStateException("Empty response body");
+			return urls;
+
+		} catch (RuntimeException e) {
+			e.printStackTrace();
 		}
 
-		JsonNode filesNode = body.path("data").path("filesPaths");
-		if (!filesNode.isArray()) {
-			throw new IllegalStateException("Invalid response shape: data.filesPaths not found");
-		}
-
-		List<String> urls = new ArrayList<>();
-		for (JsonNode node : filesNode) {
-			urls.add(node.asText());
-		}
-		return urls;
+		return List.of();
 	}
 
 	private void createDir(Path dir) {
@@ -122,5 +120,55 @@ public class ScripMasterDownloadService {
 	}
 
 	private record SessionInfo(String token, String baseUrl) {
+	}
+
+
+	public  static class ScripMasterFilesResponse {
+
+		private Data data;
+
+		public ScripMasterFilesResponse() {
+		}
+
+		public ScripMasterFilesResponse(Data data) {
+			this.data = data;
+		}
+
+		public Data getData() {
+			return data;
+		}
+
+		public void setData(Data data) {
+			this.data = data;
+		}
+
+		public static class Data {
+			private String baseFolder;
+			private List<String> filesPaths;
+
+			public Data() {
+			}
+
+			public Data(String baseFolder, List<String> filesPaths) {
+				this.baseFolder = baseFolder;
+				this.filesPaths = filesPaths;
+			}
+
+			public String getBaseFolder() {
+				return baseFolder;
+			}
+
+			public void setBaseFolder(String baseFolder) {
+				this.baseFolder = baseFolder;
+			}
+
+			public List<String> getFilesPaths() {
+				return filesPaths;
+			}
+
+			public void setFilesPaths(List<String> filesPaths) {
+				this.filesPaths = filesPaths;
+			}
+		}
 	}
 }
