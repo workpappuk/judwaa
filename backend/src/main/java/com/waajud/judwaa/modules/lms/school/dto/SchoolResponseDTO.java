@@ -1,6 +1,8 @@
 package com.waajud.judwaa.modules.lms.school.dto;
 
 import com.waajud.judwaa.shared.RecordStatus;
+
+import java.util.Set;
 import java.util.UUID;
 
 public class SchoolResponseDTO {
@@ -8,7 +10,7 @@ public class SchoolResponseDTO {
 	private UUID organizationId;
 	private String code;
 	private String name;
-	private String board;
+	private Set<String> boards;
 	private String addressLine1;
 	private String addressLine2;
 	private String city;
@@ -49,12 +51,12 @@ public class SchoolResponseDTO {
 		this.name = name;
 	}
 
-	public String getBoard() {
-		return board;
+	public Set<String> getBoards() {
+		return boards;
 	}
 
-	public void setBoard(String board) {
-		this.board = board;
+	public void setBoards(Set<String> boards) {
+		this.boards = boards;
 	}
 
 	public String getAddressLine1() {

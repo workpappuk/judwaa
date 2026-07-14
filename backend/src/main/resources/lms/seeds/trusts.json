@@ -1,0 +1,48 @@
+[
+  {
+    "name": "St. John's Educational Trust",
+    "code": "T001",
+    "schools": [
+      {"name": "St. John's Senior Secondary School, Chennai", "code": "S001", "board": ["CBSE"]},
+      {"name": "St. John's English School & Junior College, Chennai", "code": "S002", "board": ["CBSE"]},
+      {"name": "St. John's Matriculation Higher Secondary School, Alwarthirunagar", "code": "S003", "board": ["State Board"]},
+      {"name": "St. John's International Residential School, Chennai", "code": "S004", "board": ["CBSE"]}
+    ]
+  },
+  {
+    "name": "Delhi Public School Society",
+    "code": "T002",
+    "schools": [
+      {"name": "Delhi Public School, RK Puram", "code": "S005", "board": ["CBSE"]},
+      {"name": "Delhi Public School, Vasant Kunj", "code": "S006", "board": ["CBSE"]},
+      {"name": "Delhi Public School, Bangalore East", "code": "S007", "board": ["CBSE"]}
+    ]
+  },
+  {
+    "name": "Ryan International Group of Institutions",
+    "code": "T003",
+    "schools": [
+      {"name": "Ryan International School, Vasant Kunj", "code": "S008", "board": ["CBSE"]},
+      {"name": "Ryan International School, Noida", "code": "S009", "board": ["CBSE", "ICSE"]},
+      {"name": "Ryan International School, HSR Layout", "code": "S010", "board": ["ICSE"]}
+    ]
+  },
+  {
+    "name": "National Public School Trust",
+    "code": "T004",
+    "schools": [
+      {"name": "National Public School, Rajajinagar", "code": "S011", "board": ["CBSE"]},
+      {"name": "National Public School, Indiranagar", "code": "S012", "board": ["CBSE"]},
+      {"name": "National Public School, Koramangala", "code": "S013", "board": ["CBSE"]}
+    ]
+  },
+  {
+    "name": "DAV College Managing Committee",
+    "code": "T005",
+    "schools": [
+      {"name": "DAV Public School, Chandrasekharpur", "code": "S014", "board": ["CBSE"]},
+      {"name": "DAV Public School, Nerul", "code": "S015", "board": ["CBSE"]},
+      {"name": "DAV Public School, Aundh", "code": "S016", "board": ["CBSE"]}
+    ]
+  }
+]

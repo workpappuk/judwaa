@@ -1,0 +1,10 @@
+[
+  {
+    "schoolCode": "S001",
+    "examCode": "OLY-CLASS8-001",
+    "studentAdmissionNos": [
+      "ADM-1001", "ADM-1002", "ADM-1003", "ADM-1004", "ADM-1005", "ADM-1006", "ADM-1007", "ADM-1008", "ADM-1009", "ADM-1010",
+      "ADM-1011", "ADM-1012", "ADM-1013", "ADM-1014", "ADM-1015", "ADM-1016", "ADM-1017", "ADM-1018", "ADM-1019", "ADM-1020"
+    ]
+  }
+]

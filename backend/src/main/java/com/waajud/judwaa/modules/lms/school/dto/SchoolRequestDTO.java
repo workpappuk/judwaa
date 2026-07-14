@@ -2,6 +2,8 @@ package com.waajud.judwaa.modules.lms.school.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.Set;
 import java.util.UUID;
 
 public class SchoolRequestDTO {
@@ -14,7 +16,7 @@ public class SchoolRequestDTO {
 	@NotBlank
 	private String name;
 
-	private String board;
+	private Set<String> boards;
 	private String addressLine1;
 	private String addressLine2;
 	private String city;
@@ -46,12 +48,11 @@ public class SchoolRequestDTO {
 		this.name = name;
 	}
 
-	public String getBoard() {
-		return board;
+	public Set<String> getBoards() {
+		return boards;
 	}
-
-	public void setBoard(String board) {
-		this.board = board;
+	public void setBoards(Set<String> boards) {
+		this.boards = boards;
 	}
 
 	public String getAddressLine1() {

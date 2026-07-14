@@ -1,0 +1,101 @@
+[
+  {
+    "schoolCode": "S001",
+    "code": "OLY-CLASS8-001",
+    "title": "Class 8 Science-Math Olympiad",
+    "description": "Seeded olympiad paper with objective and numeric questions",
+    "examType": "OLYMPIAD",
+    "startAfterMinutes": 60,
+    "durationMinutes": 90,
+    "totalMarks": 60,
+    "sections": [
+      {
+        "displayOrder": 1,
+        "title": "Mathematics Aptitude",
+        "description": "Logical and numerical reasoning",
+        "maxMarks": 30,
+        "questions": [
+          {
+            "displayOrder": 1,
+            "questionType": "SINGLE_CHOICE",
+            "questionText": "What is 17 x 6?",
+            "marks": 5,
+            "mandatory": true,
+            "options": [
+              {"displayOrder": 1, "optionText": "96", "correct": false},
+              {"displayOrder": 2, "optionText": "102", "correct": true},
+              {"displayOrder": 3, "optionText": "112", "correct": false},
+              {"displayOrder": 4, "optionText": "98", "correct": false}
+            ]
+          },
+          {
+            "displayOrder": 2,
+            "questionType": "MULTIPLE_CHOICE",
+            "questionText": "Which of the following are prime numbers?",
+            "marks": 5,
+            "mandatory": true,
+            "options": [
+              {"displayOrder": 1, "optionText": "29", "correct": true},
+              {"displayOrder": 2, "optionText": "39", "correct": false},
+              {"displayOrder": 3, "optionText": "41", "correct": true},
+              {"displayOrder": 4, "optionText": "51", "correct": false}
+            ]
+          },
+          {
+            "displayOrder": 3,
+            "questionType": "NUMERIC",
+            "questionText": "If a train travels 180 km in 3 hours, what is speed in km/h?",
+            "marks": 5,
+            "mandatory": true,
+            "options": []
+          }
+        ]
+      },
+      {
+        "displayOrder": 2,
+        "title": "General Science",
+        "description": "Physics, Chemistry, Biology basics",
+        "maxMarks": 30,
+        "questions": [
+          {
+            "displayOrder": 1,
+            "questionType": "SINGLE_CHOICE",
+            "questionText": "Which gas is most abundant in Earth's atmosphere?",
+            "marks": 5,
+            "mandatory": true,
+            "options": [
+              {"displayOrder": 1, "optionText": "Oxygen", "correct": false},
+              {"displayOrder": 2, "optionText": "Hydrogen", "correct": false},
+              {"displayOrder": 3, "optionText": "Nitrogen", "correct": true},
+              {"displayOrder": 4, "optionText": "Carbon Dioxide", "correct": false}
+            ]
+          },
+          {
+            "displayOrder": 2,
+            "questionType": "TRUE_FALSE",
+            "questionText": "Sound cannot travel in vacuum.",
+            "marks": 5,
+            "mandatory": true,
+            "options": [
+              {"displayOrder": 1, "optionText": "True", "correct": true},
+              {"displayOrder": 2, "optionText": "False", "correct": false}
+            ]
+          },
+          {
+            "displayOrder": 3,
+            "questionType": "SINGLE_CHOICE",
+            "questionText": "Human blood is primarily pumped by which organ?",
+            "marks": 5,
+            "mandatory": true,
+            "options": [
+              {"displayOrder": 1, "optionText": "Liver", "correct": false},
+              {"displayOrder": 2, "optionText": "Heart", "correct": true},
+              {"displayOrder": 3, "optionText": "Lung", "correct": false},
+              {"displayOrder": 4, "optionText": "Kidney", "correct": false}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

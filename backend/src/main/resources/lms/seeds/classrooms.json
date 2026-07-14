@@ -1,0 +1,174 @@
+[
+  {
+    "name": "LKG",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Rhymes",
+      "Drawing"
+    ]
+  },
+  {
+    "name": "UKG",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "EVS",
+      "Drawing"
+    ]
+  },
+  {
+    "name": "Class 1",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "EVS",
+      "Hindi"
+    ]
+  },
+  {
+    "name": "Class 2",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "EVS",
+      "Hindi"
+    ]
+  },
+  {
+    "name": "Class 3",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Science",
+      "Social Studies",
+      "Hindi"
+    ]
+  },
+  {
+    "name": "Class 4",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Science",
+      "Social Studies",
+      "Hindi"
+    ]
+  },
+  {
+    "name": "Class 5",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Science",
+      "Social Studies",
+      "Computer"
+    ]
+  },
+  {
+    "name": "Class 6",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Science",
+      "Social Science",
+      "Computer",
+      "Hindi"
+    ]
+  },
+  {
+    "name": "Class 7",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Science",
+      "Social Science",
+      "Computer",
+      "Hindi"
+    ]
+  },
+  {
+    "name": "Class 8",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Physics",
+      "Chemistry",
+      "Biology",
+      "History",
+      "Geography",
+      "Computer"
+    ]
+  },
+  {
+    "name": "Class 9",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Physics",
+      "Chemistry",
+      "Biology",
+      "History",
+      "Geography",
+      "Computer"
+    ]
+  },
+  {
+    "name": "Class 10",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Mathematics",
+      "Science",
+      "Social Science",
+      "Computer"
+    ]
+  },
+  {
+    "name": "Class 11",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Physics",
+      "Chemistry",
+      "Mathematics",
+      "Computer Science"
+    ]
+  },
+  {
+    "name": "Class 12",
+    "section": "A",
+    "academicYear": "2026-2027",
+    "subjects": [
+      "English",
+      "Physics",
+      "Chemistry",
+      "Mathematics",
+      "Computer Science"
+    ]
+  }
+]

@@ -89,17 +89,7 @@ public class StudentService {
 			int page, int size) {
 		Pageable pageable = PageRequest.of(normalizePage(page), normalizeSize(size),
 				Sort.by(Sort.Direction.ASC, "firstName").and(Sort.by(Sort.Direction.ASC, "lastName")));
-		Page<Student> pageData;
-		if (organizationId == null) {
-			pageData = studentRepository.findAll(pageable);
-		} else if (schoolId == null) {
-			pageData = studentRepository.findByOrganizationId(organizationId, pageable);
-		} else if (classroomId == null) {
-			pageData = studentRepository.findByOrganizationIdAndSchoolId(organizationId, schoolId, pageable);
-		} else {
-			pageData = studentRepository.findByOrganizationIdAndSchoolIdAndClassroomId(organizationId, schoolId,
-					classroomId, pageable);
-		}
+		Page<Student> pageData = studentRepository.findAll(pageable);
 		return PaginatedResponseDTO.fromPage(pageData.map(this::toResponse));
 	}
 
