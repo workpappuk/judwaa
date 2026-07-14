@@ -18,7 +18,7 @@ type SchoolFormState = {
   organizationId: string;
   code: string;
   name: string;
-  board: string;
+  boardsInput: string;
   addressLine1: string;
   addressLine2: string;
   city: string;
@@ -31,7 +31,7 @@ const initialForm: SchoolFormState = {
   organizationId: "",
   code: "",
   name: "",
-  board: "",
+  boardsInput: "",
   addressLine1: "",
   addressLine2: "",
   city: "",
@@ -87,7 +87,7 @@ export default function SchoolManagementPage() {
       organizationId: school.organizationId,
       code: school.code,
       name: school.name,
-      board: school.board ?? "",
+      boardsInput: school.boards?.join(", ") ?? "",
       addressLine1: school.addressLine1 ?? "",
       addressLine2: school.addressLine2 ?? "",
       city: school.city ?? "",
@@ -111,11 +111,16 @@ export default function SchoolManagementPage() {
     setMessage(null);
 
     try {
+      const boards = form.boardsInput
+        .split(",")
+        .map((board) => board.trim())
+        .filter((board) => board.length > 0);
+
       const payload = {
         organizationId: form.organizationId,
         code: form.code.toUpperCase(),
         name: form.name,
-        board: form.board || undefined,
+        boards: boards.length > 0 ? boards : undefined,
         addressLine1: form.addressLine1 || undefined,
         addressLine2: form.addressLine2 || undefined,
         city: form.city || undefined,
@@ -203,10 +208,10 @@ export default function SchoolManagementPage() {
               placeholder="Sunrise School"
             />
             <LmsTextField
-              label="Board"
-              value={form.board}
-              onChange={(board) => setForm((prev) => ({ ...prev, board }))}
-              placeholder="State Board"
+              label="Boards"
+              value={form.boardsInput}
+              onChange={(boardsInput) => setForm((prev) => ({ ...prev, boardsInput }))}
+              placeholder="CBSE, ICSE"
             />
             <AddressFields
               values={{
@@ -264,6 +269,7 @@ export default function SchoolManagementPage() {
                   <div>
                     <p className="text-sm font-medium">{school.code} - {school.name}</p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">{orgLabelById.get(school.organizationId) ?? school.organizationId} | {school.status}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Boards: {school.boards?.join(", ") || "-"}</p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       {school.addressLine1 ?? "-"}, {school.addressLine2 ?? "-"}, {school.city ?? "-"}, {school.state ?? "-"}, {school.country ?? "-"} {school.pincode ?? ""}
                     </p>

@@ -11,6 +11,16 @@ const SCHOOL_ROUTE_CARDS = [
     description: "Create, update and activate/deactivate schools.",
     href: "/lms/school-management",
   },
+  {
+    title: "Student Management",
+    description: "Manage student lifecycle and enrollment records.",
+    href: "/lms/student-management",
+  },
+  {
+    title: "Exam Management",
+    description: "Manage exams, schedules, and activation workflows.",
+    href: "/lms/exam-management",
+  },
 ];
 
 export default function SchoolRoutesPage() {
@@ -21,7 +31,7 @@ export default function SchoolRoutesPage() {
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Choose a dedicated route to manage school onboarding workflows.</p>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
         {SCHOOL_ROUTE_CARDS.map((card) => (
           <Link
             key={card.href}

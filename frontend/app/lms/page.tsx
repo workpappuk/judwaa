@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FiBookOpen, FiMap, FiUsers } from "react-icons/fi";
+import { FiBookOpen, FiClipboard, FiMap, FiUserCheck, FiUsers } from "react-icons/fi";
 
 const LMS_CARDS = [
   {
@@ -20,6 +20,18 @@ const LMS_CARDS = [
     href: "/lms/school-routes",
     icon: FiMap,
   },
+  {
+    title: "Student Management",
+    description: "Dedicated route to manage student workflows.",
+    href: "/lms/student-management",
+    icon: FiUserCheck,
+  },
+  {
+    title: "Exam Management",
+    description: "Dedicated route to manage exam workflows.",
+    href: "/lms/exam-management",
+    icon: FiClipboard,
+  },
 ];
 
 export default function LmsPage() {
@@ -28,7 +40,7 @@ export default function LmsPage() {
       <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h1 className="display-face text-2xl font-semibold">LMS Route Hub</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Navigate to dedicated management routes for organization and school CRUD.
+          Navigate to dedicated management routes for organization, school, student, and exam workflows.
         </p>
       </section>
 

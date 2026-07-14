@@ -1,6 +1,9 @@
 import axios from "axios";
 
 import type {
+  Classroom,
+  Exam,
+  ExamRequest,
   LmsPaginatedResponse,
   Organization,
   OrganizationRequest,
@@ -41,6 +44,23 @@ export async function listSchools(page = 1, size = 20, organizationId?: string):
       page,
       size,
       ...(organizationId ? { organizationId } : {}),
+    },
+  });
+
+  return response.data;
+}
+
+export async function listClassrooms(
+  page = 1,
+  size = 20,
+  filters?: { organizationId?: string; schoolId?: string },
+): Promise<LmsPaginatedResponse<Classroom>> {
+  const response = await lmsApi.get<LmsPaginatedResponse<Classroom>>("/api/lms/classrooms", {
+    params: {
+      page,
+      size,
+      ...(filters?.organizationId ? { organizationId: filters.organizationId } : {}),
+      ...(filters?.schoolId ? { schoolId: filters.schoolId } : {}),
     },
   });
 
@@ -147,5 +167,82 @@ export async function createStudent(payload: StudentRequest): Promise<Student> {
     return response.data;
   } catch (error) {
     throw new Error(getApiErrorMessage(error, "Unable to create student right now."));
+  }
+}
+
+export async function updateStudent(id: string, payload: StudentRequest): Promise<Student> {
+  try {
+    const response = await lmsApi.put<Student>(`/api/lms/students/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to update student right now."));
+  }
+}
+
+export async function activateStudent(id: string): Promise<void> {
+  try {
+    await lmsApi.put(`/api/lms/students/${id}/activate`);
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to activate student right now."));
+  }
+}
+
+export async function deactivateStudent(id: string): Promise<void> {
+  try {
+    await lmsApi.put(`/api/lms/students/${id}/deactivate`);
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to deactivate student right now."));
+  }
+}
+
+export async function listExams(
+  page = 1,
+  size = 20,
+  filters?: { organizationId?: string; schoolId?: string; examType?: string },
+): Promise<LmsPaginatedResponse<Exam>> {
+  const response = await lmsApi.get<LmsPaginatedResponse<Exam>>("/api/lms/exams", {
+    params: {
+      page,
+      size,
+      ...(filters?.organizationId ? { organizationId: filters.organizationId } : {}),
+      ...(filters?.schoolId ? { schoolId: filters.schoolId } : {}),
+      ...(filters?.examType ? { examType: filters.examType } : {}),
+    },
+  });
+
+  return response.data;
+}
+
+export async function createExam(payload: ExamRequest): Promise<Exam> {
+  try {
+    const response = await lmsApi.post<Exam>("/api/lms/exams", payload);
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to create exam right now."));
+  }
+}
+
+export async function updateExam(id: string, payload: ExamRequest): Promise<Exam> {
+  try {
+    const response = await lmsApi.put<Exam>(`/api/lms/exams/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to update exam right now."));
+  }
+}
+
+export async function activateExam(id: string): Promise<void> {
+  try {
+    await lmsApi.put(`/api/lms/exams/${id}/activate`);
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to activate exam right now."));
+  }
+}
+
+export async function deactivateExam(id: string): Promise<void> {
+  try {
+    await lmsApi.put(`/api/lms/exams/${id}/deactivate`);
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "Unable to deactivate exam right now."));
   }
 }

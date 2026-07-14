@@ -1,4 +1,5 @@
 export type LmsRecordStatus = "ACTIVE" | "INACTIVE";
+export type LmsExamType = "OLYMPIAD" | "SCHOOL" | "CUSTOM" | "COMPETITIVE" | "PRACTICE";
 
 export interface LmsPaginatedResponse<T> {
   content: T[];
@@ -43,7 +44,7 @@ export interface School {
   organizationId: string;
   code: string;
   name: string;
-  board: string | null;
+  boards: string[] | null;
   addressLine1: string | null;
   addressLine2: string | null;
   city: string | null;
@@ -57,13 +58,25 @@ export interface SchoolRequest {
   organizationId: string;
   code: string;
   name: string;
-  board?: string;
+  boards?: string[];
   addressLine1?: string;
   addressLine2?: string;
   city?: string;
   state?: string;
   country?: string;
   pincode?: string;
+}
+
+export interface Classroom {
+  id: string;
+  organizationId: string;
+  schoolId: string;
+  schoolCode: string;
+  academicYear: string;
+  grade: string;
+  section: string;
+  classTeacherName: string | null;
+  status: LmsRecordStatus;
 }
 
 export interface Student {
@@ -96,4 +109,57 @@ export interface StudentRequest {
   guardianName?: string;
   guardianPhone?: string;
   enrolledAt?: string;
+}
+
+export interface ExamQuestionOptionRequest {
+  displayOrder: number;
+  optionText: string;
+  correct: boolean;
+}
+
+export interface ExamQuestionRequest {
+  displayOrder: number;
+  questionType: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER" | "LONG_ANSWER" | "NUMERIC";
+  questionText: string;
+  marks: number;
+  mandatory?: boolean;
+  explanation?: string;
+  options?: ExamQuestionOptionRequest[];
+}
+
+export interface ExamSectionRequest {
+  displayOrder: number;
+  title: string;
+  description?: string;
+  maxMarks?: number;
+  questions: ExamQuestionRequest[];
+}
+
+export interface ExamRequest {
+  organizationId: string;
+  schoolId?: string;
+  code: string;
+  title: string;
+  description?: string;
+  examType: LmsExamType;
+  startsAt?: string;
+  endsAt?: string;
+  durationMinutes?: number;
+  totalMarks?: number;
+  sections: ExamSectionRequest[];
+}
+
+export interface Exam {
+  id: string;
+  organizationId: string;
+  schoolId: string | null;
+  code: string;
+  title: string;
+  description: string | null;
+  examType: LmsExamType;
+  startsAt: string | null;
+  endsAt: string | null;
+  durationMinutes: number | null;
+  totalMarks: number | null;
+  status: LmsRecordStatus;
 }
