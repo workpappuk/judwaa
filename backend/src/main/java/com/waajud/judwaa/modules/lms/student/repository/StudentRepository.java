@@ -15,5 +15,20 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
 	boolean existsBySchoolIdAndRollNoAndIdNot(UUID schoolId, String rollNo, UUID id);
 
+	Page<Student> findByOrganizationId(UUID organizationId, Pageable pageable);
+
+	Page<Student> findBySchoolId(UUID schoolId, Pageable pageable);
+
+	Page<Student> findByClassroomId(UUID classroomId, Pageable pageable);
+
+	Page<Student> findBySchoolIdAndClassroomId(UUID schoolId, UUID classroomId, Pageable pageable);
+
+	Page<Student> findByOrganizationIdAndSchoolId(UUID organizationId, UUID schoolId, Pageable pageable);
+
+	Page<Student> findByOrganizationIdAndClassroomId(UUID organizationId, UUID classroomId, Pageable pageable);
+
+	Page<Student> findByOrganizationIdAndSchoolIdAndClassroomId(UUID organizationId, UUID schoolId, UUID classroomId,
+			Pageable pageable);
+
 	List<Student> findBySchoolId(UUID schoolId);
 }

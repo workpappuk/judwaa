@@ -16,6 +16,12 @@ import org.springframework.data.repository.query.Param;
 public interface ClassroomRepository extends JpaRepository<Classroom, UUID> {
 	Optional<Classroom> findByIdAndSchoolId(UUID id, UUID schoolId);
 
+    boolean existsBySchoolIdAndAcademicYearAndGradeAndSection(UUID schoolId, String academicYear, String grade,
+            String section);
+
+    boolean existsBySchoolIdAndAcademicYearAndGradeAndSectionAndIdNot(UUID schoolId, String academicYear,
+            String grade, String section, UUID id);
+
     @Query("select c from Classroom c where c.school.id = :schoolId")
     Page<Classroom> findPageBySchoolId(@Param("schoolId") UUID schoolId, Pageable pageable);
 
