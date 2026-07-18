@@ -1,5 +1,7 @@
 "use client";
 
+import { Alert, Box, Container } from "@mui/material";
+
 import Tabs from "@/components/tab";
 import HeroSection from "@/components/incentive/hero-section";
 import SchemesTab from "@/components/incentive/schemes-tab";
@@ -73,8 +75,15 @@ export default function IncentivePage() {
   } = useIncentivePageState();
 
   return (
-    <div className="min-h-screen rounded-xl bg-[radial-gradient(circle_at_top_left,#dbeafe,#f4f7ff_45%,#eef2ff_75%)] pb-8 p-3 text-zinc-900 transition-colors dark:bg-[radial-gradient(circle_at_top_left,#1e293b_0%,#111827_42%,#090d16_100%)] dark:text-zinc-100">
-      <div className="mx-auto max-w-7xl">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        py: { xs: 1.5, md: 2.5 },
+        background:
+          "radial-gradient(circle at 0% 0%, rgba(13,110,253,0.12), rgba(255,255,255,0.96) 45%, rgba(236,242,255,0.92) 100%)",
+      }}
+    >
+      <Container maxWidth="xl">
         <HeroSection
           schemesCount={schemes.length}
           activeSchemeCount={activeSchemeCount}
@@ -83,20 +92,12 @@ export default function IncentivePage() {
           onCreateScheme={() => setShowSchemeForm(true)}
         />
 
-        {error ? (
-          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
-            {error}
-          </div>
-        ) : null}
+        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
 
-        {message ? (
-          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/90 p-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-            {message}
-          </div>
-        ) : null}
+        {message ? <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert> : null}
 
         <Tabs
-          className="mb-6"
+          className="incentive-tabs"
           activeTab={activeTab}
           onTabChange={(tabId) => {
             if (tabId === "schemes") {
@@ -211,7 +212,7 @@ export default function IncentivePage() {
             onRunNewCalculation={() => void handleRunCalculation()}
           />
         ) : null}
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 }

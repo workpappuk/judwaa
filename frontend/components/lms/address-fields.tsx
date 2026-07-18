@@ -1,3 +1,5 @@
+import { Box } from "@mui/material";
+
 import { LmsTextField } from "@/components/lms/lms-text-field";
 
 type AddressFormValues = {
@@ -16,7 +18,7 @@ type AddressFieldsProps = {
 
 export function AddressFields({ values, onChange }: AddressFieldsProps) {
   return (
-    <>
+    <Box sx={{ display: "grid", gap: 1.5 }}>
       <LmsTextField
         label="Address Line 1"
         value={values.addressLine1}
@@ -29,7 +31,7 @@ export function AddressFields({ values, onChange }: AddressFieldsProps) {
         onChange={(addressLine2) => onChange({ ...values, addressLine2 })}
         placeholder="Near City Mall"
       />
-      <div className="grid gap-3 md:grid-cols-2">
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
         <LmsTextField
           label="City"
           value={values.city}
@@ -42,8 +44,8 @@ export function AddressFields({ values, onChange }: AddressFieldsProps) {
           onChange={(state) => onChange({ ...values, state })}
           placeholder="Maharashtra"
         />
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
+      </Box>
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
         <LmsTextField
           label="Country"
           value={values.country}
@@ -56,7 +58,7 @@ export function AddressFields({ values, onChange }: AddressFieldsProps) {
           onChange={(pincode) => onChange({ ...values, pincode })}
           placeholder="400001"
         />
-      </div>
-    </>
+      </Box>
+    </Box>
   );
 }

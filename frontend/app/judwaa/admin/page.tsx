@@ -1,7 +1,7 @@
 
 import Link from "next/link";
 import type { IconType } from "react-icons";
-import { FiArrowUpRight, FiBookOpen, FiLogOut, FiShield, FiTrendingUp, FiUserCheck } from "react-icons/fi";
+import { FiArrowUpRight, FiLogOut, FiShield } from "react-icons/fi";
 
 export default function AdminHome() {
   type Card = {
@@ -13,7 +13,8 @@ export default function AdminHome() {
   };
 
   const cards: Card[] = [
-       { id: 5, title: "Force Logout", content: "Blacklist user token", url: "/judwaa/admin/security/forcelogout", icon: FiLogOut },
+      { id: 1, title: "Nocode", content: "Metadata platform admin", url: "/judwaa/admin/nocode", icon: FiShield },
+      { id: 5, title: "Force Logout", content: "Blacklist user token", url: "/judwaa/admin/security/forcelogout", icon: FiLogOut },
   ];
 
   return (

@@ -1,6 +1,7 @@
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { FiLayers, FiPlus } from "react-icons/fi";
 
-import { formatCompactNumber, incentiveTheme } from "@/components/incentive/utils";
+import { formatCompactNumber } from "@/components/incentive/utils";
 
 interface HeroSectionProps {
   schemesCount: number;
@@ -18,44 +19,39 @@ export default function HeroSection({
   onCreateScheme,
 }: HeroSectionProps) {
   return (
-    <div className={`mb-6 overflow-hidden rounded-2xl p-5 backdrop-blur-sm ${incentiveTheme.panel}`}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="mb-1 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-            <FiLayers className="h-3 w-3" />
+    <Paper variant="outlined" sx={{ mb: 3, p: 2.5 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
+        <Box>
+          <Typography variant="caption" sx={{ mb: 1, display: "inline-flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, borderRadius: 99, bgcolor: "info.50", color: "info.dark", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 700 }}>
+            <FiLayers size={12} />
             Incentive Engine
-          </p>
-          <h1 className="display-face text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Distributor Incentive Manager</h1>
-          <p className={`mt-1 text-sm ${incentiveTheme.mutedText}`}>Build schemes, author rules, and run payout calculations from one place.</p>
-        </div>
-        <button
-          onClick={onCreateScheme}
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
-        >
-          <FiPlus className="h-3.5 w-3.5" />
+          </Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>Distributor Incentive Manager</Typography>
+          <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>Build schemes, author rules, and run payout calculations from one place.</Typography>
+        </Box>
+        <Button onClick={onCreateScheme} variant="contained" size="small" startIcon={<FiPlus />}>
           Create Scheme
-        </button>
-      </div>
+        </Button>
+      </Box>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-        <article className={incentiveTheme.metricCard}>
-          <p className={`text-[10px] uppercase tracking-wide ${incentiveTheme.mutedText}`}>Schemes</p>
-          <p className="mt-0.5 text-base font-semibold">{formatCompactNumber(schemesCount)}</p>
-        </article>
-        <article className={incentiveTheme.metricCard}>
-          <p className={`text-[10px] uppercase tracking-wide ${incentiveTheme.mutedText}`}>Active</p>
-          <p className="mt-0.5 text-base font-semibold text-emerald-600 dark:text-emerald-300">{formatCompactNumber(activeSchemeCount)}</p>
-        </article>
-        <article className={incentiveTheme.metricCard}>
-          <p className={`text-[10px] uppercase tracking-wide ${incentiveTheme.mutedText}`}>Drafts</p>
-          <p className="mt-0.5 text-base font-semibold text-amber-600 dark:text-amber-300">{formatCompactNumber(draftSchemeCount)}</p>
-        </article>
-        <article className={incentiveTheme.metricCard}>
-          <p className={`text-[10px] uppercase tracking-wide ${incentiveTheme.mutedText}`}>Total Rules</p>
-          <p className="mt-0.5 text-base font-semibold">{formatCompactNumber(totalRulesAcrossSchemes)}</p>
-        </article>
-      </div>
-    </div>
+      <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", md: "repeat(4,1fr)" }, gap: 1 }}>
+        <Paper variant="outlined" sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.08em" }}>Schemes</Typography>
+          <Typography variant="subtitle1" sx={{ mt: 0.5, fontWeight: 700 }}>{formatCompactNumber(schemesCount)}</Typography>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.08em" }}>Active</Typography>
+          <Typography variant="subtitle1" sx={{ mt: 0.5, fontWeight: 700, color: "success.main" }}>{formatCompactNumber(activeSchemeCount)}</Typography>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.08em" }}>Drafts</Typography>
+          <Typography variant="subtitle1" sx={{ mt: 0.5, fontWeight: 700, color: "warning.main" }}>{formatCompactNumber(draftSchemeCount)}</Typography>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 1.25 }}>
+          <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total Rules</Typography>
+          <Typography variant="subtitle1" sx={{ mt: 0.5, fontWeight: 700 }}>{formatCompactNumber(totalRulesAcrossSchemes)}</Typography>
+        </Paper>
+      </Box>
+    </Paper>
   );
 }

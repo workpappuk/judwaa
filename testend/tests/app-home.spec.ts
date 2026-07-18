@@ -75,12 +75,12 @@ test('protected card redirects to auth when not logged in', async ({ page }) => 
 test('full homepage e2e navigation coverage for all cards', async ({ page }) => {
   await page.goto(`${APP_BASE_URL}/`);
 
-  await expect(page.getByRole('button')).toHaveCount(7);
+  await expect(page.locator('main > div > button')).toHaveCount(7);
   await expect(page.getByText(/members only/i)).toHaveCount(6);
 
   for (const card of homeCards) {
     await page.goto(`${APP_BASE_URL}/`);
-    await page.getByRole('button', { name: card.label }).click();
+    await page.locator('main > div > button').filter({ hasText: card.label }).first().click();
     await expect(page).toHaveURL(card.expectedPath);
   }
 });

@@ -1,3 +1,5 @@
+import { Box } from "@mui/material";
+
 import { LmsTextField } from "@/components/lms/lms-text-field";
 
 type ContactFormValues = {
@@ -12,7 +14,7 @@ type ContactFieldsProps = {
 
 export function ContactFields({ values, onChange }: ContactFieldsProps) {
   return (
-    <>
+    <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" } }}>
       <LmsTextField
         label="Contact Email"
         type="email"
@@ -26,6 +28,6 @@ export function ContactFields({ values, onChange }: ContactFieldsProps) {
         onChange={(contactPhone) => onChange({ ...values, contactPhone })}
         placeholder="+91-9000000000"
       />
-    </>
+    </Box>
   );
 }

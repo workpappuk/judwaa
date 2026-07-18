@@ -10,8 +10,9 @@ test('data collector supports search, navigation, and persisted data modal', asy
   await expect(page.getByText(/no collectors found for this search\./i)).toBeVisible();
   await page.getByRole('button', { name: /clear collector search/i }).click();
 
-  await expect(page.getByRole('button', { name: /next/i })).toBeVisible();
-  await page.getByRole('button', { name: /next/i }).click();
+  const nextButton = page.getByRole('button', { name: /^next$/i });
+  await expect(nextButton).toBeVisible();
+  await nextButton.click();
   await expect(page.getByText(/step \d+ of \d+/i)).toBeVisible();
 
   await page.getByRole('button', { name: /view persisted data/i }).click();

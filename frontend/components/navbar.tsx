@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { FiHome, FiLogOut, FiMaximize, FiMenu, FiMinimize, FiMoon, FiPause, FiPlay, FiSun, FiUser } from "react-icons/fi";
+import { FiLogOut, FiMaximize, FiMenu, FiMinimize, FiMoon, FiPause, FiPlay, FiSun, FiUser } from "react-icons/fi";
 import { useTheme } from "next-themes";
+import { AppBar, Box, IconButton, Toolbar, Typography, Button as MuiButton } from "@mui/material";
 
 import { logoutUser } from "@/services/auth-api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -113,86 +114,46 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f141c]/95 backdrop-blur-sm transition-colors">
-      <audio
-        ref={audioRef}
-        src="/audio/fno-background.mp3"
-        preload="auto"
-        loop
-        playsInline
-        className="hidden"
-      />
+    <AppBar position="sticky" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: "divider", backdropFilter: "blur(6px)", bgcolor: "background.paper" }}>
+      <audio ref={audioRef} src="/audio/fno-background.mp3" preload="auto" loop playsInline style={{ display: "none" }} />
 
-      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="display-face  font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">
+      <Toolbar sx={{ minHeight: 56, justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography component={Link} href="/" sx={{ textDecoration: "none", fontWeight: 800, textTransform: "uppercase", color: "text.primary" }}>
             Judwaa
-          </Link>
-          <nav className="flex items-center gap-4  font-medium text-zinc-600 dark:text-zinc-300">
-            <button
-              type="button"
-              onClick={() => dispatch(toggleSidebar())}
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
-              aria-label="Toggle navigation sidebar"
-              title="Toggle sidebar"
-            >
-              <FiMenu className="h-4 w-4" />
-            </button>
+          </Typography>
 
-            {!authSession ? (
-              <Link href="/auth" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                <FiUser className="h-3.5 w-3.5" />
-                Login
-              </Link>
-            ) : null}
-          </nav>
-        </div>
+          <IconButton size="small" onClick={() => dispatch(toggleSidebar())} aria-label="Toggle navigation sidebar" title="Toggle sidebar">
+            <FiMenu />
+          </IconButton>
 
-        <div className="flex items-center gap-2">
+          {!authSession ? (
+            <MuiButton component={Link} href="/auth" size="small" startIcon={<FiUser />}>
+              Login
+            </MuiButton>
+          ) : null}
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {authSession ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              title={`Logout ${authSession.username}`}
-            >
-              <FiLogOut className="h-3.5 w-3.5" />
+            <MuiButton size="small" variant="outlined" onClick={handleLogout} startIcon={<FiLogOut />} title={`Logout ${authSession.username}`}>
               Logout
-            </button>
+            </MuiButton>
           ) : null}
 
+          <IconButton size="small" onClick={handleAudioToggle} aria-label="Toggle background audio" title={isAudioPlaying ? "Pause audio" : "Play audio"}>
+            {isAudioPlaying ? <FiPause /> : <FiPlay />}
+          </IconButton>
 
-          <button
-            type="button"
-            onClick={handleAudioToggle}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
-            aria-label="Toggle background audio"
-            title={isAudioPlaying ? "Pause audio" : "Play audio"}
-          >
-            {isAudioPlaying ? <FiPause className="h-4 w-4" /> : <FiPlay className="h-4 w-4" />}
-          </button>
+          <IconButton size="small" onClick={handleFullscreenToggle} aria-label="Toggle fullscreen" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+            {isFullscreen ? <FiMinimize /> : <FiMaximize />}
+          </IconButton>
 
-          <button
-            type="button"
-            onClick={handleFullscreenToggle}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
-            aria-label="Toggle fullscreen"
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            {isFullscreen ? <FiMinimize className="h-4 w-4" /> : <FiMaximize className="h-4 w-4" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleThemeToggle}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 h-8 w-8 active:scale-95 transition"
-            aria-label="Toggle theme"
-            title={currentTheme === "dark" ? "Switch to light" : "Switch to dark"}
-          >
-            {currentTheme === "dark" ? <FiSun className="h-4 w-4" /> : <FiMoon className="h-4 w-4" />}
-          </button>
-        </div>
-      </div>
-    </header>
+          <IconButton size="small" onClick={handleThemeToggle} aria-label="Toggle theme" title={currentTheme === "dark" ? "Switch to light" : "Switch to dark"}>
+            {currentTheme === "dark" ? <FiSun /> : <FiMoon />}
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { Box, Paper, Typography } from "@mui/material";
 
 type Mp3PlayerProps = {
   src: string;
@@ -34,35 +35,26 @@ export function Mp3Player({
     });
   }, [autoPlay, src]);
 
-  return (
-    <section
-      className={showUI
-        ? `rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 ${className ?? ""}`
-        : `absolute w-px h-px overflow-hidden opacity-0 pointer-events-none ${className ?? ""}`}
-      aria-hidden={!showUI}
-    >
-      {showUI ? (
-        <label
-          htmlFor={audioId}
-          className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2"
-        >
-          {title}
-        </label>
-      ) : null}
+  if (!showUI) {
+    return (
+      <Box className={className} sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }} aria-hidden>
+        <audio id={audioId} ref={audioRef} controls={false} preload={preload} autoPlay={autoPlay} loop={loop} playsInline>
+          <source src={src} type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      </Box>
+    );
+  }
 
-      <audio
-        id={audioId}
-        ref={audioRef}
-        controls={showUI}
-        preload={preload}
-        autoPlay={autoPlay}
-        loop={loop}
-        playsInline
-        className="w-full"
-      >
+  return (
+    <Paper variant="outlined" className={className} sx={{ p: 1.5 }}>
+      <Typography variant="caption" sx={{ display: "block", mb: 1, fontWeight: 600, color: "text.secondary" }}>
+        {title}
+      </Typography>
+      <audio id={audioId} ref={audioRef} controls preload={preload} autoPlay={autoPlay} loop={loop} playsInline style={{ width: "100%" }}>
         <source src={src} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
-    </section>
+    </Paper>
   );
 }

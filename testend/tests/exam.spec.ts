@@ -9,5 +9,5 @@ test('exam management supports dynamic builder actions', async ({ page }) => {
   await expect(page.getByText(/section 2/i)).toBeVisible();
 
   await page.getByRole('button', { name: /add question/i }).nth(1).click();
-  await expect(page.getByText(/question 2/i).nth(1)).toBeVisible();
+  await expect(page.getByText(/question 2/i).first()).toBeVisible();
 });

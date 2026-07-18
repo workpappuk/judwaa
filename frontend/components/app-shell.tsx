@@ -1,5 +1,7 @@
 "use client";
 
+import { Box, Container } from "@mui/material";
+
 import { AppLeftSidebar } from "@/components/app-left-sidebar";
 import { Navbar } from "@/components/navbar";
 import { useAppSelector } from "@/store/hooks";
@@ -12,12 +14,12 @@ export function AppShell({ children }: AppShellProps) {
   const isSidebarOpen = useAppSelector((state) => state.ui.isSidebarOpen);
 
   return (
-    <div className="min-h-full flex flex-col">
+    <Box sx={{ minHeight: "100%", display: "flex", flexDirection: "column" }}>
       <Navbar />
       <AppLeftSidebar />
-      <div className={`container mx-auto transition-[padding] duration-200 ${isSidebarOpen ? "lg:pl-72" : ""}`}>
+      <Container maxWidth="xl" sx={{ transition: "padding 0.2s", pl: { lg: isSidebarOpen ? "300px" : undefined }, pt: 1 }}>
         {children}
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 }

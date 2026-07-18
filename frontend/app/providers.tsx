@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { Provider as ReduxProvider } from "react-redux";
 import { useDispatch, useSelector } from "react-redux";
+import { useTheme as useNextTheme } from "next-themes";
+import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme } from "@mui/material";
+import { useMemo } from "react";
 
 import { store } from "@/store";
 import type { RootState } from "@/store";
@@ -17,6 +20,35 @@ const AUTH_STORAGE_KEY = "judwaa.auth.session";
 
 interface ProvidersProps {
   children: React.ReactNode;
+}
+
+function MuiAppTheme({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useNextTheme();
+  const mode = resolvedTheme === "dark" ? "dark" : "light";
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+        },
+        typography: {
+          fontFamily: "var(--font-sans)",
+          button: {
+            textTransform: "none",
+            fontWeight: 600,
+          },
+        },
+      }),
+    [mode],
+  );
+
+  return (
+    <MuiThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </MuiThemeProvider>
+  );
 }
 
 function DraftPositionsPersistence() {
@@ -91,7 +123,7 @@ export function Providers({ children }: ProvidersProps) {
       <DraftPositionsPersistence />
       <AuthSessionPersistence />
       <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false}>
-        {children}
+        <MuiAppTheme>{children}</MuiAppTheme>
       </ThemeProvider>
     </ReduxProvider>
   );

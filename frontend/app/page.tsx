@@ -1,9 +1,11 @@
 
 "use client";
 
-import type { IconType } from "react-icons";
-import { FiArrowUpRight, FiBookOpen, FiCheckCircle, FiDatabase, FiLock, FiLogOut, FiShield, FiTrendingUp, FiUserCheck, FiUsers } from "react-icons/fi";
+import { FiArrowUpRight, FiCheckCircle, FiLock } from "react-icons/fi";
 import { useRouter } from "next/navigation";
+import { Box, Chip, Grid, Paper, Typography } from "@mui/material";
+
+import { HOME_CARDS, type HomeCardConfig } from "@/config/navigation";
 import { useAppSelector } from "@/store/hooks";
 
 const AUTH_STORAGE_KEY = "judwaa.auth.session";
@@ -36,26 +38,7 @@ export default function Home() {
   const session = useAppSelector((state) => state.auth.session);
   const isAuthenticated = Boolean(session?.token) || hasValidSession();
 
-  type Card = {
-    id: number;
-    title: string;
-    content: string;
-    url: string;
-    icon: IconType;
-    requiresAuth?: boolean;
-  };
-
-  const cards: Card[] = [
-    { id: 1, title: "F&O", content: "Live market dashboard", url: "/trading/f&o", icon: FiTrendingUp, requiresAuth: true },
-    { id: 2, title: "Instruments", content: "List of all instruments", url: "/trading/instrument", icon: FiBookOpen, requiresAuth: true },
-    { id: 3, title: "Auth", content: "Login and registration", url: "/auth", icon: FiUserCheck },
-    { id: 4, title: "Admin", content: "Admin dashboard", url: "/judwaa/admin", icon: FiShield, requiresAuth: true },
-    { id: 5, title: "Incentive", content: "Scheme and rule manager", url: "/incentive", icon: FiLogOut, requiresAuth: true },
-    { id: 6, title: "Data Collector", content: "Step-based ingestion setup", url: "/data-collector", icon: FiDatabase, requiresAuth: true },
-    { id: 7, title: "LMS", content: "School and student onboarding", url: "/lms", icon: FiUsers, requiresAuth: true },
-  ];
-
-  const handleCardClick = (card: Card) => {
+  const handleCardClick = (card: HomeCardConfig) => {
     if (card.requiresAuth && !isAuthenticated) {
       router.push("/auth");
       return;
@@ -65,47 +48,95 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-7rem)] bg-[#f5f7fb] dark:bg-[#0b0f15] text-zinc-900 dark:text-zinc-100 transition-colors rounded-xl p-3">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4">
-        {cards.map((card) => (
-          <button
-            key={card.id}
-            type="button"
-            onClick={() => handleCardClick(card)}
-            className={`block w-full text-left bg-white dark:bg-zinc-900 border p-4 rounded shadow-sm hover:shadow-md transition ${
-              card.requiresAuth
-                ? isAuthenticated
-                  ? "border-emerald-300/80 dark:border-emerald-800/80"
-                  : "border-amber-300/80 dark:border-amber-800/80"
-                : "border-zinc-200 dark:border-zinc-800"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-                <card.icon className="h-4 w-4" />
-              </div>
-              <div className="flex items-center gap-1.5">
-                {card.requiresAuth ? (
-                  isAuthenticated ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/90 dark:border-emerald-700/90 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700 dark:text-emerald-300">
-                      <FiCheckCircle className="h-3 w-3" />
-                      Unlocked
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/90 dark:border-amber-700/90 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-700 dark:text-amber-300">
-                      <FiLock className="h-3 w-3" />
-                      Members only
-                    </span>
-                  )
-                ) : null}
-                <FiArrowUpRight className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-              </div>
-            </div>
-            <h2 className="display-face text-xl font-semibold mt-3">{card.title}</h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">{card.content}</p>
-          </button>
-        ))}
-      </div>
-    </main>
+    <Box component="main" sx={{ minHeight: "calc(100vh - 7rem)", p: { xs: 1.5, md: 2 } }}>
+      <Box sx={{ mb: 2.5, display: "grid", gap: 2.5 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Judwaa Workspace
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 760 }}>
+          Open a module to continue your workflow. Protected cards automatically redirect to login when required.
+        </Typography>
+      </Box>
+
+      <Grid container spacing={1.75}>
+        {HOME_CARDS.map((card) => {
+          const protectedStatus = card.requiresAuth ? (isAuthenticated ? "unlocked" : "members") : "public";
+          const borderColor =
+            protectedStatus === "unlocked"
+              ? "success.light"
+              : protectedStatus === "members"
+                ? "warning.light"
+                : "divider";
+
+          return (
+            <Grid key={card.id} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
+              <Paper
+                component="button"
+                type="button"
+                onClick={() => handleCardClick(card)}
+                elevation={0}
+                sx={{
+                  width: "100%",
+                  textAlign: "left",
+                  p: 2,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor,
+                  bgcolor: "background.paper",
+                  cursor: "pointer",
+                  transition: "box-shadow 180ms ease, border-color 180ms ease",
+                  "&:hover": {
+                    boxShadow: 1,
+                    borderColor: "primary.light",
+                  },
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      display: "grid",
+                      placeItems: "center",
+                      borderRadius: 1.5,
+                      bgcolor: "action.hover",
+                      color: "text.secondary",
+                    }}
+                  >
+                    <card.icon size={16} />
+                  </Box>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                    {card.requiresAuth ? (
+                      <Chip
+                        size="small"
+                        color={isAuthenticated ? "success" : "warning"}
+                        variant="outlined"
+                        icon={isAuthenticated ? <FiCheckCircle /> : <FiLock />}
+                        label={isAuthenticated ? "Unlocked" : "Members only"}
+                        sx={{
+                          fontWeight: 700,
+                          letterSpacing: 0.3,
+                        }}
+                      />
+                    ) : null}
+                    <Box sx={{ color: "text.secondary", display: "grid", placeItems: "center" }}>
+                      <FiArrowUpRight size={16} />
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Typography variant="h5" sx={{ mt: 1.5, fontWeight: 700 }}>
+                  {card.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {card.content}
+                </Typography>
+              </Paper>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
   );
 }

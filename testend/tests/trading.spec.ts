@@ -16,7 +16,7 @@ test('instrument page neo actions validates empty totp', async ({ page }) => {
   await page.goto(`${APP_BASE_URL}/trading/instrument`);
 
   await page.getByRole('button', { name: /neo actions/i }).click();
-  await expect(page.getByText(/neo actions/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /neo actions/i })).toBeVisible();
   await page.getByRole('button', { name: /login neo/i }).click();
   await expect(page.getByText(/totp is required\./i)).toBeVisible();
   await page.getByRole('button', { name: /close neo actions/i }).click();
