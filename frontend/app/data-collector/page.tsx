@@ -2,10 +2,46 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  LinearProgress,
+  MenuItem,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { FiArrowRight, FiCheckCircle, FiChevronLeft, FiChevronRight, FiUploadCloud, FiX } from "react-icons/fi";
 
-import { collectorConfigs, getDefaultFormValues, type CollectorField, type CollectorFieldValue, type CollectorFormValues, type CollectorSection } from "./config";
-import { fetchCollectorDetail, fetchCollectorSummaries, fetchPersistedCollectorData, persistCollectorValues, type CollectorSummary, type PersistedCollectorData, updatePersistedCollectorData } from "@/services/data-collector-api";
+import {
+  collectorConfigs,
+  getDefaultFormValues,
+  type CollectorField,
+  type CollectorFieldValue,
+  type CollectorFormValues,
+  type CollectorSection,
+} from "./config";
+import {
+  fetchCollectorDetail,
+  fetchCollectorSummaries,
+  fetchPersistedCollectorData,
+  persistCollectorValues,
+  type CollectorSummary,
+  type PersistedCollectorData,
+  updatePersistedCollectorData,
+} from "@/services/data-collector-api";
 
 type SearchInputWithClearProps = {
   value: string;
@@ -13,8 +49,7 @@ type SearchInputWithClearProps = {
   onClear: () => void;
   placeholder: string;
   clearAriaLabel: string;
-  containerClassName?: string;
-  inputClassName?: string;
+  size?: "small" | "medium";
 };
 
 function SearchInputWithClear({
@@ -23,30 +58,27 @@ function SearchInputWithClear({
   onClear,
   placeholder,
   clearAriaLabel,
-  containerClassName,
-  inputClassName,
+  size = "small",
 }: SearchInputWithClearProps) {
   return (
-    <div className={containerClassName ?? "relative"}>
-      <input
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className={inputClassName ?? "w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 pr-8 text-[11px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/25 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"}
-      />
-      {value ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="absolute right-1.5 top-1.5 rounded p-0.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-          aria-label={clearAriaLabel}
-          title="Clear"
-        >
-          <FiX className="h-3.5 w-3.5" />
-        </button>
-      ) : null}
-    </div>
+    <TextField
+      size={size}
+      fullWidth
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      slotProps={{
+        input: {
+          endAdornment: value ? (
+            <InputAdornment position="end">
+              <IconButton size="small" onClick={onClear} aria-label={clearAriaLabel} title="Clear">
+                <FiX size={14} />
+              </IconButton>
+            </InputAdornment>
+          ) : undefined,
+        },
+      }}
+    />
   );
 }
 
@@ -64,23 +96,25 @@ export default function DataCollectorPage() {
   };
 
   const fallbackSummaries = useMemo<CollectorSummary[]>(
-    () => collectorConfigs.map((config) => ({
-      id: config.id,
-      category: config.category,
-      title: config.title,
-      subtitle: config.subtitle,
-      importButtonLabel: config.importButtonLabel,
-      related: {
-        steps: config.steps.length,
-        sections: config.steps.reduce((count, step) => count + step.sections.length, 0),
-        fields: config.steps.reduce(
-          (count, step) => count + step.sections.reduce((sectionCount, section) => sectionCount + section.fields.length, 0),
-          0,
-        ),
-        links: config.extraLinks.length,
-      },
-      updatedAt: null,
-    })),
+    () =>
+      collectorConfigs.map((config) => ({
+        id: config.id,
+        category: config.category,
+        title: config.title,
+        subtitle: config.subtitle,
+        importButtonLabel: config.importButtonLabel,
+        related: {
+          steps: config.steps.length,
+          sections: config.steps.reduce((count, step) => count + step.sections.length, 0),
+          fields: config.steps.reduce(
+            (count, step) =>
+              count + step.sections.reduce((sectionCount, section) => sectionCount + section.fields.length, 0),
+            0,
+          ),
+          links: config.extraLinks.length,
+        },
+        updatedAt: null,
+      })),
     [],
   );
   const [collectorSummaries, setCollectorSummaries] = useState<CollectorSummary[]>(fallbackSummaries);
@@ -228,7 +262,10 @@ export default function DataCollectorPage() {
     };
   }, [selectedConfig]);
 
-  const progress = useMemo(() => Math.round(((currentStep + 1) / selectedConfig.steps.length) * 100), [currentStep, selectedConfig.steps.length]);
+  const progress = useMemo(
+    () => Math.round(((currentStep + 1) / selectedConfig.steps.length) * 100),
+    [currentStep, selectedConfig.steps.length],
+  );
   const isFirst = currentStep === 0;
   const isLast = currentStep === selectedConfig.steps.length - 1;
   const activeStep = selectedConfig.steps[currentStep];
@@ -458,285 +495,418 @@ export default function DataCollectorPage() {
   };
 
   const renderField = (field: CollectorField) => {
-    const colSpanClass = field.colSpan === 2 ? "md:col-span-2" : "";
+    const gridColumn = field.colSpan === 2 ? { xs: "span 1", md: "span 2" } : { xs: "span 1", md: "span 1" };
     const value = formValues[field.key];
     const error = fieldErrors[field.key];
-    const baseInputClass = `w-full rounded-md border bg-white px-2.5 py-2 text-zinc-900 focus:outline-none focus:ring-2 dark:bg-zinc-950/70 dark:text-zinc-100 ${error ? "border-rose-500 focus:ring-rose-500/30 dark:border-rose-500" : "border-zinc-300 focus:ring-blue-500/30 dark:border-zinc-700"}`;
 
     if (field.type === "checkbox") {
       return (
-        <div key={field.key} className={colSpanClass}>
-          <label
-            className={`inline-flex items-center gap-2 rounded-md border bg-zinc-50 px-3 py-2 text-xs dark:bg-zinc-900/70 ${error ? "border-rose-500 dark:border-rose-500" : "border-zinc-200 dark:border-zinc-800"}`}
-          >
-            <input
-              type="checkbox"
-              id={`field-${field.key}`}
-              checked={Boolean(value)}
-              onChange={(event) => handleFieldChange(field.key, event.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-            />
-            {field.label}
-          </label>
-          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
-        </div>
+        <Box key={field.key} sx={{ gridColumn }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                id={`field-${field.key}`}
+                checked={Boolean(value)}
+                onChange={(event) => handleFieldChange(field.key, event.target.checked)}
+              />
+            }
+            label={field.label}
+          />
+          {error ? (
+            <Typography variant="caption" color="error">
+              {error}
+            </Typography>
+          ) : null}
+        </Box>
       );
     }
 
     if (field.type === "select") {
       return (
-        <label key={field.key} className={`text-xs ${colSpanClass}`}>
-          <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
-          <select
-            id={`field-${field.key}`}
-            value={String(value)}
-            onChange={(event) => handleFieldChange(field.key, event.target.value)}
-            className={baseInputClass}
-          >
-            {(field.options ?? []).map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
-        </label>
+        <TextField
+          key={field.key}
+          id={`field-${field.key}`}
+          select
+          size="small"
+          fullWidth
+          label={field.label}
+          value={String(value)}
+          onChange={(event) => handleFieldChange(field.key, event.target.value)}
+          error={Boolean(error)}
+          helperText={error ?? " "}
+          sx={{ gridColumn }}
+        >
+          {(field.options ?? []).map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
       );
     }
 
     if (field.type === "textarea") {
       return (
-        <label key={field.key} className={`text-xs ${colSpanClass}`}>
-          <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
-          <textarea
-            id={`field-${field.key}`}
-            value={String(value)}
-            onChange={(event) => handleFieldChange(field.key, event.target.value)}
-            rows={field.rows ?? 3}
-            className={baseInputClass}
-            placeholder={field.placeholder}
-          />
-          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
-        </label>
+        <TextField
+          key={field.key}
+          id={`field-${field.key}`}
+          size="small"
+          fullWidth
+          multiline
+          rows={field.rows ?? 3}
+          label={field.label}
+          value={String(value)}
+          onChange={(event) => handleFieldChange(field.key, event.target.value)}
+          error={Boolean(error)}
+          helperText={error ?? " "}
+          placeholder={field.placeholder}
+          sx={{ gridColumn }}
+        />
       );
     }
 
     if (field.type === "number") {
       return (
-        <label key={field.key} className={`text-xs ${colSpanClass}`}>
-          <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
-          <input
-            id={`field-${field.key}`}
-            type="number"
-            value={String(value)}
-            onChange={(event) => {
-              const raw = event.target.value;
-              handleFieldChange(field.key, raw === "" ? "" : Number(raw));
-            }}
-            min={field.min}
-            max={field.max}
-            step={field.step}
-            className={baseInputClass}
-            placeholder={field.placeholder}
-          />
-          {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
-        </label>
+        <TextField
+          key={field.key}
+          id={`field-${field.key}`}
+          type="number"
+          size="small"
+          fullWidth
+          label={field.label}
+          value={String(value)}
+          onChange={(event) => {
+            const raw = event.target.value;
+            handleFieldChange(field.key, raw === "" ? "" : Number(raw));
+          }}
+          error={Boolean(error)}
+          helperText={error ?? " "}
+          placeholder={field.placeholder}
+          slotProps={{
+            htmlInput: {
+              min: field.min,
+              max: field.max,
+              step: field.step,
+            },
+          }}
+          sx={{ gridColumn }}
+        />
       );
     }
 
     return (
-      <label key={field.key} className={`text-xs ${colSpanClass}`}>
-        <span className="mb-1 block text-zinc-600 dark:text-zinc-300">{field.label}</span>
-        <input
-          id={`field-${field.key}`}
-          type={field.type === "date" || field.type === "email" || field.type === "url" || field.type === "tel" || field.type === "time" || field.type === "password" ? field.type : "text"}
-          value={String(value)}
-          onChange={(event) => handleFieldChange(field.key, event.target.value)}
-          className={baseInputClass}
-          placeholder={field.placeholder}
-        />
-        {error ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{error}</p> : null}
-      </label>
+      <TextField
+        key={field.key}
+        id={`field-${field.key}`}
+        type={
+          field.type === "date"
+          || field.type === "email"
+          || field.type === "url"
+          || field.type === "tel"
+          || field.type === "time"
+          || field.type === "password"
+            ? field.type
+            : "text"
+        }
+        size="small"
+        fullWidth
+        label={field.label}
+        value={String(value)}
+        onChange={(event) => handleFieldChange(field.key, event.target.value)}
+        error={Boolean(error)}
+        helperText={error ?? " "}
+        placeholder={field.placeholder}
+        sx={{ gridColumn }}
+      />
     );
   };
 
   const renderSection = (section: CollectorSection) => {
     return (
-      <section key={section.id} className="rounded-lg border border-zinc-200/80 bg-white/80 p-3 dark:border-zinc-800 dark:bg-zinc-900/70">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">{section.title}</h3>
-        {section.description ? <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">{section.description}</p> : null}
-        <div className="mt-2 grid gap-3 md:grid-cols-2">{section.fields.map((field) => renderField(field))}</div>
-      </section>
+      <Paper key={section.id} variant="outlined" sx={{ p: 2 }}>
+        <Typography variant="subtitle2">{section.title}</Typography>
+        {section.description ? (
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+            {section.description}
+          </Typography>
+        ) : null}
+        <Box
+          sx={{
+            mt: 1.5,
+            display: "grid",
+            gap: 1.5,
+            gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+          }}
+        >
+          {section.fields.map((field) => renderField(field))}
+        </Box>
+      </Paper>
     );
   };
 
   const renderExtraLink = (item: SidebarLink) => {
-
     if (item.external) {
       return (
-        <a
+        <Button
           key={item.label}
+          component="a"
           href={item.href}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
+          fullWidth
+          variant="outlined"
+          endIcon={<FiArrowRight size={14} />}
+          sx={{ justifyContent: "space-between", textTransform: "none" }}
         >
           {item.label}
-          <FiArrowRight className="h-3.5 w-3.5" />
-        </a>
+        </Button>
       );
     }
 
     return (
-      <Link
-        key={item.label}
-        href={item.href}
-        className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
-      >
-        {item.label}
-        <FiArrowRight className="h-3.5 w-3.5" />
+      <Link key={item.label} href={item.href} style={{ textDecoration: "none" }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          endIcon={<FiArrowRight size={14} />}
+          sx={{ justifyContent: "space-between", textTransform: "none" }}
+        >
+          {item.label}
+        </Button>
       </Link>
     );
   };
 
   const renderStepForm = () => {
     if (activeStep.sections.length > 0) {
-      return <div className="space-y-3">{activeStep.sections.map((section) => renderSection(section))}</div>;
+      return <Stack spacing={2}>{activeStep.sections.map((section) => renderSection(section))}</Stack>;
     }
 
     const reviewSteps = selectedConfig.steps.filter((step) => step.sections.length > 0);
     const filledFieldCount = Object.values(formValues).filter((value) => String(value).trim().length > 0).length;
 
     return (
-      <div className="space-y-3">
-        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900/70">
-          <div className="flex items-center justify-between gap-2">
-            <p className="font-semibold">Collected Data Review</p>
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-              {filledFieldCount}/{Object.keys(formValues).length} fields filled
-            </span>
-          </div>
+      <Stack spacing={2}>
+        <Paper variant="outlined" sx={{ p: 2, bgcolor: "background.default" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1,
+            }}
+          >
+            <Typography variant="subtitle2">Collected Data Review</Typography>
+            <Chip
+              size="small"
+              color="primary"
+              label={`${filledFieldCount}/${Object.keys(formValues).length} fields filled`}
+            />
+          </Box>
 
-          <div className="mt-3 space-y-3">
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
             {reviewSteps.map((step) => (
-              <section key={step.id} className="rounded-md border border-zinc-200/80 bg-white/80 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/80">
-                <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">{step.title}</p>
-                <div className="mt-2 space-y-2">
+              <Paper key={step.id} variant="outlined" sx={{ p: 1.5 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {step.title}
+                </Typography>
+                <Stack spacing={1} sx={{ mt: 1 }}>
                   {step.sections.map((section) => (
-                    <div key={section.id} className="rounded border border-zinc-200/80 bg-zinc-50/70 p-2 dark:border-zinc-800 dark:bg-zinc-950/60">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{section.title}</p>
-                      <div className="mt-1.5 grid gap-1.5 md:grid-cols-2">
+                    <Paper key={section.id} variant="outlined" sx={{ p: 1.25 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>
+                        {section.title}
+                      </Typography>
+                      <Box
+                        sx={{
+                          mt: 1,
+                          display: "grid",
+                          gap: 1,
+                          gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+                        }}
+                      >
                         {section.fields.map((field) => (
-                          <div key={field.key} className="rounded border border-zinc-200/80 bg-white/80 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80">
-                            <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{field.label}</p>
-                            <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{formatValue(formValues[field.key])}</p>
-                          </div>
+                          <Paper key={field.key} variant="outlined" sx={{ p: 1 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>
+                              {field.label}
+                            </Typography>
+                            <Typography variant="body2" sx={{ mt: 0.5 }}>
+                              {formatValue(formValues[field.key])}
+                            </Typography>
+                          </Paper>
                         ))}
-                      </div>
-                    </div>
+                      </Box>
+                    </Paper>
                   ))}
-                </div>
-              </section>
+                </Stack>
+              </Paper>
             ))}
-          </div>
+          </Stack>
 
-          <div className="mt-3 rounded-md border border-zinc-200/80 bg-white/80 p-2.5 dark:border-zinc-800 dark:bg-zinc-900/80">
-            <p className="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Raw Payload Preview</p>
-            <pre className="mt-1 max-h-48 overflow-auto rounded bg-zinc-950 p-2 text-[11px] text-zinc-200">
+          <Paper variant="outlined" sx={{ p: 1.5, mt: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>
+              Raw Payload Preview
+            </Typography>
+            <Box
+              component="pre"
+              sx={{
+                mt: 1,
+                p: 1.5,
+                borderRadius: 1,
+                maxHeight: 280,
+                overflow: "auto",
+                bgcolor: "grey.950",
+                color: "grey.100",
+                fontSize: 12,
+              }}
+            >
               {JSON.stringify(formValues, null, 2)}
-            </pre>
-          </div>
-        </div>
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300">
-          Ready to run initial data collection with current settings.
-        </div>
-      </div>
+            </Box>
+          </Paper>
+        </Paper>
+
+        <Alert severity="success">Ready to run initial data collection with current settings.</Alert>
+      </Stack>
     );
   };
 
   return (
-    <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[radial-gradient(circle_at_top_left,#dbeafe,#f4f7ff_45%,#eef2ff_75%)] p-3 text-zinc-900 transition-colors dark:bg-[radial-gradient(circle_at_top_left,#1e293b_0%,#111827_42%,#090d16_100%)] dark:text-zinc-100">
-      <section className="mb-4 rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">Available Data Collectors</h2>
-          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Choose a config to load wizard defaults</span>
-        </div>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <SearchInputWithClear
-            value={collectorSearch}
-            onChange={setCollectorSearch}
-            onClear={() => setCollectorSearch("")}
-            placeholder="Search by name, id, or category"
-            clearAriaLabel="Clear collector search"
-            containerClassName="relative w-full md:w-72"
-            inputClassName="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 pr-8 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-zinc-100"
-          />
-          <div className="flex items-center gap-2">
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{filteredCollectorConfigs.length} collectors</p>
-            <button
-              type="button"
-              onClick={() => scrollCollectorRail("left")}
-              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              aria-label="Scroll collectors left"
-              title="Scroll left"
-            >
-              <FiChevronLeft className="h-3.5 w-3.5" />
+    <Box
+      component="main"
+      sx={{
+        minHeight: "calc(100vh - 7rem)",
+        p: { xs: 2, md: 3 },
+        borderRadius: 3,
+        background: (theme) =>
+          theme.palette.mode === "dark"
+            ? "radial-gradient(circle at top left, #1e293b 0%, #111827 42%, #090d16 100%)"
+            : "radial-gradient(circle at top left, #dbeafe, #f4f7ff 45%, #eef2ff 75%)",
+      }}
+    >
+      <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            alignItems: { md: "center" },
+            justifyContent: "space-between",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              Available Data Collectors
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Choose a config to load wizard defaults
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            {filteredCollectorConfigs.length} collectors
+          </Typography>
+        </Box>
+
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ mt: 2 }}>
+          <Box sx={{ width: { xs: "100%", md: 320 } }}>
+            <SearchInputWithClear
+              value={collectorSearch}
+              onChange={setCollectorSearch}
+              onClear={() => setCollectorSearch("")}
+              placeholder="Search by name, id, or category"
+              clearAriaLabel="Clear collector search"
+            />
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="small" onClick={() => scrollCollectorRail("left")} startIcon={<FiChevronLeft />}>
               Left
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollCollectorRail("right")}
-              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              aria-label="Scroll collectors right"
-              title="Scroll right"
-            >
+            </Button>
+            <Button variant="outlined" size="small" onClick={() => scrollCollectorRail("right")} endIcon={<FiChevronRight />}>
               Right
-              <FiChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-        <div ref={collectorRailRef} className="overflow-x-auto pb-1">
-          <div className="flex min-w-max gap-2 pr-1">
+            </Button>
+          </Stack>
+        </Stack>
+
+        <Box ref={collectorRailRef} sx={{ mt: 2, overflowX: "auto", pb: 0.5 }}>
+          <Stack direction="row" spacing={1.25} sx={{ minWidth: "max-content", pr: 1 }}>
             {filteredCollectorConfigs.map((config) => {
               const isSelected = config.id === selectedCollectorId;
 
               return (
-                <button
+                <Paper
                   key={config.id}
-                  type="button"
-                  onClick={() => setSelectedCollectorId(config.id)}
-                  className={`w-72 shrink-0 rounded-lg border p-3 text-left transition ${
-                    isSelected
-                      ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
-                      : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
-                  }`}
+                  variant="outlined"
+                  sx={{
+                    width: 288,
+                    borderColor: isSelected ? "primary.main" : "divider",
+                    bgcolor: isSelected ? "action.selected" : "background.paper",
+                  }}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{config.category}</p>
-                  <p className="mt-1 text-sm font-semibold">{config.title}</p>
-                  <p className="mt-1 line-clamp-2 text-[11px] text-zinc-500 dark:text-zinc-400">{config.subtitle}</p>
-                </button>
+                  <Button
+                    fullWidth
+                    onClick={() => setSelectedCollectorId(config.id)}
+                    sx={{ p: 2, textAlign: "left", textTransform: "none", alignItems: "flex-start", justifyContent: "flex-start" }}
+                  >
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ textTransform: "uppercase" }}>
+                        {config.category}
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ mt: 0.5 }}>
+                        {config.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                        {config.subtitle}
+                      </Typography>
+                    </Box>
+                  </Button>
+                </Paper>
               );
             })}
-          </div>
-        </div>
-        {filteredCollectorConfigs.length === 0 ? <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">No collectors found for this search.</p> : null}
-      </section>
+          </Stack>
+        </Box>
 
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="display-face text-2xl font-semibold">{selectedConfig.title}</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">{selectedConfig.subtitle}</p>
+        {filteredCollectorConfigs.length === 0 ? (
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+            No collectors found for this search.
+          </Typography>
+        ) : null}
+      </Paper>
+
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          justifyContent: "space-between",
+          alignItems: { md: "center" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            {selectedConfig.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {selectedConfig.subtitle}
+          </Typography>
           {selectedSummary?.updatedAt ? (
-            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
               Last saved: {new Date(selectedSummary.updatedAt).toLocaleString()}
-            </p>
+            </Typography>
           ) : null}
-          {collectorApiError ? <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{collectorApiError}</p> : null}
-          {saveStatus ? <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-300">{saveStatus}</p> : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
+          {collectorApiError ? (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+              {collectorApiError}
+            </Typography>
+          ) : null}
+          {saveStatus ? (
+            <Typography variant="caption" color="success.main" sx={{ mt: 0.5, display: "block" }}>
+              {saveStatus}
+            </Typography>
+          ) : null}
+        </Box>
+
+        <Stack direction="row" spacing={1.25}>
+          <Button
+            variant="outlined"
             onClick={() => {
               setShowPersistedModal(true);
               setIsPersistedLoading(true);
@@ -756,123 +926,167 @@ export default function DataCollectorPage() {
                 }
               })();
             }}
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
             View Persisted Data
-          </button>
-          <button type="button" className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
-            <FiUploadCloud className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="contained" startIcon={<FiUploadCloud size={14} />}>
             {selectedConfig.importButtonLabel}
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Stack>
+      </Box>
 
-      <section className="grid gap-3 lg:h-[calc(100dvh-19rem)] lg:grid-cols-[240px_minmax(0,1fr)_260px]">
-        <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">{selectedConfig.title}</h2>
-          <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Step Navigator</p>
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: { xs: "1fr", lg: "240px minmax(0, 1fr) 260px" },
+          minHeight: { lg: "calc(100dvh - 19rem)" },
+        }}
+      >
+        <Paper variant="outlined" sx={{ p: 2, overflowY: { lg: "auto" } }}>
+          <Typography variant="overline" color="text.secondary">
+            {selectedConfig.title}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+            Step Navigator
+          </Typography>
+
           <SearchInputWithClear
             value={leftStepSearch}
             onChange={setLeftStepSearch}
             onClear={() => setLeftStepSearch("")}
             placeholder="Search steps"
             clearAriaLabel="Clear step search"
-            containerClassName="relative mb-2"
           />
-          <ol className="space-y-2">
+
+          <Stack spacing={1} sx={{ mt: 1.5 }}>
             {filteredStepItems.map(({ step, index }) => {
               const isActive = index === currentStep;
               const isDone = index < currentStep;
 
               return (
-                <li key={step.id}>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep(index)}
-                    className={`w-full rounded-lg border px-2.5 py-2 text-left transition ${
-                      isActive
-                        ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-800"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold">{step.title}</span>
-                      {isDone ? <FiCheckCircle className="h-3.5 w-3.5 text-emerald-500" /> : null}
-                    </div>
-                    <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">{step.description}</p>
-                  </button>
-                </li>
+                <Button
+                  key={step.id}
+                  variant={isActive ? "contained" : "outlined"}
+                  color={isActive ? "primary" : "inherit"}
+                  onClick={() => setCurrentStep(index)}
+                  sx={{ textTransform: "none", justifyContent: "space-between", p: 1.25 }}
+                >
+                  <Box sx={{ textAlign: "left" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {step.title}
+                    </Typography>
+                    <Typography variant="caption" sx={{ opacity: isActive ? 0.9 : 1 }}>
+                      {step.description}
+                    </Typography>
+                  </Box>
+                  {isDone ? <FiCheckCircle size={14} /> : null}
+                </Button>
               );
             })}
-          </ol>
-          {filteredStepItems.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No steps match this search.</p> : null}
+          </Stack>
 
-          <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Current Step Fields ({filteredStepFieldItems.length}/{activeStepFieldItems.length})</h3>
+          {filteredStepItems.length === 0 ? (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+              No steps match this search.
+            </Typography>
+          ) : null}
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+            Current Step Fields ({filteredStepFieldItems.length}/{activeStepFieldItems.length})
+          </Typography>
+
+          <Box sx={{ mt: 1 }}>
             <SearchInputWithClear
               value={stepFieldSearch}
               onChange={setStepFieldSearch}
               onClear={() => setStepFieldSearch("")}
               placeholder="Search step fields"
               clearAriaLabel="Clear step fields search"
-              containerClassName="relative mb-2"
             />
-            <div className="space-y-1">
-              {filteredStepFieldItems.map((item, index) => (
-                <button
-                  key={`${item.field.key}-${index}`}
-                  type="button"
-                  onClick={() => focusFieldByKey(item.field.key)}
-                  className="w-full rounded border border-zinc-200/80 bg-zinc-50/80 px-2 py-1 text-left text-[11px] transition hover:border-blue-300 hover:bg-blue-50/80 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-blue-700 dark:hover:bg-blue-950/30"
-                  title={`Go to ${item.field.label}`}
-                >
-                  <p className="truncate font-medium text-zinc-700 dark:text-zinc-200">{item.field.label}</p>
-                  <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">{item.sectionTitle}</p>
-                </button>
-              ))}
-            </div>
-            {filteredStepFieldItems.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No fields match this search.</p> : null}
-          </div>
-        </aside>
+          </Box>
 
-        <article className="flex min-h-0 flex-col rounded-xl border border-zinc-200 bg-white/95 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/95 lg:h-full">
-          <div className="shrink-0 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Current Step</p>
-            <h2 className="mt-1 text-lg font-semibold">{activeStep.title}</h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{activeStep.description}</p>
-          </div>
+          <Stack spacing={1} sx={{ mt: 1.25 }}>
+            {filteredStepFieldItems.map((item, index) => (
+              <Button
+                key={`${item.field.key}-${index}`}
+                variant="outlined"
+                color="inherit"
+                onClick={() => focusFieldByKey(item.field.key)}
+                sx={{ textTransform: "none", alignItems: "flex-start", textAlign: "left" }}
+                title={`Go to ${item.field.label}`}
+              >
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.primary", display: "block" }}>
+                    {item.field.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.sectionTitle}
+                  </Typography>
+                </Box>
+              </Button>
+            ))}
+          </Stack>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderStepForm()}</div>
+          {filteredStepFieldItems.length === 0 ? (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+              No fields match this search.
+            </Typography>
+          ) : null}
+        </Paper>
 
-          <footer className="sticky bottom-0 mt-auto shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 bg-white/95 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/95">
-            <div>
-              <p className="text-xs font-semibold">Step {currentStep + 1} of {selectedConfig.steps.length}</p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Progress: {progress}%</p>
-            </div>
+        <Paper
+          variant="outlined"
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+            height: { lg: "100%" },
+          }}
+        >
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+            <Typography variant="overline" color="primary">
+              Current Step
+            </Typography>
+            <Typography variant="h6">{activeStep.title}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {activeStep.description}
+            </Typography>
+          </Box>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
+          <Box sx={{ p: 2, flex: 1, minHeight: 0, overflowY: "auto" }}>{renderStepForm()}</Box>
+
+          <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
+            <Stack spacing={1}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                Step {currentStep + 1} of {selectedConfig.steps.length}
+              </Typography>
+              <LinearProgress variant="determinate" value={progress} />
+              <Typography variant="caption" color="text.secondary">
+                Progress: {progress}%
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+              <Button
+                variant="outlined"
                 onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
                 disabled={isFirst}
-                className="inline-flex items-center gap-1 rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                startIcon={<FiChevronLeft size={14} />}
               >
-                <FiChevronLeft className="h-3.5 w-3.5" />
                 Previous
-              </button>
+              </Button>
 
               {!isLast ? (
-                <button
-                  type="button"
-                  onClick={validateActiveStepAndProceed}
-                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
-                >
+                <Button variant="contained" onClick={validateActiveStepAndProceed} endIcon={<FiChevronRight size={14} />}>
                   Next
-                  <FiChevronRight className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="contained"
+                  color="success"
                   onClick={() => {
                     void (async () => {
                       try {
@@ -890,125 +1104,136 @@ export default function DataCollectorPage() {
                       }
                     })();
                   }}
-                  className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                  endIcon={<FiArrowRight size={14} />}
                 >
                   Start Collection
-                  <FiArrowRight className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
-            </div>
-          </footer>
-        </article>
+            </Stack>
+          </Box>
+        </Paper>
 
-        <aside className="rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-900/90 lg:overflow-y-auto">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">{selectedConfig.title}</h2>
-          <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">Related Links</p>
+        <Paper variant="outlined" sx={{ p: 2, overflowY: { lg: "auto" } }}>
+          <Typography variant="overline" color="text.secondary">
+            {selectedConfig.title}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+            Related Links
+          </Typography>
+
           <SearchInputWithClear
             value={rightLinkSearch}
             onChange={setRightLinkSearch}
             onClear={() => setRightLinkSearch("")}
             placeholder="Search links"
             clearAriaLabel="Clear links search"
-            containerClassName="relative mb-2"
           />
-          <div className="space-y-2">
+
+          <Stack spacing={1.25} sx={{ mt: 1.5 }}>
             {filteredRightLinks.map((item) => renderExtraLink(item))}
-          </div>
-          {filteredRightLinks.length === 0 ? <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">No links match this search.</p> : null}
-        </aside>
-      </section>
+          </Stack>
 
-      {showPersistedModal ? (
-        <div className="fixed inset-0 z-40 bg-black/55 p-4">
-          <div className="mx-auto mt-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111926]">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-              <h3 className="text-sm font-semibold">Persisted Data: {selectedConfig.title}</h3>
-              <button
-                type="button"
-                onClick={() => setShowPersistedModal(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700"
-                aria-label="Close persisted data modal"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
+          {filteredRightLinks.length === 0 ? (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "block" }}>
+              No links match this search.
+            </Typography>
+          ) : null}
+        </Paper>
+      </Box>
 
-            <div className="space-y-2 p-4">
-              {isPersistedLoading ? (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading persisted data...</p>
-              ) : null}
+      <Dialog open={showPersistedModal} onClose={() => setShowPersistedModal(false)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ pr: 6 }}>
+          Persisted Data: {selectedConfig.title}
+          <IconButton
+            onClick={() => setShowPersistedModal(false)}
+            aria-label="Close persisted data modal"
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <FiX size={16} />
+          </IconButton>
+        </DialogTitle>
 
-              {!isPersistedLoading && persistedViewData ? (
-                <>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Last updated: {persistedViewData.updatedAt ? new Date(persistedViewData.updatedAt).toLocaleString() : "N/A"}
-                  </p>
-                  <textarea
-                    value={persistedEditorText}
-                    onChange={(event) => {
-                      setPersistedEditorText(event.target.value);
-                      if (persistedEditorError) {
-                        setPersistedEditorError(null);
-                      }
-                    }}
-                    className="min-h-80 max-h-[60vh] w-full overflow-auto rounded border border-zinc-300 bg-zinc-950 p-3 text-[11px] text-zinc-200 outline-none focus:border-blue-500 dark:border-zinc-700"
-                  />
-                  {persistedEditorError ? (
-                    <p className="text-[11px] text-rose-600 dark:text-rose-300">{persistedEditorError}</p>
-                  ) : null}
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextValues = parsePersistedEditorValues();
-                        if (!nextValues) {
-                          return;
-                        }
+        <DialogContent dividers>
+          {isPersistedLoading ? <Typography variant="body2">Loading persisted data...</Typography> : null}
 
-                        setIsPersistedSaving(true);
-                        void (async () => {
-                          try {
-                            const response = await updatePersistedCollectorData(selectedConfig.id, nextValues);
-                            setPersistedViewData((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    values: nextValues,
-                                    updatedAt: response.updatedAt,
-                                  }
-                                : prev,
-                            );
-                            setCollectorSummaries((prev) =>
-                              prev.map((item) =>
-                                item.id === selectedConfig.id ? { ...item, updatedAt: response.updatedAt } : item,
-                              ),
-                            );
-                            setFormValues((prev) => ({ ...prev, ...nextValues }));
-                            setCollectorApiError(null);
-                            setSaveStatus("Persisted data updated.");
-                          } catch {
-                            setPersistedEditorError("Unable to save persisted data updates.");
-                          } finally {
-                            setIsPersistedSaving(false);
+          {!isPersistedLoading && persistedViewData ? (
+            <Stack spacing={1.25}>
+              <Typography variant="caption" color="text.secondary">
+                Last updated: {persistedViewData.updatedAt ? new Date(persistedViewData.updatedAt).toLocaleString() : "N/A"}
+              </Typography>
+
+              <TextField
+                multiline
+                minRows={14}
+                maxRows={24}
+                fullWidth
+                value={persistedEditorText}
+                onChange={(event) => {
+                  setPersistedEditorText(event.target.value);
+                  if (persistedEditorError) {
+                    setPersistedEditorError(null);
+                  }
+                }}
+                error={Boolean(persistedEditorError)}
+                helperText={persistedEditorError ?? " "}
+              />
+            </Stack>
+          ) : null}
+
+          {!isPersistedLoading && !persistedViewData ? (
+            <Typography variant="body2" color="text.secondary">
+              No persisted data available.
+            </Typography>
+          ) : null}
+        </DialogContent>
+
+        <DialogActions>
+          {!isPersistedLoading && persistedViewData ? (
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => {
+                const nextValues = parsePersistedEditorValues();
+                if (!nextValues) {
+                  return;
+                }
+
+                setIsPersistedSaving(true);
+                void (async () => {
+                  try {
+                    const response = await updatePersistedCollectorData(selectedConfig.id, nextValues);
+                    setPersistedViewData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            values: nextValues,
+                            updatedAt: response.updatedAt,
                           }
-                        })();
-                      }}
-                      disabled={isPersistedSaving}
-                      className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isPersistedSaving ? "Saving..." : "Save Updates"}
-                    </button>
-                  </div>
-                </>
-              ) : null}
-
-              {!isPersistedLoading && !persistedViewData ? (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">No persisted data available.</p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </main>
+                        : prev,
+                    );
+                    setCollectorSummaries((prev) =>
+                      prev.map((item) =>
+                        item.id === selectedConfig.id ? { ...item, updatedAt: response.updatedAt } : item,
+                      ),
+                    );
+                    setFormValues((prev) => ({ ...prev, ...nextValues }));
+                    setCollectorApiError(null);
+                    setSaveStatus("Persisted data updated.");
+                  } catch {
+                    setPersistedEditorError("Unable to save persisted data updates.");
+                  } finally {
+                    setIsPersistedSaving(false);
+                  }
+                })();
+              }}
+              disabled={isPersistedSaving}
+            >
+              {isPersistedSaving ? "Saving..." : "Save Updates"}
+            </Button>
+          ) : null}
+          <Button onClick={() => setShowPersistedModal(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

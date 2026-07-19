@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FiBookOpen, FiClipboard, FiMap, FiUserCheck, FiUsers } from "react-icons/fi";
+import { Box, Card, CardContent, Container, Typography } from "@mui/material";
 
 const LMS_CARDS = [
   {
@@ -36,29 +37,31 @@ const LMS_CARDS = [
 
 export default function LmsPage() {
   return (
-    <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[#f8fafc] p-4 text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100">
-      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="display-face text-2xl font-semibold">LMS Route Hub</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Navigate to dedicated management routes for organization, school, student, and exam workflows.
-        </p>
-      </section>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Card variant="outlined" sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>LMS Route Hub</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Navigate to dedicated management routes for organization, school, student, and exam workflows.
+          </Typography>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" } }}>
         {LMS_CARDS.map((card) => (
-          <Link
-            key={card.href}
-            href={card.href}
-            className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
-          >
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-              <card.icon className="h-5 w-5" />
-            </div>
-            <h2 className="mt-3 text-lg font-semibold">{card.title}</h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{card.description}</p>
+          <Link key={card.href} href={card.href} style={{ textDecoration: "none", color: "inherit" }}>
+            <Card variant="outlined" sx={{ "&:hover": { boxShadow: 2 } }}>
+              <CardContent>
+                <Box sx={{ width: 40, height: 40, borderRadius: 1.5, bgcolor: "action.hover", display: "grid", placeItems: "center" }}>
+                  <card.icon size={18} />
+                </Box>
+                <Typography variant="subtitle1" sx={{ mt: 1.5, fontWeight: 700 }}>{card.title}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{card.description}</Typography>
+              </CardContent>
+            </Card>
           </Link>
         ))}
-      </div>
-    </main>
+      </Box>
+    </Container>
   );
 }

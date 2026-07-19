@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 
 import { AppShell } from "@/components/app-shell";
 
 import { Providers } from "./providers";
 import "./globals.css";
+
+const roboto = localFont({
+  src: [
+    { path: "../font/roboto/Roboto-Regular.ttf", weight: "400", style: "normal" },
+    { path: "../font/roboto/Roboto-Medium.ttf", weight: "500", style: "normal" },
+    { path: "../font/roboto/Roboto-Bold.ttf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-sans",
+  display: "swap",
+  fallback: ["Segoe UI", "-apple-system", "BlinkMacSystemFont", "Helvetica Neue", "Arial", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   title: "Judwaa",
@@ -17,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={roboto.variable}>
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>

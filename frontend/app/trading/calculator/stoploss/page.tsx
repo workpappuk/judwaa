@@ -1,6 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import {
+	Alert,
+	Box,
+	Button,
+	Card,
+	CardContent,
+	Chip,
+	Container,
+	Divider,
+	TextField,
+	Typography,
+} from "@mui/material";
 import { FiAlertTriangle, FiPercent, FiTrendingDown, FiTrendingUp } from "react-icons/fi";
 
 const formatMoney = (value: number): string =>
@@ -20,14 +32,34 @@ const toNumber = (value: string): number => {
 	return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const DEFAULT_STOPLOSS_FORM = {
+	positionType: "SELLER" as const,
+	lotSize: "1",
+	pricePerLot: "30",
+	amountRequiredPerLot: "250000",
+	capital: "2500000",
+	profitLossPct: "2.2",
+	stoplossPct: "1",
+};
+
 export default function FnOStoplossCalculatorPage() {
-	const [positionType, setPositionType] = useState<"BUYER" | "SELLER">("SELLER");
-	const [lotSize, setLotSize] = useState("1");
-	const [pricePerLot, setPricePerLot] = useState("30");
-	const [amountRequiredPerLot, setAmountRequiredPerLot] = useState("250000");
-	const [capital, setCapital] = useState("2500000");
-	const [profitLossPct, setProfitLossPct] = useState("2.2");
-	const [stoplossPct, setStoplossPct] = useState("1");
+	const [positionType, setPositionType] = useState<"BUYER" | "SELLER">(DEFAULT_STOPLOSS_FORM.positionType);
+	const [lotSize, setLotSize] = useState(DEFAULT_STOPLOSS_FORM.lotSize);
+	const [pricePerLot, setPricePerLot] = useState(DEFAULT_STOPLOSS_FORM.pricePerLot);
+	const [amountRequiredPerLot, setAmountRequiredPerLot] = useState(DEFAULT_STOPLOSS_FORM.amountRequiredPerLot);
+	const [capital, setCapital] = useState(DEFAULT_STOPLOSS_FORM.capital);
+	const [profitLossPct, setProfitLossPct] = useState(DEFAULT_STOPLOSS_FORM.profitLossPct);
+	const [stoplossPct, setStoplossPct] = useState(DEFAULT_STOPLOSS_FORM.stoplossPct);
+
+	const resetDefaults = () => {
+		setPositionType(DEFAULT_STOPLOSS_FORM.positionType);
+		setLotSize(DEFAULT_STOPLOSS_FORM.lotSize);
+		setPricePerLot(DEFAULT_STOPLOSS_FORM.pricePerLot);
+		setAmountRequiredPerLot(DEFAULT_STOPLOSS_FORM.amountRequiredPerLot);
+		setCapital(DEFAULT_STOPLOSS_FORM.capital);
+		setProfitLossPct(DEFAULT_STOPLOSS_FORM.profitLossPct);
+		setStoplossPct(DEFAULT_STOPLOSS_FORM.stoplossPct);
+	};
 
 	const calculations = (() => {
 		const lotSizeValue = Math.max(0, toNumber(lotSize));
@@ -116,306 +148,126 @@ export default function FnOStoplossCalculatorPage() {
 		};
 	})();
 
+	const metricCard = (label: string, value: string, subtext?: string, valueColor?: string) => (
+		<Card variant="outlined" sx={{ height: "100%" }}>
+			<CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+				<Typography variant="caption" color="text.secondary">{label}</Typography>
+				<Typography variant="body2" sx={{ fontWeight: 700, color: valueColor ?? "text.primary" }}>{value}</Typography>
+				{subtext ? (
+					<Typography variant="caption" color="text.secondary">{subtext}</Typography>
+				) : null}
+			</CardContent>
+		</Card>
+	);
+
 	return (
-		<main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
-			<header className="rounded-2xl border border-zinc-200 bg-linear-to-br from-emerald-50 to-white p-5 shadow-sm dark:border-zinc-800 dark:from-emerald-950/40 dark:to-zinc-900">
-				<p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-					<FiPercent className="h-3.5 w-3.5" />
-					F&O Calculator
-				</p>
-				<h1 className="mt-2 text-2xl font-extrabold tracking-tight">Stoploss and P&L Planner</h1>
-				<p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-					Calculate expected profit or loss and stoploss risk using lot size, quantity, entry price per lot and
-					percentage inputs.
-				</p>
-				<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-					Primary check is on invested amount. Seller mode is enabled by default.
-				</p>
-				<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-					Quantity is auto-computed from Total Capital / Amount Required Per Lot.
-				</p>
-				<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-					Example: 2.5 lakh per lot and 25 lakh capital allows up to 10 quantity at lot = 1.
-				</p>
-			</header>
+		<Container maxWidth="lg" sx={{ py: 3 }}>
+			<Card variant="outlined" sx={{ mb: 2.5 }}>
+				<CardContent>
+					<Chip icon={<FiPercent />} label="F&O Calculator" size="small" sx={{ mb: 1 }} />
+					<Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>Stoploss and P&L Planner</Typography>
+					<Typography variant="body2" color="text.secondary">
+						Calculate expected profit or loss and stoploss risk using lot size, quantity, entry price per lot and percentage inputs.
+					</Typography>
+					<Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+						Quantity is auto-computed from Total Capital / Amount Required Per Lot.
+					</Typography>
+				</CardContent>
+			</Card>
 
-			<section className="mt-5 grid gap-5 lg:grid-cols-2">
-				<article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-					<h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Inputs</h2>
-					<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Inputs are prefilled with defaults. Edit any value directly.</p>
+			<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" }, gap: 2.5 }}>
+				<Card variant="outlined">
+					<CardContent>
+						<Typography variant="subtitle2" color="text.secondary">Inputs</Typography>
+						<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Inputs are prefilled with defaults. Edit any value directly.</Typography>
 
-					<div className="mt-4 space-y-3">
-						<div className="grid grid-cols-2 gap-2">
-							<button
+						<Button type="button" onClick={resetDefaults} variant="outlined" size="small" sx={{ mb: 2 }}>
+							Reset defaults
+						</Button>
+
+						<Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mb: 2 }}>
+							<Button
 								type="button"
 								onClick={() => setPositionType("SELLER")}
-								className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
-									positionType === "SELLER"
-										? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-										: "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-								}`}
+								variant={positionType === "SELLER" ? "contained" : "outlined"}
 							>
 								Seller
-							</button>
-							<button
+							</Button>
+							<Button
 								type="button"
 								onClick={() => setPositionType("BUYER")}
-								className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
-									positionType === "BUYER"
-										? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-										: "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-								}`}
+								variant={positionType === "BUYER" ? "contained" : "outlined"}
 							>
 								Buyer
-							</button>
-						</div>
+							</Button>
+						</Box>
 
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Lot</span>
-							<input
-								type="number"
-								min="0"
-								step="1"
-								value={lotSize}
-								onChange={(event) => setLotSize(event.target.value)}
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950"
-								placeholder="e.g. 25"
-							/>
-						</label>
+						<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
+							<TextField label="Lot" type="number" size="small" value={lotSize} onChange={(event) => setLotSize(event.target.value)} />
+							<TextField label="Quantity (Auto)" type="number" size="small" value={calculations.quantityValue} disabled />
+							<TextField label="Amount Required Per Lot" type="number" size="small" value={amountRequiredPerLot} onChange={(event) => setAmountRequiredPerLot(event.target.value)} />
+							<TextField label="Total Capital" type="number" size="small" value={capital} onChange={(event) => setCapital(event.target.value)} />
+							<TextField label="Entry Price Per Lot" type="number" size="small" value={pricePerLot} onChange={(event) => setPricePerLot(event.target.value)} />
+							<TextField label="% Profit / Loss" type="number" size="small" value={profitLossPct} onChange={(event) => setProfitLossPct(event.target.value)} />
+							<TextField label="% Stoploss" type="number" size="small" value={stoplossPct} onChange={(event) => setStoplossPct(event.target.value)} sx={{ gridColumn: { sm: "span 2" } }} />
+						</Box>
 
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Quantity (Auto)</span>
-							<input
-								type="number"
-								min="0"
-								step="1"
-								value={calculations.quantityValue}
-								readOnly
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
-								placeholder="e.g. 2"
-							/>
-						</label>
+						{calculations.stoplossTooHigh ? (
+							<Alert severity="warning" sx={{ mt: 2 }} icon={<FiAlertTriangle />}>
+								Stoploss percentage should be less than 100.
+							</Alert>
+						) : null}
+					</CardContent>
+				</Card>
 
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Amount Required Per Lot</span>
-							<input
-								type="number"
-								min="0"
-								step="0.01"
-								value={amountRequiredPerLot}
-								onChange={(event) => setAmountRequiredPerLot(event.target.value)}
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950"
-								placeholder="e.g. 3000"
-							/>
-						</label>
+				<Card variant="outlined">
+					<CardContent>
+						<Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>Computed</Typography>
 
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Total Capital</span>
-							<input
-								type="number"
-								min="0"
-								step="0.01"
-								value={capital}
-								onChange={(event) => setCapital(event.target.value)}
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950"
-								placeholder="e.g. 2500000"
-							/>
-						</label>
+						{!calculations.hasInput ? (
+							<Typography variant="body2" color="text.secondary">Enter valid lot size, quantity and price per lot to see calculations.</Typography>
+						) : (
+							<Box sx={{ display: "grid", gap: 1.5 }}>
+								<Card variant="outlined">
+									<CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+										<Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>Formula Check</Typography>
+										<Divider sx={{ my: 1 }} />
+										<Box sx={{ display: "grid", gap: 0.5 }}>
+											<Typography variant="caption" color="text.secondary">Quantity = floor(Capital / Required) = {formatNumber(calculations.quantityValue)}</Typography>
+											<Typography variant="caption" color="text.secondary">Invested Amount = Quantity x Required = {formatMoney(calculations.investedAmount)}</Typography>
+											<Typography variant="caption" color="text.secondary">Target Profit = {formatMoney(calculations.targetProfitAmountOnInvested)}</Typography>
+											<Typography variant="caption" color="text.secondary">Max Loss = {formatMoney(calculations.maxLossAmountOnInvested)}</Typography>
+										</Box>
+									</CardContent>
+								</Card>
 
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Entry Price Per Lot</span>
-							<input
-								type="number"
-								min="0"
-								step="0.01"
-								value={pricePerLot}
-								onChange={(event) => setPricePerLot(event.target.value)}
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950"
-								placeholder="e.g. 120"
-							/>
-						</label>
+								<Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>Capital And Sizing</Typography>
+								<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
+									{metricCard("Capital", formatMoney(calculations.capitalValue))}
+									{metricCard("Total Units", formatNumber(calculations.totalUnits))}
+									{metricCard("Invested Amount", formatMoney(calculations.investedAmount), `Capital used: ${calculations.capitalUsagePct.toFixed(2)}%`)}
+									{metricCard("Max Quantity", formatNumber(calculations.maxAffordableQuantity), `Remaining: ${formatMoney(calculations.remainingCapital)}`)}
+								</Box>
 
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">% Profit / Loss (target move)</span>
-							<input
-								type="number"
-								step="0.01"
-								value={profitLossPct}
-								onChange={(event) => setProfitLossPct(event.target.value)}
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950"
-								placeholder="e.g. 5 or -3"
-							/>
-						</label>
-
-						<label className="block">
-							<span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">% Stoploss</span>
-							<input
-								type="number"
-								min="0"
-								step="0.01"
-								value={stoplossPct}
-								onChange={(event) => setStoplossPct(event.target.value)}
-								className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-950"
-								placeholder="e.g. 2"
-							/>
-						</label>
-					</div>
-
-					{calculations.stoplossTooHigh ? (
-						<div className="mt-4 inline-flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
-							<FiAlertTriangle className="mt-0.5 h-3.5 w-3.5" />
-							Stoploss percentage should be less than 100.
-						</div>
-					) : null}
-				</article>
-
-				<article className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-					<h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Computed</h2>
-
-					{!calculations.hasInput ? (
-						<p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-							Enter valid lot size, quantity and price per lot to see calculations.
-						</p>
-					) : (
-						<div className="mt-4 space-y-4">
-							<section className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-								<h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Formula Check</h3>
-								<div className="mt-2 space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
-									<p>
-										Quantity = floor(Total Capital / Amount Required Per Lot) = floor({formatMoney(calculations.capitalValue)} / {formatMoney(calculations.amountRequiredPerLotValue)}) = {formatNumber(calculations.quantityValue)}
-									</p>
-									<p>
-										Invested Amount = Quantity x Amount Required Per Lot = {formatNumber(calculations.quantityValue)} x {formatMoney(calculations.amountRequiredPerLotValue)} = {formatMoney(calculations.investedAmount)}
-									</p>
-									<p>
-										Target Profit = Invested Amount x Target % = {formatMoney(calculations.investedAmount)} x {calculations.profitLossPctValue.toFixed(2)}% = {formatMoney(calculations.targetProfitAmountOnInvested)}
-									</p>
-									<p>
-										Max Loss = Invested Amount x Stoploss % = {formatMoney(calculations.investedAmount)} x {calculations.stoplossPctValue.toFixed(2)}% = {formatMoney(calculations.maxLossAmountOnInvested)}
-									</p>
-									<p>
-										{positionType === "SELLER" ? "Target Buyback Amount Per Lot" : "Target Exit Amount Per Lot"} = Amount Required Per Lot x (1 {positionType === "SELLER" ? "-" : "+"} Target %) = {formatMoney(calculations.amountRequiredPerLotValue)} x (1 {positionType === "SELLER" ? "-" : "+"} {calculations.profitLossPctValue.toFixed(4)}) = {formatMoney(calculations.targetExitAmountPerLot)}
-									</p>
-									<p>
-										{positionType === "SELLER" ? "Stoploss Buyback Amount Per Lot" : "Stoploss Exit Amount Per Lot"} = Amount Required Per Lot x (1 {positionType === "SELLER" ? "+" : "-"} Stoploss %) = {formatMoney(calculations.amountRequiredPerLotValue)} x (1 {positionType === "SELLER" ? "+" : "-"} {calculations.stoplossPctValue.toFixed(4)}) = {formatMoney(calculations.stoplossExitAmountPerLot)}
-									</p>
-									<p>
-										{positionType === "SELLER" ? "Max Premium Profit" : "Max Premium Loss"} = Lot Size x Quantity x Entry Price = {formatNumber(calculations.lotSizeValue)} x {formatNumber(calculations.quantityValue)} x {formatMoney(calculations.pricePerLotValue)} = {formatMoney(calculations.premiumNotional)}
-									</p>
-								</div>
-							</section>
-
-							<section className="space-y-2">
-								<h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Capital And Sizing</h3>
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Capital</p>
-								<p className="text-sm font-semibold">{formatMoney(calculations.capitalValue)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Total Units (Lot Size x Quantity)</p>
-								<p className="text-sm font-semibold">{formatNumber(calculations.totalUnits)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Invested Amount</p>
-								<p className="text-sm font-semibold">{formatMoney(calculations.investedAmount)}</p>
-								<p className={`text-xs ${calculations.overCapital ? "text-rose-600" : "text-zinc-500"}`}>
-									Capital used: {calculations.capitalUsagePct.toFixed(2)}%
-								</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Max Quantity You Can Take</p>
-								<p className="text-sm font-semibold">{formatNumber(calculations.maxAffordableQuantity)}</p>
-								<p className={`text-xs ${calculations.remainingCapital < 0 ? "text-rose-600" : "text-zinc-500"}`}>
-									Remaining capital: {formatMoney(calculations.remainingCapital)}
-								</p>
-							</div>
-							</section>
-
-							<section className="space-y-2">
-								<h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Target And Risk</h3>
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">{positionType === "SELLER" ? "Target Buyback Amount Per Lot" : "Target Exit Amount Per Lot"}</p>
-								<p className="text-sm font-semibold">{formatMoney(calculations.targetExitAmountPerLot)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">{positionType === "SELLER" ? "Max Premium Profit" : "Max Premium Loss"}</p>
-								<p className={`text-sm font-semibold ${positionType === "SELLER" ? "text-emerald-600" : "text-rose-600"}`}>
-									{formatMoney(calculations.premiumNotional)}
-								</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">{positionType === "SELLER" ? "Stoploss Buyback Amount Per Lot" : "Stoploss Exit Amount Per Lot"}</p>
-								<p className="text-sm font-semibold">{formatMoney(calculations.stoplossExitAmountPerLot)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="inline-flex items-center gap-1 text-xs text-zinc-500">
-									<FiTrendingUp className="h-3.5 w-3.5" />
-									Target Profit On Invested Amount
-								</p>
-								<p className="text-sm font-semibold text-emerald-600">
-									{formatMoney(calculations.targetProfitAmountOnInvested)}
-								</p>
-								<p className="text-xs text-emerald-600">
-									{calculations.targetProfitPctOnInvested.toFixed(2)}% of invested amount
-								</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="inline-flex items-center gap-1 text-xs text-zinc-500">
-									<FiTrendingDown className="h-3.5 w-3.5" />
-									Max Loss On Invested Amount
-								</p>
-								<p className="text-sm font-semibold text-rose-600">{formatMoney(calculations.maxLossAmountOnInvested)}</p>
-								<p className="text-xs text-rose-600">{calculations.stoplossPctOnInvested.toFixed(2)}% of invested amount</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">P&amp;L From Entry/Exit Price Move</p>
-								<p className={`text-sm font-semibold ${calculations.expectedPnL >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-									{formatMoney(calculations.expectedPnL)}
-								</p>
-								<p className="text-xs text-zinc-500">Stoploss scenario: {formatMoney(-calculations.maxLoss)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Risk : Reward</p>
-								<p className="text-sm font-semibold">
-									1 : {Number.isFinite(calculations.riskRewardRatio) ? calculations.riskRewardRatio.toFixed(2) : "0.00"}
-								</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Expected Turnover (Buy + Sell)</p>
-								<p className="text-sm font-semibold">{formatMoney(calculations.expectedTurnover)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Expected P&amp;L On Turnover</p>
-								<p className={`text-sm font-semibold ${calculations.expectedPnLOnTurnoverPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-									{calculations.expectedPnLOnTurnoverPct.toFixed(2)}%
-								</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Stoploss Turnover (Buy + Sell)</p>
-								<p className="text-sm font-semibold">{formatMoney(calculations.stoplossTurnover)}</p>
-							</div>
-
-							<div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-								<p className="text-xs text-zinc-500">Max Loss On Turnover</p>
-								<p className="text-sm font-semibold text-rose-600">{calculations.maxLossOnTurnoverPct.toFixed(2)}%</p>
-							</div>
-							</section>
-						</div>
-					)}
-				</article>
-			</section>
-		</main>
+								<Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mt: 0.5 }}>Target And Risk</Typography>
+								<Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
+									{metricCard(positionType === "SELLER" ? "Target Buyback" : "Target Exit", formatMoney(calculations.targetExitAmountPerLot))}
+									{metricCard(positionType === "SELLER" ? "Max Premium Profit" : "Max Premium Loss", formatMoney(calculations.premiumNotional), undefined, positionType === "SELLER" ? "success.main" : "error.main")}
+									{metricCard(positionType === "SELLER" ? "Stoploss Buyback" : "Stoploss Exit", formatMoney(calculations.stoplossExitAmountPerLot))}
+									{metricCard("Target Profit On Invested", formatMoney(calculations.targetProfitAmountOnInvested), `${calculations.targetProfitPctOnInvested.toFixed(2)}% of invested`, "success.main")}
+									{metricCard("Max Loss On Invested", formatMoney(calculations.maxLossAmountOnInvested), `${calculations.stoplossPctOnInvested.toFixed(2)}% of invested`, "error.main")}
+									{metricCard("P&L From Price Move", formatMoney(calculations.expectedPnL), `Stoploss scenario: ${formatMoney(-calculations.maxLoss)}`, calculations.expectedPnL >= 0 ? "success.main" : "error.main")}
+									{metricCard("Risk : Reward", `1 : ${Number.isFinite(calculations.riskRewardRatio) ? calculations.riskRewardRatio.toFixed(2) : "0.00"}`)}
+									{metricCard("Expected Turnover", formatMoney(calculations.expectedTurnover))}
+									{metricCard("Expected P&L On Turnover", `${calculations.expectedPnLOnTurnoverPct.toFixed(2)}%`, undefined, calculations.expectedPnLOnTurnoverPct >= 0 ? "success.main" : "error.main")}
+									{metricCard("Stoploss Turnover", formatMoney(calculations.stoplossTurnover))}
+									{metricCard("Max Loss On Turnover", `${calculations.maxLossOnTurnoverPct.toFixed(2)}%`, undefined, "error.main")}
+								</Box>
+							</Box>
+						)}
+					</CardContent>
+				</Card>
+			</Box>
+		</Container>
 	);
 }

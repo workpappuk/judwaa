@@ -10,6 +10,7 @@ import { useMemo } from "react";
 
 import { store } from "@/store";
 import type { RootState } from "@/store";
+import { inferUserRole } from "@/lib/access-control";
 import { setSession } from "@/store/slices/authSlice";
 import { markDraftPositionsHydrated, setDraftPositions } from "@/store/slices/tradingSlice";
 import type { AuthSession } from "@/types/auth";
@@ -98,7 +99,13 @@ function AuthSessionPersistence() {
 
       const parsed = JSON.parse(raw) as Partial<AuthSession>;
       if (typeof parsed.username === "string" && typeof parsed.token === "string") {
-        dispatch(setSession({ username: parsed.username, token: parsed.token }));
+        dispatch(
+          setSession({
+            username: parsed.username,
+            token: parsed.token,
+            role: inferUserRole({ username: parsed.username, token: parsed.token, role: parsed.role }),
+          }),
+        );
       }
     } catch {
       window.localStorage.removeItem(AUTH_STORAGE_KEY);

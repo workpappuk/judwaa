@@ -1,6 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 import {
   activateStudent,
@@ -281,67 +292,69 @@ export default function StudentManagementPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[#f8fafc] p-4 text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100">
-      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="display-face text-2xl font-semibold">Student Management</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Manage student profile CRUD and activation lifecycle.
-        </p>
-        {message ? <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{message}</p> : null}
-        {error ? <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
-      </section>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Card variant="outlined" sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>Student Management</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Manage student profile CRUD and activation lifecycle.
+          </Typography>
+          {message ? <Alert severity="success" sx={{ mt: 1.5 }}>{message}</Alert> : null}
+          {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-lg font-semibold">{editingId ? "Edit Student" : "Create Student"}</h2>
-          <form className="mt-3 grid gap-3" onSubmit={handleSubmit}>
-            <label className="grid gap-1 text-sm">
-              Organization
-              <select
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" } }}>
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>{editingId ? "Edit Student" : "Create Student"}</Typography>
+            <Box component="form" sx={{ mt: 1.5, display: "grid", gap: 1.5 }} onSubmit={handleSubmit}>
+              <TextField
+                label="Organization"
+                select
                 required
+                size="small"
                 value={form.organizationId}
                 onChange={(event) => {
                   const organizationId = event.target.value;
                   setSelectedOrg(organizationId);
                   setForm((prev) => ({ ...prev, organizationId }));
                 }}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
               >
-                {!organizations.length ? <option value="">No organizations found</option> : null}
+                {!organizations.length ? <MenuItem value="">No organizations found</MenuItem> : null}
                 {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
+                  <MenuItem key={organization.id} value={organization.id}>
                     {organization.code} - {organization.name}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
+              </TextField>
 
-            <label className="grid gap-1 text-sm">
-              School
-              <select
+              <TextField
+                label="School"
+                select
                 required
+                size="small"
                 value={form.schoolId}
                 onChange={(event) => {
                   const schoolId = event.target.value;
                   setSelectedSchool(schoolId);
                   setForm((prev) => ({ ...prev, schoolId }));
                 }}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
               >
-                {!schools.length ? <option value="">No schools found</option> : null}
+                {!schools.length ? <MenuItem value="">No schools found</MenuItem> : null}
                 {schools.map((school) => (
-                  <option key={school.id} value={school.id}>
+                  <MenuItem key={school.id} value={school.id}>
                     {school.code} - {school.name}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
+              </TextField>
 
-            {!manualClassroomEntry ? (
-              <label className="grid gap-1 text-sm">
-                Classroom
-                <select
+              {!manualClassroomEntry ? (
+                <TextField
+                  label="Classroom"
+                  select
                   required
+                  size="small"
                   value={form.classroomId}
                   onChange={(event) => {
                     const value = event.target.value;
@@ -352,189 +365,188 @@ export default function StudentManagementPage() {
                     }
                     setForm((prev) => ({ ...prev, classroomId: value }));
                   }}
-                  className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
                 >
-                  {!classrooms.length ? <option value="">No classrooms found</option> : null}
-                    {classrooms.map((classroom) => (
-                      <option key={classroom.id} value={classroom.id}>
-                        {classroomLabelById.get(classroom.id) ?? classroom.id}
-                    </option>
+                  {!classrooms.length ? <MenuItem value="">No classrooms found</MenuItem> : null}
+                  {classrooms.map((classroom) => (
+                    <MenuItem key={classroom.id} value={classroom.id}>
+                      {classroomLabelById.get(classroom.id) ?? classroom.id}
+                    </MenuItem>
                   ))}
-                  <option value="__manual__">Enter classroom ID manually</option>
-                </select>
-              </label>
-            ) : (
-              <>
-                <LmsTextField
-                  required
-                  label="Classroom ID"
-                  value={form.classroomId}
-                  onChange={(classroomId) => setForm((prev) => ({ ...prev, classroomId }))}
-                  placeholder="UUID of classroom"
-                />
-                {classrooms.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setManualClassroomEntry(false);
-                      setForm((prev) => ({ ...prev, classroomId: classrooms[0].id }));
-                    }}
-                    className="w-fit rounded border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                  >
-                    Use classroom list
-                  </button>
-                ) : null}
-              </>
-            )}
-            <LmsTextField
-              required
-              label="Admission No"
-              value={form.admissionNo}
-              onChange={(admissionNo) => setForm((prev) => ({ ...prev, admissionNo }))}
-              placeholder="ADM-1001"
-            />
-            <LmsTextField
-              label="Roll No"
-              value={form.rollNo}
-              onChange={(rollNo) => setForm((prev) => ({ ...prev, rollNo }))}
-              placeholder="R-12"
-            />
-            <LmsTextField
-              required
-              label="First Name"
-              value={form.firstName}
-              onChange={(firstName) => setForm((prev) => ({ ...prev, firstName }))}
-              placeholder="Aarav"
-            />
-            <LmsTextField
-              label="Last Name"
-              value={form.lastName}
-              onChange={(lastName) => setForm((prev) => ({ ...prev, lastName }))}
-              placeholder="Sharma"
-            />
-            <LmsTextField
-              label="Gender"
-              value={form.gender}
-              onChange={(gender) => setForm((prev) => ({ ...prev, gender: gender.toUpperCase() }))}
-              placeholder="MALE / FEMALE / OTHER"
-            />
-            <LmsTextField
-              label="Date of Birth"
-              type="date"
-              value={form.dateOfBirth}
-              onChange={(dateOfBirth) => setForm((prev) => ({ ...prev, dateOfBirth }))}
-            />
-            <LmsTextField
-              label="Guardian Name"
-              value={form.guardianName}
-              onChange={(guardianName) => setForm((prev) => ({ ...prev, guardianName }))}
-              placeholder="Parent Name"
-            />
-            <LmsTextField
-              label="Guardian Phone"
-              value={form.guardianPhone}
-              onChange={(guardianPhone) => setForm((prev) => ({ ...prev, guardianPhone }))}
-              placeholder="9876543210"
-            />
-            <LmsTextField
-              label="Enrolled At"
-              type="date"
-              value={form.enrolledAt}
-              onChange={(enrolledAt) => setForm((prev) => ({ ...prev, enrolledAt }))}
-            />
+                  <MenuItem value="__manual__">Enter classroom ID manually</MenuItem>
+                </TextField>
+              ) : (
+                <>
+                  <LmsTextField
+                    required
+                    label="Classroom ID"
+                    value={form.classroomId}
+                    onChange={(classroomId) => setForm((prev) => ({ ...prev, classroomId }))}
+                    placeholder="UUID of classroom"
+                  />
+                  {classrooms.length > 0 ? (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setManualClassroomEntry(false);
+                        setForm((prev) => ({ ...prev, classroomId: classrooms[0].id }));
+                      }}
+                      variant="outlined"
+                      size="small"
+                      sx={{ width: "fit-content" }}
+                    >
+                      Use classroom list
+                    </Button>
+                  ) : null}
+                </>
+              )}
 
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={saving || !form.organizationId || !form.schoolId || !form.classroomId}
-                className="rounded bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                {saving ? "Saving..." : editingId ? "Update" : "Create"}
-              </button>
-              {editingId ? (
-                <button
-                  type="button"
-                  onClick={clearForm}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              <LmsTextField
+                required
+                label="Admission No"
+                value={form.admissionNo}
+                onChange={(admissionNo) => setForm((prev) => ({ ...prev, admissionNo }))}
+                placeholder="ADM-1001"
+              />
+              <LmsTextField
+                label="Roll No"
+                value={form.rollNo}
+                onChange={(rollNo) => setForm((prev) => ({ ...prev, rollNo }))}
+                placeholder="R-12"
+              />
+              <LmsTextField
+                required
+                label="First Name"
+                value={form.firstName}
+                onChange={(firstName) => setForm((prev) => ({ ...prev, firstName }))}
+                placeholder="Aarav"
+              />
+              <LmsTextField
+                label="Last Name"
+                value={form.lastName}
+                onChange={(lastName) => setForm((prev) => ({ ...prev, lastName }))}
+                placeholder="Sharma"
+              />
+              <LmsTextField
+                label="Gender"
+                value={form.gender}
+                onChange={(gender) => setForm((prev) => ({ ...prev, gender: gender.toUpperCase() }))}
+                placeholder="MALE / FEMALE / OTHER"
+              />
+              <LmsTextField
+                label="Date of Birth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={(dateOfBirth) => setForm((prev) => ({ ...prev, dateOfBirth }))}
+              />
+              <LmsTextField
+                label="Guardian Name"
+                value={form.guardianName}
+                onChange={(guardianName) => setForm((prev) => ({ ...prev, guardianName }))}
+                placeholder="Parent Name"
+              />
+              <LmsTextField
+                label="Guardian Phone"
+                value={form.guardianPhone}
+                onChange={(guardianPhone) => setForm((prev) => ({ ...prev, guardianPhone }))}
+                placeholder="9876543210"
+              />
+              <LmsTextField
+                label="Enrolled At"
+                type="date"
+                value={form.enrolledAt}
+                onChange={(enrolledAt) => setForm((prev) => ({ ...prev, enrolledAt }))}
+              />
+
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  type="submit"
+                  disabled={saving || !form.organizationId || !form.schoolId || !form.classroomId}
+                  variant="contained"
+                  size="small"
                 >
-                  Cancel Edit
-                </button>
-              ) : null}
-            </div>
-          </form>
-        </section>
+                  {saving ? "Saving..." : editingId ? "Update" : "Create"}
+                </Button>
+                {editingId ? (
+                  <Button type="button" onClick={clearForm} variant="outlined" size="small">
+                    Cancel Edit
+                  </Button>
+                ) : null}
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">Students</h2>
-            <div className="flex gap-2">
-              <select
-                value={selectedOrg}
-                onChange={(event) => setSelectedOrg(event.target.value)}
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">All organizations</option>
-                {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
-                    {organization.code}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedSchool}
-                onChange={(event) => setSelectedSchool(event.target.value)}
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">All schools</option>
-                {schools.map((school) => (
-                  <option key={school.id} value={school.id}>
-                    {school.code}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        <Card variant="outlined">
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>Students</Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Organization"
+                  value={selectedOrg}
+                  onChange={(event) => setSelectedOrg(event.target.value)}
+                  sx={{ minWidth: 150 }}
+                >
+                  <MenuItem value="">All organizations</MenuItem>
+                  {organizations.map((organization) => (
+                    <MenuItem key={organization.id} value={organization.id}>
+                      {organization.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  size="small"
+                  label="School"
+                  value={selectedSchool}
+                  onChange={(event) => setSelectedSchool(event.target.value)}
+                  sx={{ minWidth: 140 }}
+                >
+                  <MenuItem value="">All schools</MenuItem>
+                  {schools.map((school) => (
+                    <MenuItem key={school.id} value={school.id}>
+                      {school.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Box>
 
-          {loading ? <p className="mt-3 text-sm text-zinc-500">Loading students...</p> : null}
-          {!loading && !students.length ? <p className="mt-3 text-sm text-zinc-500">No students found.</p> : null}
+            {loading ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>Loading students...</Typography> : null}
+            {!loading && !students.length ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>No students found.</Typography> : null}
 
-          <ul className="mt-3 space-y-2">
-            {students.map((student) => (
-              <li key={student.id} className="rounded border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {student.admissionNo} - {student.firstName} {student.lastName ?? ""}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {orgLabelById.get(student.organizationId) ?? student.organizationId} | {schoolLabelById.get(student.schoolId) ?? student.schoolId} | {student.status}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Classroom: {classroomLabelById.get(student.classroomId) ?? student.classroomId} | Roll: {student.rollNo ?? "-"}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(student)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void toggleStatus(student)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                    >
-                      {student.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+            <Box sx={{ mt: 1.5, display: "grid", gap: 1 }}>
+              {students.map((student) => (
+                <Card key={student.id} variant="outlined">
+                  <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {student.admissionNo} - {student.firstName} {student.lastName ?? ""}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                          {orgLabelById.get(student.organizationId) ?? student.organizationId} | {schoolLabelById.get(student.schoolId) ?? student.schoolId} | {student.status}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                          Classroom: {classroomLabelById.get(student.classroomId) ?? student.classroomId} | Roll: {student.rollNo ?? "-"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button type="button" onClick={() => startEdit(student)} variant="outlined" size="small">Edit</Button>
+                        <Button type="button" onClick={() => void toggleStatus(student)} variant="outlined" size="small">
+                          {student.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
   );
 }

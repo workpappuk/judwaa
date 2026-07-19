@@ -13,6 +13,26 @@ import {
   FiTrendingUp,
   FiX,
 } from "react-icons/fi";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 
 import { useNeoQuotes } from "@/hooks/use-neo-quotes";
 import { useAppSelector } from "@/store/hooks";
@@ -126,209 +146,174 @@ export default function TradingPositionsPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
 
   const totalPnl = rows.reduce((acc, row) => acc + row.pnl, 0);
+  const totalOrderNotional = orderRows.reduce((sum, order) => sum + order.notional, 0);
 
   const positionTabContent = (
     <>
       {!draftsHydrated ? (
-        <section className="pt-3">
-          <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-            Restoring saved positions...
-          </article>
-        </section>
+        <Box sx={{ pt: 1.5 }}>
+          <Alert severity="info" variant="outlined">Restoring saved positions...</Alert>
+        </Box>
       ) : null}
       {draftsHydrated && rows.length === 0 ? (
-        <section className="pt-3">
-          <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors">
-            <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-              <FiPlusCircle className="h-4 w-4" />
-            </div>
-            <h2 className="mt-2 text-sm font-semibold">No positions selected</h2>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Go to Instruments and select contracts with quantity and average price.
-            </p>
-            <Link
-              href="/trading/instrument"
-              className="mt-3 inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1.5 text-xs font-medium"
-            >
-              <FiPlusCircle className="h-3.5 w-3.5" />
-              Select Instruments
-            </Link>
-          </article>
-        </section>
+        <Box sx={{ pt: 1.5 }}>
+          <Card variant="outlined">
+            <CardContent>
+              <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: "action.hover", display: "grid", placeItems: "center" }}>
+                <FiPlusCircle size={16} />
+              </Box>
+              <Typography variant="subtitle2" sx={{ mt: 1.5, fontWeight: 700 }}>No positions selected</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                Go to Instruments and select contracts with quantity and average price.
+              </Typography>
+              <Button component={Link} href="/trading/instrument" startIcon={<FiPlusCircle />} variant="outlined" size="small" sx={{ mt: 1.5 }}>
+                Select Instruments
+              </Button>
+            </CardContent>
+          </Card>
+        </Box>
       ) : null}
-      <div className="grid grid-cols-1 gap-2 mt-3">
-        <article
-          className={`rounded-2xl border px-4 py-3 transition-colors shadow-sm ${totalPnl >= 0
-            ? "border-emerald-200 dark:border-emerald-900 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/40 dark:to-zinc-900"
-            : "border-rose-200 dark:border-rose-900 bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/40 dark:to-zinc-900"
-            }`}
-        >
-          <p className="inline-flex w-full items-center justify-center gap-1.5 text-[11px] uppercase tracking-wide font-semibold text-zinc-700 dark:text-zinc-300 text-center">
-            Day P&L
-          </p>
-          <p
-            className={`mt-1 text-center text-2xl font-extrabold leading-none ${totalPnl >= 0 ? "text-emerald-600" : "text-rose-600"
-              }`}
-          >
-            {formatCompact(totalPnl)}
-          </p>
-        </article>
-      </div>
-      <section className="  pt-3 space-y-2.5">
-        {false ? (
-          <div className="rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-2.5 text-xs text-rose-700 dark:text-rose-300">
-            {error}
-          </div>
+      <Box sx={{ mt: 1.5 }}>
+        <Card variant="outlined" sx={{ bgcolor: totalPnl >= 0 ? "success.50" : "error.50" }}>
+          <CardContent sx={{ textAlign: "center", py: 1.5, "&:last-child": { pb: 1.5 } }}>
+            <Typography variant="caption" color="text.secondary">Day P&L</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: totalPnl >= 0 ? "success.main" : "error.main" }}>{formatCompact(totalPnl)}</Typography>
+          </CardContent>
+        </Card>
+      </Box>
+      <Box sx={{ pt: 1.5, display: "grid", gap: 1.25 }}>
+        {error ? (
+          <Alert severity="error" variant="outlined">{error}</Alert>
         ) : null}
 
         {rows.map((row) => (
-          <article
+          <Card
             key={row.id}
-            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors"
+            variant="outlined"
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-[14px] font-semibold leading-tight truncate">{row.label}</h2>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+            <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>{row.label}</Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
                   {row.expiry} • {row.product} • Lots {row.qty}
-                </p>
-              </div>
+                </Typography>
+              </Box>
 
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded border ${row.side === "LONG"
-                  ? "border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
-                  : "border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30"
-                  }`}
-              >
-                {row.side}
-              </span>
-            </div>
+              <Chip size="small" color={row.side === "LONG" ? "success" : "error"} variant="outlined" label={row.side} />
+            </Box>
 
-            <div className="grid grid-cols-4 gap-2 mt-2.5 text-[11px]">
-              <div>
-                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400"><FiHash className="h-3 w-3" />Avg</p>
-                <p className="font-medium">{formatMoney(row.avgPrice)}</p>
-              </div>
-              <div>
-                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400"><FiBarChart2 className="h-3 w-3" />LTP</p>
-                <p className="font-medium">{formatMoney(row.ltp)}</p>
-              </div>
-              <div>
-                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
-                  {row.changePct >= 0 ? <FiArrowUpRight className="h-3 w-3" /> : <FiArrowDownRight className="h-3 w-3" />}
-                  Chg
-                </p>
-                <p
-                  className={`font-medium ${row.changePct >= 0 ? "text-emerald-600" : "text-rose-600"
-                    }`}
-                >
-                  {formatSignedPercent(row.changePct)}
-                </p>
-              </div>
-              <div>
-                <p className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400"><FiTrendingUp className="h-3 w-3" />P&L</p>
-                <p
-                  className={`font-semibold ${row.pnl >= 0 ? "text-emerald-600" : "text-rose-600"
-                    }`}
-                >
-                  {formatMoney(row.pnl)}
-                </p>
-              </div>
-            </div>
-
-          </article>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1, mt: 1.5 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}><FiHash size={12} />Avg</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatMoney(row.avgPrice)}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}><FiBarChart2 size={12} />LTP</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatMoney(row.ltp)}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                  {row.changePct >= 0 ? <FiArrowUpRight size={12} /> : <FiArrowDownRight size={12} />}Chg
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: row.changePct >= 0 ? "success.main" : "error.main" }}>{formatSignedPercent(row.changePct)}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}><FiTrendingUp size={12} />P&L</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: row.pnl >= 0 ? "success.main" : "error.main" }}>{formatMoney(row.pnl)}</Typography>
+              </Box>
+            </Box>
+            </CardContent>
+          </Card>
         ))}
-      </section>
+      </Box>
     </>
   );
 
   const ordersTabContent = (
-    <section className=" pt-3 space-y-2.5">
+    <Box sx={{ pt: 1.5, display: "grid", gap: 1.25 }}>
       {!draftsHydrated ? (
-        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-          Restoring selected instruments...
-        </article>
+        <Alert severity="info" variant="outlined">Restoring selected instruments...</Alert>
       ) : null}
 
       {draftsHydrated && orderRows.length === 0 ? (
-        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3 transition-colors">
-          <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200">
-            <FiClipboard className="h-4 w-4" />
-          </div>
-          <h2 className="mt-2 text-sm font-semibold">No orders created</h2>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Select instruments first to generate order entries.
-          </p>
-          <Link
-            href="/trading/instrument"
-            className="mt-3 inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1.5 text-xs font-medium"
-          >
-            <FiPlusCircle className="h-3.5 w-3.5" />
-            Select Instruments
-          </Link>
-        </article>
+        <Card variant="outlined">
+          <CardContent>
+            <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: "action.hover", display: "grid", placeItems: "center" }}>
+              <FiClipboard size={16} />
+            </Box>
+            <Typography variant="subtitle2" sx={{ mt: 1.5, fontWeight: 700 }}>No orders created</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+              Select instruments first to generate order entries.
+            </Typography>
+            <Button component={Link} href="/trading/instrument" startIcon={<FiPlusCircle />} variant="outlined" size="small" sx={{ mt: 1.5 }}>
+              Select Instruments
+            </Button>
+          </CardContent>
+        </Card>
       ) : null}
 
       {draftsHydrated && orderRows.length > 0 ? (
-        <article className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 transition-colors overflow-hidden">
-          <div>
-            <table className="w-full table-fixed text-[12px]">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/70 text-zinc-600 dark:text-zinc-300">
-                <tr>
-                  <th className="px-2 py-2 text-left font-semibold w-[42%]">Symbol</th>
-                  <th className="px-2 py-2 text-left font-semibold w-[16%]">Side</th>
-                  <th className="px-2 py-2 text-right font-semibold w-[12%]">Qty</th>
-                  <th className="px-2 py-2 text-right font-semibold w-[18%]">Limit</th>
-                  <th className="px-2 py-2 text-center font-semibold w-[12%]">View</th>
-                </tr>
-              </thead>
-              <tbody>
+        <>
+          <Card variant="outlined">
+            <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
+              <Typography variant="caption" color="text.secondary">Order book notional</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatMoney(totalOrderNotional)}</Typography>
+            </CardContent>
+          </Card>
+
+          <TableContainer component={Card} variant="outlined">
+              <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: "42%" }}>Symbol</TableCell>
+                  <TableCell sx={{ width: "16%" }}>Side</TableCell>
+                  <TableCell sx={{ width: "12%", textAlign: "right" }}>Qty</TableCell>
+                  <TableCell sx={{ width: "18%", textAlign: "right" }}>Limit</TableCell>
+                  <TableCell sx={{ width: "12%", textAlign: "center" }}>View</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {orderRows.map((order) => (
-                  <tr
+                  <TableRow
                     key={order.id}
-                    className="border-t border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100"
+                    hover
                   >
-                    <td className="px-2 py-2">
-                      <p className="font-medium leading-tight truncate">{order.symbol}</p>
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{order.symbol}</Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
                         {order.expiry} • {order.product}
-                      </p>
-                    </td>
-                    <td className="px-2 py-2">
-                      <span
-                        className={`inline-flex rounded border px-2 py-0.5 text-[10px] ${order.side === "LONG"
-                          ? "border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
-                          : "border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/30"
-                          }`}
-                      >
-                        {order.side === "LONG" ? "BUY" : "SELL"}
-                      </span>
-                    </td>
-                    <td className="px-2 py-2 text-right">{order.qty}</td>
-                    <td className="px-2 py-2 text-right font-medium">{formatMoney(order.limitPrice)}</td>
-                    <td className="px-2 py-2 text-center">
-                      <button
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" color={order.side === "LONG" ? "success" : "error"} variant="outlined" label={order.side === "LONG" ? "BUY" : "SELL"} />
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "right" }}>{order.qty}</TableCell>
+                    <TableCell sx={{ textAlign: "right", fontWeight: 600 }}>{formatMoney(order.limitPrice)}</TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>
+                      <IconButton
                         type="button"
                         onClick={() => setSelectedOrder(order)}
-                        className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-[10px] font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        aria-label={`View order details for ${order.symbol}`}
+                        size="small"
+                        color="primary"
                       >
-                        <FiEye className="h-3 w-3" />
-                      </button>
-                    </td>
-                  </tr>
+                        <FiEye size={14} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
+              </TableBody>
+              </Table>
+          </TableContainer>
+        </>
       ) : null}
-    </section>
+    </Box>
   );
 
   return (
-    <main className="min-h-screen  text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100 pb-8 transition-colors">
-      <section className="sticky top-14 z-10 bg-white/95 dark:bg-[#0f141c]/95 backdrop-blur-sm  border-zinc-200 dark:border-zinc-800 transition-colors">
-        <div className="px-4 pt-4 pb-3">
+    <Container maxWidth="lg" sx={{ minHeight: "100vh", pb: 4 }}>
+      <Box sx={{ position: "sticky", top: 56, zIndex: 10, bgcolor: "background.default", py: 1.5 }}>
           <Tabs
             defaultTab="positions"
             tabs={[
@@ -345,71 +330,46 @@ export default function TradingPositionsPage() {
             ]}
           />
 
-        </div >
-      </section >
+      </Box>
 
-      {selectedOrder ? (
-        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/50 p-3 sm:p-4">
-          <article className="w-full max-w-md rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold">Order Details</h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  {selectedOrder.symbol}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                aria-label="Close order details"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
+      <Dialog
+        open={Boolean(selectedOrder)}
+        onClose={() => setSelectedOrder(null)}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="order-details-title"
+      >
+        {selectedOrder ? (
+        <>
+          <DialogTitle id="order-details-title" sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Order Details</Typography>
+              <Typography variant="caption" color="text.secondary">{selectedOrder.symbol}</Typography>
+            </Box>
+            <IconButton
+              onClick={() => setSelectedOrder(null)}
+              aria-label="Close order details"
+              size="small"
+            >
+              <FiX size={16} />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mb: 1.5 }}>
+              <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}><Typography variant="caption" color="text.secondary">Symbol</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedOrder.neoSymbol}</Typography></CardContent></Card>
+              <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}><Typography variant="caption" color="text.secondary">Side</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedOrder.side === "LONG" ? "BUY" : "SELL"}</Typography></CardContent></Card>
+              <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}><Typography variant="caption" color="text.secondary">Product</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedOrder.product}</Typography></CardContent></Card>
+              <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}><Typography variant="caption" color="text.secondary">Quantity</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedOrder.qty}</Typography></CardContent></Card>
+              <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}><Typography variant="caption" color="text.secondary">Expiry</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedOrder.expiry}</Typography></CardContent></Card>
+              <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}><Typography variant="caption" color="text.secondary">Strike / Type</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedOrder.strike} {selectedOrder.optionType}</Typography></CardContent></Card>
+            </Box>
 
-            <dl className="mt-3 grid grid-cols-2 gap-2 text-[12px]">
-              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Symbol</dt>
-                <dd className="font-medium">{selectedOrder.neoSymbol}</dd>
-              </div>
-              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Side</dt>
-                <dd className="font-medium">{selectedOrder.side === "LONG" ? "BUY" : "SELL"}</dd>
-              </div>
-              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Product</dt>
-                <dd className="font-medium">{selectedOrder.product}</dd>
-              </div>
-              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Quantity</dt>
-                <dd className="font-medium">{selectedOrder.qty}</dd>
-              </div>
-              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Expiry</dt>
-                <dd className="font-medium">{selectedOrder.expiry}</dd>
-              </div>
-              <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-2.5 py-2">
-                <dt className="text-zinc-500 dark:text-zinc-400">Strike / Type</dt>
-                <dd className="font-medium">
-                  {selectedOrder.strike} {selectedOrder.optionType}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="mt-3 flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-800 px-2.5 py-2 text-[12px]">
-              <span className="text-zinc-500 dark:text-zinc-400">Limit Price</span>
-              <span className="font-semibold">{formatMoney(selectedOrder.limitPrice)}</span>
-            </div>
-            <div className="mt-2 flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-800 px-2.5 py-2 text-[12px]">
-              <span className="text-zinc-500 dark:text-zinc-400">Total Order Value</span>
-              <span className="font-semibold">{formatMoney(selectedOrder.notional)}</span>
-            </div>
-          </article>
-        </div>
-      ) : null}
-
-
-    </main >
+            <Card variant="outlined" sx={{ mb: 1 }}><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 }, display: "flex", justifyContent: "space-between" }}><Typography variant="caption" color="text.secondary">Limit Price</Typography><Typography variant="body2" sx={{ fontWeight: 700 }}>{formatMoney(selectedOrder.limitPrice)}</Typography></CardContent></Card>
+            <Card variant="outlined"><CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 }, display: "flex", justifyContent: "space-between" }}><Typography variant="caption" color="text.secondary">Total Order Value</Typography><Typography variant="body2" sx={{ fontWeight: 700 }}>{formatMoney(selectedOrder.notional)}</Typography></CardContent></Card>
+          </DialogContent>
+        </>
+        ) : null}
+      </Dialog>
+    </Container>
   );
 }

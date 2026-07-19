@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { Alert, Box, Button, Card, CardContent, Container, Typography } from "@mui/material";
 
 import {
   activateOrganization,
@@ -146,18 +147,21 @@ export default function OrganizationManagementPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[#f8fafc] p-4 text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100">
-      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="display-face text-2xl font-semibold">Organization Management</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Dedicated route to manage organization CRUD.</p>
-        {message ? <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{message}</p> : null}
-        {error ? <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
-      </section>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Card variant="outlined" sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>Organization Management</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Dedicated route to manage organization CRUD.</Typography>
+          {message ? <Alert severity="success" sx={{ mt: 1.5 }}>{message}</Alert> : null}
+          {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-lg font-semibold">{editingId ? "Edit Organization" : "Create Organization"}</h2>
-          <form className="mt-3 grid gap-3" onSubmit={handleSubmit}>
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" } }}>
+        <Card variant="outlined">
+          <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>{editingId ? "Edit Organization" : "Create Organization"}</Typography>
+          <Box component="form" sx={{ mt: 1.5, display: "grid", gap: 1.5 }} onSubmit={handleSubmit}>
             <LmsTextField
               required
               label="Code"
@@ -206,67 +210,76 @@ export default function OrganizationManagementPage() {
                 }))
               }
             />
-            <div className="flex gap-2">
-              <button
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
                 type="submit"
                 disabled={saving}
-                className="rounded bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                variant="contained"
+                size="small"
               >
                 {saving ? "Saving..." : editingId ? "Update" : "Create"}
-              </button>
+              </Button>
               {editingId ? (
-                <button
+                <Button
                   type="button"
                   onClick={clearForm}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  variant="outlined"
+                  size="small"
                 >
                   Cancel Edit
-                </button>
+                </Button>
               ) : null}
-            </div>
-          </form>
-        </section>
+            </Box>
+          </Box>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-lg font-semibold">Organizations</h2>
-          {loading ? <p className="mt-3 text-sm text-zinc-500">Loading organizations...</p> : null}
-          {!loading && !organizations.length ? <p className="mt-3 text-sm text-zinc-500">No organizations found.</p> : null}
-          <ul className="mt-3 space-y-2">
+        <Card variant="outlined">
+          <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Organizations</Typography>
+          {loading ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>Loading organizations...</Typography> : null}
+          {!loading && !organizations.length ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>No organizations found.</Typography> : null}
+          <Box sx={{ mt: 1.5, display: "grid", gap: 1 }}>
             {organizations.map((organization) => (
-              <li key={organization.id} className="rounded border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium">{organization.code} - {organization.name}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{organization.status}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <Card key={organization.id} variant="outlined">
+                <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "flex-start" }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{organization.code} - {organization.name}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{organization.status}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
                       {organization.contactEmail ?? "-"} | {organization.contactPhone ?? "-"}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
                       {organization.addressLine1 ?? "-"}, {organization.addressLine2 ?? "-"}, {organization.city ?? "-"}, {organization.state ?? "-"}, {organization.country ?? "-"} {organization.pincode ?? ""}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
                       type="button"
                       onClick={() => startEdit(organization)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      variant="outlined"
+                      size="small"
                     >
                       Edit
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => void toggleStatus(organization)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      variant="outlined"
+                      size="small"
                     >
                       {organization.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                    </button>
-                  </div>
-                </div>
-              </li>
+                    </Button>
+                  </Box>
+                </Box>
+                </CardContent>
+              </Card>
             ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+          </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Alert, Box, Button, Card, CardContent, Container, MenuItem, TextField, Typography } from "@mui/material";
 
 import {
   activateSchool,
@@ -165,34 +166,36 @@ export default function SchoolManagementPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[#f8fafc] p-4 text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100">
-      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="display-face text-2xl font-semibold">School Management</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Dedicated route to manage school CRUD.</p>
-        {message ? <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{message}</p> : null}
-        {error ? <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
-      </section>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Card variant="outlined" sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>School Management</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Dedicated route to manage school CRUD.</Typography>
+          {message ? <Alert severity="success" sx={{ mt: 1.5 }}>{message}</Alert> : null}
+          {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-lg font-semibold">{editingId ? "Edit School" : "Create School"}</h2>
-          <form className="mt-3 grid gap-3" onSubmit={handleSubmit}>
-            <label className="grid gap-1 text-sm">
-              Organization
-              <select
-                required
-                value={form.organizationId}
-                onChange={(event) => setForm((prev) => ({ ...prev, organizationId: event.target.value }))}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                {!organizations.length ? <option value="">No organizations found</option> : null}
-                {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
-                    {organization.code} - {organization.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" } }}>
+        <Card variant="outlined">
+          <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>{editingId ? "Edit School" : "Create School"}</Typography>
+          <Box component="form" sx={{ mt: 1.5, display: "grid", gap: 1.5 }} onSubmit={handleSubmit}>
+            <TextField
+              label="Organization"
+              select
+              required
+              size="small"
+              value={form.organizationId}
+              onChange={(event) => setForm((prev) => ({ ...prev, organizationId: event.target.value }))}
+            >
+              {!organizations.length ? <MenuItem value="">No organizations found</MenuItem> : null}
+              {organizations.map((organization) => (
+                <MenuItem key={organization.id} value={organization.id}>
+                  {organization.code} - {organization.name}
+                </MenuItem>
+              ))}
+            </TextField>
             <LmsTextField
               required
               label="Code"
@@ -234,68 +237,67 @@ export default function SchoolManagementPage() {
                 }))
               }
             />
-            <button
+            <Button
               type="submit"
               disabled={saving || !form.organizationId}
-              className="rounded bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              variant="contained"
+              size="small"
             >
               {saving ? "Saving..." : editingId ? "Update" : "Create"}
-            </button>
-          </form>
-        </section>
+            </Button>
+          </Box>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">Schools</h2>
-            <select
+        <Card variant="outlined">
+          <CardContent>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Schools</Typography>
+            <TextField
+              select
+              size="small"
+              label="Organization"
               value={selectedOrg}
               onChange={(event) => setSelectedOrg(event.target.value)}
-              className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              sx={{ minWidth: 170 }}
             >
-              <option value="">All organizations</option>
+              <MenuItem value="">All organizations</MenuItem>
               {organizations.map((organization) => (
-                <option key={organization.id} value={organization.id}>
+                <MenuItem key={organization.id} value={organization.id}>
                   {organization.code}
-                </option>
+                </MenuItem>
               ))}
-            </select>
-          </div>
-          {loading ? <p className="mt-3 text-sm text-zinc-500">Loading schools...</p> : null}
-          {!loading && !schools.length ? <p className="mt-3 text-sm text-zinc-500">No schools found.</p> : null}
-          <ul className="mt-3 space-y-2">
+            </TextField>
+          </Box>
+          {loading ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>Loading schools...</Typography> : null}
+          {!loading && !schools.length ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>No schools found.</Typography> : null}
+          <Box sx={{ mt: 1.5, display: "grid", gap: 1 }}>
             {schools.map((school) => (
-              <li key={school.id} className="rounded border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium">{school.code} - {school.name}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{orgLabelById.get(school.organizationId) ?? school.organizationId} | {school.status}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Boards: {school.boards?.join(", ") || "-"}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <Card key={school.id} variant="outlined">
+                <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{school.code} - {school.name}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{orgLabelById.get(school.organizationId) ?? school.organizationId} | {school.status}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>Boards: {school.boards?.join(", ") || "-"}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
                       {school.addressLine1 ?? "-"}, {school.addressLine2 ?? "-"}, {school.city ?? "-"}, {school.state ?? "-"}, {school.country ?? "-"} {school.pincode ?? ""}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(school)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void toggleStatus(school)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                    >
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button type="button" onClick={() => startEdit(school)} variant="outlined" size="small">Edit</Button>
+                    <Button type="button" onClick={() => void toggleStatus(school)} variant="outlined" size="small">
                       {school.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                    </button>
-                  </div>
-                </div>
-              </li>
+                    </Button>
+                  </Box>
+                </Box>
+                </CardContent>
+              </Card>
             ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+          </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
   );
 }

@@ -1,6 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Container,
+  FormControlLabel,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 import {
   activateExam,
@@ -465,312 +478,322 @@ export default function ExamManagementPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-7rem)] rounded-xl bg-[#f8fafc] p-4 text-zinc-900 dark:bg-[#0b0f15] dark:text-zinc-100">
-      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="display-face text-2xl font-semibold">Exam Management</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Manage exam CRUD and lifecycle with section/question builder.</p>
-        {message ? <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{message}</p> : null}
-        {error ? <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
-      </section>
+    <Container maxWidth="lg" sx={{ py: 2 }}>
+      <Card variant="outlined" sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>Exam Management</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Manage exam CRUD and lifecycle with section/question builder.
+          </Typography>
+          {message ? <Alert severity="success" sx={{ mt: 1.5 }}>{message}</Alert> : null}
+          {error ? <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert> : null}
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-lg font-semibold">{editingId ? "Edit Exam" : "Create Exam"}</h2>
-          <form className="mt-3 grid gap-3" onSubmit={handleSubmit}>
-            <label className="grid gap-1 text-sm">
-              Organization
-              <select
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" } }}>
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>{editingId ? "Edit Exam" : "Create Exam"}</Typography>
+            <Box component="form" sx={{ mt: 1.5, display: "grid", gap: 1.5 }} onSubmit={handleSubmit}>
+              <TextField
+                label="Organization"
+                select
                 required
+                size="small"
                 value={form.organizationId}
                 onChange={(event) => {
                   const organizationId = event.target.value;
                   setSelectedOrg(organizationId);
                   setForm((prev) => ({ ...prev, organizationId, schoolId: "" }));
                 }}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
               >
-                {!organizations.length ? <option value="">No organizations found</option> : null}
+                {!organizations.length ? <MenuItem value="">No organizations found</MenuItem> : null}
                 {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
+                  <MenuItem key={organization.id} value={organization.id}>
                     {organization.code} - {organization.name}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
+              </TextField>
 
-            <label className="grid gap-1 text-sm">
-              School (Optional)
-              <select
+              <TextField
+                label="School (Optional)"
+                select
+                size="small"
                 value={form.schoolId}
                 onChange={(event) => setForm((prev) => ({ ...prev, schoolId: event.target.value }))}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
               >
-                <option value="">Organization-wide exam</option>
+                <MenuItem value="">Organization-wide exam</MenuItem>
                 {schools.map((school) => (
-                  <option key={school.id} value={school.id}>
+                  <MenuItem key={school.id} value={school.id}>
                     {school.code} - {school.name}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
+              </TextField>
 
-            <LmsTextField required label="Code" value={form.code} onChange={(code) => setForm((prev) => ({ ...prev, code: code.toUpperCase() }))} placeholder="EXM-101" />
-            <LmsTextField required label="Title" value={form.title} onChange={(title) => setForm((prev) => ({ ...prev, title }))} placeholder="Term 1 Practice Exam" />
-            <LmsTextField label="Description" value={form.description} onChange={(description) => setForm((prev) => ({ ...prev, description }))} placeholder="Brief description" />
+              <LmsTextField required label="Code" value={form.code} onChange={(code) => setForm((prev) => ({ ...prev, code: code.toUpperCase() }))} placeholder="EXM-101" />
+              <LmsTextField required label="Title" value={form.title} onChange={(title) => setForm((prev) => ({ ...prev, title }))} placeholder="Term 1 Practice Exam" />
+              <LmsTextField label="Description" value={form.description} onChange={(description) => setForm((prev) => ({ ...prev, description }))} placeholder="Brief description" />
 
-            <label className="grid gap-1 text-sm">
-              Exam Type
-              <select
+              <TextField
+                label="Exam Type"
+                select
+                size="small"
                 value={form.examType}
                 onChange={(event) => setForm((prev) => ({ ...prev, examType: event.target.value as LmsExamType }))}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
               >
                 {EXAM_TYPES.map((examType) => (
-                  <option key={examType} value={examType}>
+                  <MenuItem key={examType} value={examType}>
                     {examType}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
+              </TextField>
 
-            <LmsTextField label="Starts At" type="datetime-local" value={form.startsAt} onChange={(startsAt) => setForm((prev) => ({ ...prev, startsAt }))} />
-            <LmsTextField label="Ends At" type="datetime-local" value={form.endsAt} onChange={(endsAt) => setForm((prev) => ({ ...prev, endsAt }))} />
-            <LmsTextField label="Duration Minutes" type="number" value={form.durationMinutes} onChange={(durationMinutes) => setForm((prev) => ({ ...prev, durationMinutes }))} placeholder="60" />
-            <LmsTextField label="Total Marks" type="number" value={form.totalMarks} onChange={(totalMarks) => setForm((prev) => ({ ...prev, totalMarks }))} placeholder="100" />
+              <LmsTextField label="Starts At" type="datetime-local" value={form.startsAt} onChange={(startsAt) => setForm((prev) => ({ ...prev, startsAt }))} />
+              <LmsTextField label="Ends At" type="datetime-local" value={form.endsAt} onChange={(endsAt) => setForm((prev) => ({ ...prev, endsAt }))} />
+              <LmsTextField label="Duration Minutes" type="number" value={form.durationMinutes} onChange={(durationMinutes) => setForm((prev) => ({ ...prev, durationMinutes }))} placeholder="60" />
+              <LmsTextField label="Total Marks" type="number" value={form.totalMarks} onChange={(totalMarks) => setForm((prev) => ({ ...prev, totalMarks }))} placeholder="100" />
 
-            <div className="mt-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">Section and Question Builder</h3>
-                <button
-                  type="button"
-                  onClick={addSection}
-                  className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                >
-                  Add Section
-                </button>
-              </div>
+              <Card variant="outlined" sx={{ mt: 0.5 }}>
+                <CardContent>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Section and Question Builder</Typography>
+                    <Button type="button" onClick={addSection} variant="outlined" size="small">Add Section</Button>
+                  </Box>
 
-              <div className="space-y-3">
-                {sections.map((section, sectionIndex) => (
-                  <div key={section.key} className="rounded border border-zinc-200 p-3 dark:border-zinc-800">
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="text-sm font-semibold">Section {sectionIndex + 1}</p>
-                      <button
-                        type="button"
-                        onClick={() => removeSection(section.key)}
-                        className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                      >
-                        Remove Section
-                      </button>
-                    </div>
+                  <Box sx={{ display: "grid", gap: 1.5 }}>
+                    {sections.map((section, sectionIndex) => (
+                      <Card key={section.key} variant="outlined">
+                        <CardContent>
+                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>Section {sectionIndex + 1}</Typography>
+                            <Button type="button" onClick={() => removeSection(section.key)} variant="outlined" size="small">
+                              Remove Section
+                            </Button>
+                          </Box>
 
-                    <LmsTextField label="Section Title" value={section.title} onChange={(title) => updateSection(section.key, { title })} placeholder="General" />
-                    <LmsTextField label="Section Description" value={section.description} onChange={(description) => updateSection(section.key, { description })} placeholder="Section note" />
-                    <LmsTextField label="Section Max Marks" type="number" value={section.maxMarks} onChange={(maxMarks) => updateSection(section.key, { maxMarks })} placeholder="10" />
+                          <Box sx={{ display: "grid", gap: 1.5 }}>
+                            <LmsTextField label="Section Title" value={section.title} onChange={(title) => updateSection(section.key, { title })} placeholder="General" />
+                            <LmsTextField label="Section Description" value={section.description} onChange={(description) => updateSection(section.key, { description })} placeholder="Section note" />
+                            <LmsTextField label="Section Max Marks" type="number" value={section.maxMarks} onChange={(maxMarks) => updateSection(section.key, { maxMarks })} placeholder="10" />
 
-                    <div className="mt-2 space-y-2">
-                      {section.questions.map((question, questionIndex) => (
-                        <div key={question.key} className="rounded border border-zinc-200 p-2 dark:border-zinc-800">
-                          <div className="mb-2 flex items-center justify-between">
-                            <p className="text-xs font-semibold">Question {questionIndex + 1}</p>
-                            <button
-                              type="button"
-                              onClick={() => removeQuestion(section.key, question.key)}
-                              className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                            >
-                              Remove Question
-                            </button>
-                          </div>
+                            <Box sx={{ display: "grid", gap: 1 }}>
+                              {section.questions.map((question, questionIndex) => (
+                                <Card key={question.key} variant="outlined">
+                                  <CardContent>
+                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                                      <Typography variant="caption" sx={{ fontWeight: 700 }}>Question {questionIndex + 1}</Typography>
+                                      <Button
+                                        type="button"
+                                        onClick={() => removeQuestion(section.key, question.key)}
+                                        variant="outlined"
+                                        size="small"
+                                      >
+                                        Remove Question
+                                      </Button>
+                                    </Box>
 
-                          <label className="grid gap-1 text-sm">
-                            Question Type
-                            <select
-                              value={question.questionType}
-                              onChange={(event) => updateQuestion(section.key, question.key, { questionType: event.target.value as QuestionType })}
-                              className="rounded border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
-                            >
-                              {QUESTION_TYPES.map((questionType) => (
-                                <option key={questionType} value={questionType}>
-                                  {questionType}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                                    <Box sx={{ display: "grid", gap: 1.5 }}>
+                                      <TextField
+                                        label="Question Type"
+                                        select
+                                        size="small"
+                                        value={question.questionType}
+                                        onChange={(event) => updateQuestion(section.key, question.key, { questionType: event.target.value as QuestionType })}
+                                      >
+                                        {QUESTION_TYPES.map((questionType) => (
+                                          <MenuItem key={questionType} value={questionType}>
+                                            {questionType}
+                                          </MenuItem>
+                                        ))}
+                                      </TextField>
 
-                          <LmsTextField
-                            required
-                            label="Question Text"
-                            value={question.questionText}
-                            onChange={(questionText) => updateQuestion(section.key, question.key, { questionText })}
-                            placeholder="Question text"
-                          />
-                          <LmsTextField
-                            label="Marks"
-                            type="number"
-                            value={question.marks}
-                            onChange={(marks) => updateQuestion(section.key, question.key, { marks })}
-                            placeholder="1"
-                          />
-
-                          {isChoiceQuestion(question.questionType) ? (
-                            <div className="mt-2 rounded border border-zinc-200 p-2 dark:border-zinc-800">
-                              <div className="mb-2 flex items-center justify-between">
-                                <p className="text-xs font-semibold">Options</p>
-                                <button
-                                  type="button"
-                                  onClick={() => addOption(section.key, question.key)}
-                                  className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                                >
-                                  Add Option
-                                </button>
-                              </div>
-                              <div className="space-y-2">
-                                {question.options.map((option) => (
-                                  <div key={option.key} className="grid gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center">
-                                    <input
-                                      value={option.optionText}
-                                      onChange={(event) => updateOption(section.key, question.key, option.key, { optionText: event.target.value })}
-                                      className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                      placeholder="Option text"
-                                    />
-                                    <label className="inline-flex items-center gap-1 text-xs">
-                                      <input
-                                        type="checkbox"
-                                        checked={option.correct}
-                                        onChange={(event) => updateOption(section.key, question.key, option.key, { correct: event.target.checked })}
+                                      <LmsTextField
+                                        required
+                                        label="Question Text"
+                                        value={question.questionText}
+                                        onChange={(questionText) => updateQuestion(section.key, question.key, { questionText })}
+                                        placeholder="Question text"
                                       />
-                                      Correct
-                                    </label>
-                                    <button
-                                      type="button"
-                                      onClick={() => removeOption(section.key, question.key, option.key)}
-                                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                                    >
-                                      Remove
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
+                                      <LmsTextField
+                                        label="Marks"
+                                        type="number"
+                                        value={question.marks}
+                                        onChange={(marks) => updateQuestion(section.key, question.key, { marks })}
+                                        placeholder="1"
+                                      />
 
-                      <button
-                        type="button"
-                        onClick={() => addQuestion(section.key)}
-                        className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                      >
-                        Add Question
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                                      {isChoiceQuestion(question.questionType) ? (
+                                        <Card variant="outlined">
+                                          <CardContent>
+                                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+                                              <Typography variant="caption" sx={{ fontWeight: 700 }}>Options</Typography>
+                                              <Button type="button" onClick={() => addOption(section.key, question.key)} variant="outlined" size="small">
+                                                Add Option
+                                              </Button>
+                                            </Box>
+                                            <Box sx={{ display: "grid", gap: 1 }}>
+                                              {question.options.map((option) => (
+                                                <Box
+                                                  key={option.key}
+                                                  sx={{
+                                                    display: "grid",
+                                                    gap: 1,
+                                                    gridTemplateColumns: { xs: "1fr", sm: "1fr auto auto" },
+                                                    alignItems: "center",
+                                                  }}
+                                                >
+                                                  <TextField
+                                                    label="Option Text"
+                                                    size="small"
+                                                    value={option.optionText}
+                                                    onChange={(event) => updateOption(section.key, question.key, option.key, { optionText: event.target.value })}
+                                                  />
+                                                  <FormControlLabel
+                                                    control={
+                                                      <Checkbox
+                                                        checked={option.correct}
+                                                        onChange={(event) =>
+                                                          updateOption(section.key, question.key, option.key, { correct: event.target.checked })
+                                                        }
+                                                      />
+                                                    }
+                                                    label="Correct"
+                                                    sx={{ m: 0 }}
+                                                  />
+                                                  <Button
+                                                    type="button"
+                                                    onClick={() => removeOption(section.key, question.key, option.key)}
+                                                    variant="outlined"
+                                                    size="small"
+                                                  >
+                                                    Remove
+                                                  </Button>
+                                                </Box>
+                                              ))}
+                                            </Box>
+                                          </CardContent>
+                                        </Card>
+                                      ) : null}
+                                    </Box>
+                                  </CardContent>
+                                </Card>
+                              ))}
 
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={saving || !form.organizationId || !form.code || !form.title}
-                className="rounded bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                {saving ? "Saving..." : editingId ? "Update" : "Create"}
-              </button>
-              {editingId ? (
-                <button
-                  type="button"
-                  onClick={clearForm}
-                  className="rounded border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                              <Button type="button" onClick={() => addQuestion(section.key)} variant="outlined" size="small" sx={{ width: "fit-content" }}>
+                                Add Question
+                              </Button>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  type="submit"
+                  disabled={saving || !form.organizationId || !form.code || !form.title}
+                  variant="contained"
+                  size="small"
                 >
-                  Cancel Edit
-                </button>
-              ) : null}
-            </div>
-          </form>
-        </section>
+                  {saving ? "Saving..." : editingId ? "Update" : "Create"}
+                </Button>
+                {editingId ? (
+                  <Button type="button" onClick={clearForm} variant="outlined" size="small">
+                    Cancel Edit
+                  </Button>
+                ) : null}
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">Exams</h2>
-            <div className="flex gap-2">
-              <select
-                value={selectedOrg}
-                onChange={(event) => setSelectedOrg(event.target.value)}
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">All organizations</option>
-                {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
-                    {organization.code}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedSchool}
-                onChange={(event) => setSelectedSchool(event.target.value)}
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">All schools</option>
-                {schools.map((school) => (
-                  <option key={school.id} value={school.id}>
-                    {school.code}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedExamType}
-                onChange={(event) => setSelectedExamType(event.target.value)}
-                className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-              >
-                <option value="">All types</option>
-                {EXAM_TYPES.map((examType) => (
-                  <option key={examType} value={examType}>
-                    {examType}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        <Card variant="outlined">
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>Exams</Typography>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Organization"
+                  value={selectedOrg}
+                  onChange={(event) => setSelectedOrg(event.target.value)}
+                  sx={{ minWidth: 150 }}
+                >
+                  <MenuItem value="">All organizations</MenuItem>
+                  {organizations.map((organization) => (
+                    <MenuItem key={organization.id} value={organization.id}>
+                      {organization.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  size="small"
+                  label="School"
+                  value={selectedSchool}
+                  onChange={(event) => setSelectedSchool(event.target.value)}
+                  sx={{ minWidth: 130 }}
+                >
+                  <MenuItem value="">All schools</MenuItem>
+                  {schools.map((school) => (
+                    <MenuItem key={school.id} value={school.id}>
+                      {school.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  size="small"
+                  label="Type"
+                  value={selectedExamType}
+                  onChange={(event) => setSelectedExamType(event.target.value)}
+                  sx={{ minWidth: 130 }}
+                >
+                  <MenuItem value="">All types</MenuItem>
+                  {EXAM_TYPES.map((examType) => (
+                    <MenuItem key={examType} value={examType}>
+                      {examType}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Box>
 
-          {loading ? <p className="mt-3 text-sm text-zinc-500">Loading exams...</p> : null}
-          {!loading && !exams.length ? <p className="mt-3 text-sm text-zinc-500">No exams found.</p> : null}
+            {loading ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>Loading exams...</Typography> : null}
+            {!loading && !exams.length ? <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>No exams found.</Typography> : null}
 
-          <ul className="mt-3 space-y-2">
-            {exams.map((exam) => (
-              <li key={exam.id} className="rounded border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium">{exam.code} - {exam.title}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {orgLabelById.get(exam.organizationId) ?? exam.organizationId} | {exam.schoolId ? schoolLabelById.get(exam.schoolId) ?? exam.schoolId : "ORG"} | {exam.examType} | {exam.status}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Duration: {exam.durationMinutes ?? "-"} mins | Marks: {exam.totalMarks ?? "-"}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(exam)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void toggleStatus(exam)}
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                    >
-                      {exam.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+            <Box sx={{ mt: 1.5, display: "grid", gap: 1 }}>
+              {exams.map((exam) => (
+                <Card key={exam.id} variant="outlined">
+                  <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{exam.code} - {exam.title}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                          {orgLabelById.get(exam.organizationId) ?? exam.organizationId} | {exam.schoolId ? schoolLabelById.get(exam.schoolId) ?? exam.schoolId : "ORG"} | {exam.examType} | {exam.status}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                          Duration: {exam.durationMinutes ?? "-"} mins | Marks: {exam.totalMarks ?? "-"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button type="button" onClick={() => startEdit(exam)} variant="outlined" size="small">Edit</Button>
+                        <Button type="button" onClick={() => void toggleStatus(exam)} variant="outlined" size="small">
+                          {exam.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </Container>
   );
 }

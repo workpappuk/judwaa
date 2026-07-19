@@ -3,6 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { FiChevronLeft, FiChevronRight, FiDatabase, FiFileText, FiInfo, FiX } from "react-icons/fi";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 import { downloadNeoScriptMaster, getInstruments, loginNeoSession, replaceOrders } from "@/services/trading-api";
 import { useAppDispatch } from "@/store/hooks";
@@ -312,396 +330,308 @@ export default function InstrumentPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f7ff] text-zinc-900 dark:bg-[#0c1119] dark:text-zinc-100 pb-8 transition-colors">
-      <section className="sticky top-14 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f151e]/95 backdrop-blur-sm">
-        <div className="px-4 pt-4 pb-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
-                <FiDatabase className="h-3 w-3" />
-                Trading Data
-              </p>
-              <h1 className="display-face text-lg font-semibold leading-tight">Instruments</h1>
-              <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">{rangeLabel}</p>
-            </div>
+    <Container maxWidth="lg" sx={{ minHeight: "100vh", pb: 4 }}>
+      <Card variant="outlined" sx={{ position: "sticky", top: 56, zIndex: 10, mt: 1.5 }}>
+        <CardContent sx={{ pb: "16px !important" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                <FiDatabase size={12} /> Trading Data
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>Instruments</Typography>
+              <Typography variant="caption" color="text.secondary">{rangeLabel}</Typography>
+            </Box>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
                 onClick={() => {
                   setNeoActionError(null);
                   setNeoActionSuccess(null);
                   setShowNeoActionsModal(true);
                 }}
-                className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-medium"
               >
                 Neo Actions
-              </button>
-              <span className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-medium">
-                Page {page}{totalPages > 0 ? ` / ${totalPages}` : ""}
-              </span>
-            </div>
-          </div>
+              </Button>
+              <Chip size="small" variant="outlined" label={`Page ${page}${totalPages > 0 ? ` / ${totalPages}` : ""}`} />
+            </Box>
+          </Box>
 
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <button
-              type="button"
+          <Box sx={{ mt: 1.5, display: "flex", justifyContent: "space-between", gap: 1 }}>
+            <Button
+              size="small"
+              variant="outlined"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={!hasPrevious || loading}
-              className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium disabled:opacity-45 disabled:cursor-not-allowed"
+              startIcon={<FiChevronLeft />}
             >
-              <FiChevronLeft className="h-3.5 w-3.5" />
               Prev
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              size="small"
+              variant="outlined"
               onClick={() => setPage((p) => p + 1)}
               disabled={!hasNext || loading}
-              className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium disabled:opacity-45 disabled:cursor-not-allowed"
+              endIcon={<FiChevronRight />}
             >
               Next
-              <FiChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
+            </Button>
+          </Box>
 
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 px-2.5 py-1.5">
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-              {selectedOnCurrentPageCount}/{items.length} visible selected
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleSelectAllCurrentPage}
-                disabled={loading || items.length === 0}
-                className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-medium disabled:opacity-45 disabled:cursor-not-allowed"
+          <Card variant="outlined" sx={{ mt: 1.5 }}>
+            <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 }, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <Typography variant="caption" color="text.secondary">
+                {selectedOnCurrentPageCount}/{items.length} visible selected
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={toggleSelectAllCurrentPage}
+                  disabled={loading || items.length === 0}
+                >
+                  {allCurrentPageSelected
+                    ? `Deselect visible (${items.length})`
+                    : `Select visible (${items.length - selectedOnCurrentPageCount})`}
+                </Button>
+                {selectedEntries.length > 0 ? (
+                  <Button size="small" variant="outlined" onClick={() => setSelectedInputs({})}>
+                    Clear all
+                  </Button>
+                ) : null}
+              </Box>
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
+
+      <Box sx={{ pt: 1.5 }}>
+        {error ? <Alert severity="error" variant="outlined" sx={{ mb: 1.25 }}>{error}</Alert> : null}
+        {loading ? <Alert severity="info" variant="outlined" sx={{ mb: 1.25 }}>Loading instruments...</Alert> : null}
+        {!loading && !error && items.length === 0 ? <Alert severity="info" variant="outlined" sx={{ mb: 1.25 }}>No instruments found.</Alert> : null}
+
+        <Box sx={{ display: "grid", gap: 1.25 }}>
+          {items.map((item) => {
+            const key = `${item.sourceFile}-${item.rowNumber}`;
+            const isSelected = Boolean(selectedInputs[instrumentKey(item)]);
+            return (
+              <Card
+                key={key}
+                variant="outlined"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelected(item)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    setSelected(item);
+                  }
+                }}
+                sx={{ cursor: "pointer", "&:hover": { borderColor: "text.secondary" } }}
               >
-                {allCurrentPageSelected
-                  ? `Deselect visible (${items.length})`
-                  : `Select visible (${items.length - selectedOnCurrentPageCount})`}
-              </button>
-              {selectedEntries.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setSelectedInputs({})}
-                  className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-medium"
-                >
-                  Clear all
-                </button>
-              ) : null}
-            </div>
-          </div>
+                <CardContent>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>{normalize(item.tradingSymbol)}</Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {normalize(item.symbol)} • {normalize(item.exchangeSegment)} • {normalize(item.instrumentType)}
+                      </Typography>
+                    </Box>
 
-        </div>
-      </section>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<FiInfo />}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setSelected(item);
+                      }}
+                    >
+                      Details
+                    </Button>
+                  </Box>
 
-      <section className="px-3 pt-3">
-        {error ? (
-          <div className="rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-3 text-xs text-rose-700 dark:text-rose-300">
-            {error}
-          </div>
-        ) : null}
+                  <Box sx={{ mt: 1.5, display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 1 }}>
+                    <Box><Typography variant="caption" color="text.secondary">Exchange</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{normalize(item.exchange)}</Typography></Box>
+                    <Box><Typography variant="caption" color="text.secondary">Option</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{normalize(item.optionType)}</Typography></Box>
+                    <Box><Typography variant="caption" color="text.secondary">Lot</Typography><Typography variant="body2" sx={{ fontWeight: 600 }}>{normalize(item.lotSize)}</Typography></Box>
+                  </Box>
 
-        {loading ? (
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 text-sm text-zinc-500 dark:text-zinc-400">
-            Loading instruments...
-          </div>
-        ) : null}
-
-        {!loading && !error && items.length === 0 ? (
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 text-sm text-zinc-500 dark:text-zinc-400">
-            No instruments found.
-          </div>
-        ) : null}
-
-        <div className="space-y-2.5">
-          {items.map((item) => (
-            <article
-              key={`${item.sourceFile}-${item.rowNumber}`}
-              className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="truncate text-[14px] font-semibold leading-tight">{normalize(item.tradingSymbol)}</h2>
-                  <p className="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {normalize(item.symbol)} • {normalize(item.exchangeSegment)} • {normalize(item.instrumentType)}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setSelected(item)}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-[11px] font-medium"
-                >
-                  <FiInfo className="h-3.5 w-3.5" />
-                  Details
-                </button>
-              </div>
-
-              <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
-                <div>
-                  <p className="text-zinc-500 dark:text-zinc-400">Exchange</p>
-                  <p className="font-medium">{normalize(item.exchange)}</p>
-                </div>
-                <div>
-                  <p className="text-zinc-500 dark:text-zinc-400">Option</p>
-                  <p className="font-medium">{normalize(item.optionType)}</p>
-                </div>
-                <div>
-                  <p className="text-zinc-500 dark:text-zinc-400">Lot</p>
-                  <p className="font-medium">{normalize(item.lotSize)}</p>
-                </div>
-              </div>
-
-              <div className="mt-2.5 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => toggleInstrumentSelection(item)}
-                  className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] font-medium ${
-                    selectedInputs[instrumentKey(item)]
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-                      : "border-zinc-300 dark:border-zinc-700"
-                  }`}
-                >
-                  {selectedInputs[instrumentKey(item)] ? "Selected" : "Select"}
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+                  <Box sx={{ mt: 1.5, display: "flex", justifyContent: "flex-end" }}>
+                    <Button
+                      size="small"
+                      variant={isSelected ? "contained" : "outlined"}
+                      color={isSelected ? "success" : "primary"}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleInstrumentSelection(item);
+                      }}
+                    >
+                      {isSelected ? "Selected" : "Select"}
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      </Box>
 
       {selectedEntries.length > 0 ? (
-        <section className="fixed bottom-4 left-0 right-0 z-20 px-3">
-          <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white/95 dark:bg-[#0f151e]/95 px-3 py-2 backdrop-blur-sm">
-            <p className="text-xs font-medium">
-              {selectedEntries.length} instrument{selectedEntries.length > 1 ? "s" : ""} selected
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowSelectionModal(true)}
-              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs font-medium"
-            >
-              Configure & save
-            </button>
-          </div>
-        </section>
+        <Box sx={{ position: "fixed", bottom: 16, left: 0, right: 0, zIndex: 20, px: 2 }}>
+          <Card variant="outlined" sx={{ maxWidth: 720, mx: "auto" }}>
+            <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 }, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {selectedEntries.length} instrument{selectedEntries.length > 1 ? "s" : ""} selected
+              </Typography>
+              <Button size="small" variant="contained" onClick={() => setShowSelectionModal(true)}>
+                Configure and Save
+              </Button>
+            </CardContent>
+          </Card>
+        </Box>
       ) : null}
 
-      {selected ? (
-        <div className="fixed inset-0 z-30 bg-black/55 p-4">
-          <div className="mx-auto mt-10 max-h-[78vh] w-full max-w-xl overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111926]">
-            <div className="flex items-start justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-              <div className="min-w-0">
-                <h3 className="truncate text-sm font-semibold">{normalize(selected.tradingSymbol)}</h3>
-                <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {selected.sourceFile} • row {selected.rowNumber}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700"
-                aria-label="Close details"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="max-h-[62vh] overflow-auto p-4">
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
+      <Dialog open={Boolean(selected)} onClose={() => setSelected(null)} fullWidth maxWidth="md">
+        {selected ? (
+          <>
+            <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }} noWrap>{normalize(selected.tradingSymbol)}</Typography>
+                <Typography variant="caption" color="text.secondary">{selected.sourceFile} • row {selected.rowNumber}</Typography>
+              </Box>
+              <IconButton size="small" onClick={() => setSelected(null)} aria-label="Close details">
+                <FiX size={16} />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1 }}>
                 {Object.entries(selected.fields).map(([key, value]) => (
-                  <div key={key} className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-2 py-1.5">
-                    <p className="truncate text-zinc-500 dark:text-zinc-400">{key}</p>
-                    <p className="break-all font-medium">{normalize(value)}</p>
-                  </div>
+                  <Card key={key} variant="outlined">
+                    <CardContent sx={{ py: 1.25, "&:last-child": { pb: 1.25 } }}>
+                      <Typography variant="caption" color="text.secondary" noWrap>{key}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: "break-all" }}>{normalize(value)}</Typography>
+                    </CardContent>
+                  </Card>
                 ))}
-              </div>
-            </div>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                <FiFileText size={12} /> Full CSV row fields
+              </Typography>
+            </DialogContent>
+          </>
+        ) : null}
+      </Dialog>
 
-            <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-              <p className="inline-flex items-center gap-1">
-                <FiFileText className="h-3.5 w-3.5" />
-                Full CSV row fields
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <Dialog open={showNeoActionsModal} onClose={() => setShowNeoActionsModal(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Neo Actions</Typography>
+          <IconButton size="small" onClick={() => setShowNeoActionsModal(false)} aria-label="Close neo actions">
+            <FiX size={16} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "grid", gap: 1.5, pt: 0.5 }}>
+            <TextField label="TOTP" size="small" value={totp} onChange={(event) => setTotp(event.target.value)} placeholder="Enter TOTP" />
 
-      {showNeoActionsModal ? (
-        <div className="fixed inset-0 z-40 bg-black/55 p-4">
-          <div className="mx-auto mt-10 w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111926]">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-              <h3 className="text-sm font-semibold">Neo Actions</h3>
-              <button
-                type="button"
-                onClick={() => setShowNeoActionsModal(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700"
-                aria-label="Close neo actions"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Button variant="outlined" size="small" onClick={handleNeoLogin} disabled={isNeoLoginLoading || isScriptDownloadLoading}>
+                {isNeoLoginLoading ? "Logging in..." : "Login Neo"}
+              </Button>
+              <Button variant="outlined" size="small" onClick={handleScriptDownload} disabled={isScriptDownloadLoading || isNeoLoginLoading}>
+                {isScriptDownloadLoading ? "Downloading..." : "Download Script"}
+              </Button>
+            </Box>
 
-            <div className="space-y-3 p-4">
-              <label className="block text-[11px]">
-                <span className="mb-1 block text-zinc-500 dark:text-zinc-400">TOTP</span>
-                <input
-                  type="text"
-                  value={totp}
-                  onChange={(event) => setTotp(event.target.value)}
-                  placeholder="Enter TOTP"
-                  className="h-9 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 text-xs outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
-                />
-              </label>
+            {neoActionError ? <Alert severity="error" variant="outlined">{neoActionError}</Alert> : null}
+            {neoActionSuccess ? <Alert severity="success" variant="outlined">{neoActionSuccess}</Alert> : null}
+          </Box>
+        </DialogContent>
+      </Dialog>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleNeoLogin}
-                  disabled={isNeoLoginLoading || isScriptDownloadLoading}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 px-3 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isNeoLoginLoading ? "Logging in..." : "Login Neo"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleScriptDownload}
-                  disabled={isScriptDownloadLoading || isNeoLoginLoading}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700 px-3 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isScriptDownloadLoading ? "Downloading..." : "Download Script"}
-                </button>
-              </div>
-
-              {neoActionError ? (
-                <p className="text-[11px] text-rose-600 dark:text-rose-300">{neoActionError}</p>
-              ) : null}
-              {neoActionSuccess ? (
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-300">{neoActionSuccess}</p>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {showSelectionModal ? (
-        <div className="fixed inset-0 z-40 bg-black/55 p-4">
-          <div className="mx-auto mt-10 max-h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111926]">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-              <h3 className="text-sm font-semibold">Selected Instruments</h3>
-              <button
-                type="button"
-                onClick={() => setShowSelectionModal(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 dark:border-zinc-700"
-                aria-label="Close selection"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="max-h-[62vh] space-y-2 overflow-auto p-4">
-              {selectedEntries.map((entry) => {
-                const key = instrumentKey(entry.instrument);
-                return (
-                  <article
-                    key={key}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-3"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold">{normalize(entry.instrument.tradingSymbol)}</p>
-                        <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+      <Dialog open={showSelectionModal} onClose={() => setShowSelectionModal(false)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Selected Instruments</Typography>
+          <IconButton size="small" onClick={() => setShowSelectionModal(false)} aria-label="Close selection">
+            <FiX size={16} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "grid", gap: 1, maxHeight: "58vh", overflow: "auto", pr: 0.5 }}>
+            {selectedEntries.map((entry) => {
+              const key = instrumentKey(entry.instrument);
+              return (
+                <Card key={key} variant="outlined">
+                  <CardContent>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{normalize(entry.instrument.tradingSymbol)}</Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
                           {normalize(entry.instrument.symbol)} • {normalize(entry.instrument.exchangeSegment)}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleInstrumentSelection(entry.instrument)}
-                        className="rounded-md border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-[11px]"
-                      >
+                        </Typography>
+                      </Box>
+                      <Button size="small" variant="outlined" onClick={() => toggleInstrumentSelection(entry.instrument)}>
                         Remove
-                      </button>
-                    </div>
+                      </Button>
+                    </Box>
 
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <label className="text-[11px]">
-                        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Quantity</span>
-                        <input
-                          type="number"
-                          min="11"
-                          value={entry.quantity}
-                          onChange={(event) => updateSelectedInput(key, "quantity", event.target.value)}
-                          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs"
-                        />
-                      </label>
-                      <label className="text-[11px]">
-                        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Avg Price</span>
-                        <input
-                          type="number"
-                          min="11"
-                          step="0.01"
-                          value={entry.avgPrice}
-                          onChange={(event) => updateSelectedInput(key, "avgPrice", event.target.value)}
-                          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs"
-                        />
-                      </label>
-                      <label className="text-[11px]">
-                        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Side</span>
-                        <select
-                          value={entry.side}
-                          onChange={(event) => updateSelectedInput(key, "side", event.target.value)}
-                          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs"
-                        >
-                          <option value="LONG">LONG</option>
-                          <option value="SHORT">SHORT</option>
-                        </select>
-                      </label>
-                      <label className="text-[11px]">
-                        <span className="mb-1 block text-zinc-500 dark:text-zinc-400">Product</span>
-                        <select
-                          value={entry.product}
-                          onChange={(event) => updateSelectedInput(key, "product", event.target.value)}
-                          className="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-xs"
-                        >
-                          <option value="NRML">NRML</option>
-                          <option value="MIS">MIS</option>
-                        </select>
-                      </label>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 px-4 py-3">
-              <div>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Add quantity and average price for each selected instrument.
-                </p>
-                {saveValidationError ? (
-                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{saveValidationError}</p>
-                ) : null}
-                {saveOrdersError ? (
-                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">{saveOrdersError}</p>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  void saveDraftPositions();
-                }}
-                disabled={!!saveValidationError || isSavingOrders}
-                className="rounded-md border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium"
-              >
-                {isSavingOrders ? "Saving orders..." : "Save & route F&O"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </main>
+                    <Box sx={{ mt: 1.25, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                      <TextField
+                        label="Quantity"
+                        type="number"
+                        size="small"
+                        value={entry.quantity}
+                        onChange={(event) => updateSelectedInput(key, "quantity", event.target.value)}
+                      />
+                      <TextField
+                        label="Avg Price"
+                        type="number"
+                        size="small"
+                        value={entry.avgPrice}
+                        onChange={(event) => updateSelectedInput(key, "avgPrice", event.target.value)}
+                      />
+                      <Select
+                        size="small"
+                        value={entry.side}
+                        onChange={(event) => updateSelectedInput(key, "side", event.target.value)}
+                      >
+                        <MenuItem value="LONG">LONG</MenuItem>
+                        <MenuItem value="SHORT">SHORT</MenuItem>
+                      </Select>
+                      <Select
+                        size="small"
+                        value={entry.product}
+                        onChange={(event) => updateSelectedInput(key, "product", event.target.value)}
+                      >
+                        <MenuItem value="NRML">NRML</MenuItem>
+                        <MenuItem value="MIS">MIS</MenuItem>
+                      </Select>
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between", alignItems: "flex-start" }}>
+          <Box>
+            <Typography variant="caption" color="text.secondary">Add quantity and average price for each selected instrument.</Typography>
+            {saveValidationError ? <Typography variant="caption" sx={{ display: "block", color: "error.main" }}>{saveValidationError}</Typography> : null}
+            {saveOrdersError ? <Typography variant="caption" sx={{ display: "block", color: "error.main" }}>{saveOrdersError}</Typography> : null}
+          </Box>
+          <Button
+            onClick={() => {
+              void saveDraftPositions();
+            }}
+            disabled={!!saveValidationError || isSavingOrders}
+            variant="contained"
+            size="small"
+          >
+            {isSavingOrders ? "Saving orders..." : "Save and route F&O"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 }

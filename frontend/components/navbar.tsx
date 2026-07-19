@@ -119,9 +119,11 @@ export function Navbar() {
 
       <Toolbar sx={{ minHeight: 56, justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography component={Link} href="/" sx={{ textDecoration: "none", fontWeight: 800, textTransform: "uppercase", color: "text.primary" }}>
-            Judwaa
-          </Typography>
+          <Link href="/" style={{ textDecoration: "none", color: "inherit" }} aria-label="Go to home">
+            <Typography sx={{ fontWeight: 800, textTransform: "uppercase", color: "text.primary" }}>
+              Judwaa
+            </Typography>
+          </Link>
 
           <IconButton size="small" onClick={() => dispatch(toggleSidebar())} aria-label="Toggle navigation sidebar" title="Toggle sidebar">
             <FiMenu />
@@ -141,15 +143,15 @@ export function Navbar() {
             </MuiButton>
           ) : null}
 
-          <IconButton size="small" onClick={handleAudioToggle} aria-label="Toggle background audio" title={isAudioPlaying ? "Pause audio" : "Play audio"}>
+          <IconButton size="small" onClick={handleAudioToggle} aria-label="Toggle background audio" aria-pressed={isAudioPlaying} title={isAudioPlaying ? "Pause audio" : "Play audio"}>
             {isAudioPlaying ? <FiPause /> : <FiPlay />}
           </IconButton>
 
-          <IconButton size="small" onClick={handleFullscreenToggle} aria-label="Toggle fullscreen" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+          <IconButton size="small" onClick={handleFullscreenToggle} aria-label="Toggle fullscreen" aria-pressed={isFullscreen} title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
             {isFullscreen ? <FiMinimize /> : <FiMaximize />}
           </IconButton>
 
-          <IconButton size="small" onClick={handleThemeToggle} aria-label="Toggle theme" title={currentTheme === "dark" ? "Switch to light" : "Switch to dark"}>
+          <IconButton size="small" onClick={handleThemeToggle} aria-label="Toggle theme" aria-pressed={currentTheme === "dark"} title={currentTheme === "dark" ? "Switch to light" : "Switch to dark"}>
             {currentTheme === "dark" ? <FiSun /> : <FiMoon />}
           </IconButton>
         </Box>

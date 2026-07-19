@@ -60,8 +60,6 @@ export default function Tabs({
           p: 0.5,
           borderRadius: 2,
           bgcolor: "background.paper",
-          border: 1,
-          borderColor: "divider",
           "& .MuiTabs-indicator": {
             height: "100%",
             borderRadius: 1.5,

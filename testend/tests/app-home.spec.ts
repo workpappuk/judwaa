@@ -3,18 +3,19 @@ import { test, expect, type Page } from '@playwright/test';
 const APP_BASE_URL = 'http://localhost:3000';
 
 const homeCards = [
-  { label: /f&o/i, expectedPath: /\/auth$/ },
-  { label: /instruments/i, expectedPath: /\/auth$/ },
-  { label: /auth/i, expectedPath: /\/auth$/ },
-  { label: /admin/i, expectedPath: /\/auth$/ },
-  { label: /incentive/i, expectedPath: /\/auth$/ },
-  { label: /data collector/i, expectedPath: /\/auth$/ },
-  { label: /lms/i, expectedPath: /\/auth$/ },
+  { label: /f&o/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /instruments/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /auth/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /admin/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /incentive/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /data collector/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /lms/i, expectedPath: /\/auth(\?.*)?$/ },
+  { label: /nocode/i, expectedPath: /\/auth(\?.*)?$/ },
 ];
 
 const routeExpectations = [
   { route: '/', heading: /auth/i, kind: 'button' as const },
-  { route: '/auth', heading: /login fast, trade faster/i, kind: 'text' as const },
+  { route: '/auth', heading: /welcome back/i, kind: 'text' as const },
   { route: '/data-collector', heading: /available data collectors/i, kind: 'text' as const },
   { route: '/incentive', heading: /schemes/i, kind: 'tab' as const },
   { route: '/judwaa/admin', heading: /force logout/i, kind: 'link' as const },
@@ -23,11 +24,11 @@ const routeExpectations = [
   { route: '/lms/exam-management', heading: /exam management/i, kind: 'text' as const },
   { route: '/lms/organization-management', heading: /organization management/i, kind: 'text' as const },
   { route: '/lms/school-management', heading: /school management/i, kind: 'text' as const },
-  { route: '/lms/school-routes', heading: /school routes/i, kind: 'text' as const },
+  { route: '/lms/school-routes', heading: /choose a dedicated route to manage school onboarding workflows\./i, kind: 'text' as const },
   { route: '/lms/student-management', heading: /student management/i, kind: 'text' as const },
   { route: '/trading/calculator/stoploss', heading: /stoploss and p&l planner/i, kind: 'text' as const },
   { route: '/trading/f&o', heading: /positions/i, kind: 'tab' as const },
-  { route: '/trading/instrument', heading: /instruments/i, kind: 'text' as const },
+  { route: '/trading/instrument', heading: /neo actions/i, kind: 'button' as const },
 ];
 
 const expectRouteContent = async (
@@ -69,18 +70,19 @@ test('protected card redirects to auth when not logged in', async ({ page }) => 
   await page.goto(`${APP_BASE_URL}/`);
 
   await page.getByRole('button', { name: /f&o/i }).click();
-  await expect(page).toHaveURL(/\/auth$/);
+  await expect(page).toHaveURL(/\/auth(\?.*)?$/);
 });
 
 test('full homepage e2e navigation coverage for all cards', async ({ page }) => {
   await page.goto(`${APP_BASE_URL}/`);
 
-  await expect(page.locator('main > div > button')).toHaveCount(7);
-  await expect(page.getByText(/members only/i)).toHaveCount(6);
+  const cardButtons = page.getByRole('button').filter({ has: page.getByRole('heading', { level: 5 }) });
+  await expect(cardButtons).toHaveCount(8);
+  await expect(page.getByText(/members only/i)).toHaveCount(7);
 
   for (const card of homeCards) {
     await page.goto(`${APP_BASE_URL}/`);
-    await page.locator('main > div > button').filter({ hasText: card.label }).first().click();
+    await cardButtons.filter({ hasText: card.label }).first().click();
     await expect(page).toHaveURL(card.expectedPath);
   }
 });

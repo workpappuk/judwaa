@@ -13,33 +13,38 @@ import {
   ListItemButton,
   ListItemIcon,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
+import { canAccessRoute, hasRequiredRole, inferUserRole } from "@/lib/access-control";
 import { SIDEBAR_ITEMS, type SidebarGroupItem, type SidebarItem } from "@/config/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setIsSidebarOpen } from "@/store/slices/uiSlice";
+import type { UserRole } from "@/types/auth";
 
 const AUTH_STORAGE_KEY = "judwaa.auth.session";
+const NAVBAR_HEIGHT = 56;
+const SIDEBAR_WIDTH = 296;
 
 function isGroup(item: SidebarItem): item is SidebarGroupItem {
   return "children" in item;
 }
 
-function hasValidSession(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
+function parsePersistedSession(raw: string | null): { hasToken: boolean; role: UserRole } {
   try {
-    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) {
-      return false;
+      return { hasToken: false, role: "user" };
     }
 
-    const parsed = JSON.parse(raw) as { token?: string };
-    return typeof parsed.token === "string" && parsed.token.trim().length > 0;
+    const parsed = JSON.parse(raw) as { token?: string; username?: string; role?: string };
+    const hasToken = typeof parsed.token === "string" && parsed.token.trim().length > 0;
+    return {
+      hasToken,
+      role: inferUserRole({ username: parsed.username, token: parsed.token, role: parsed.role }),
+    };
   } catch {
-    return false;
+    return { hasToken: false, role: "user" };
   }
 }
 
@@ -47,18 +52,42 @@ export function AppLeftSidebar() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const isOpen = useAppSelector((state) => state.ui.isSidebarOpen);
   const authSession = useAppSelector((state) => state.auth.session);
-  const [hasClientSession, setHasClientSession] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [persistedAuth, setPersistedAuth] = useState<{ hasToken: boolean; role: UserRole }>({ hasToken: false, role: "user" });
+  const isAuthenticated = Boolean(authSession?.token) || persistedAuth.hasToken;
+  const currentRole: UserRole = authSession?.role ?? persistedAuth.role;
 
-  useEffect(() => {
-    setHasClientSession(hasValidSession());
-  }, []);
+  const visibleItems = useMemo<SidebarItem[]>(() => {
+    const shouldShowLeaf = (item: { requiresRole?: UserRole | UserRole[] }) => {
+      if (!isAuthenticated) {
+        return true;
+      }
 
-  const isAuthenticated = Boolean(authSession?.token) || hasClientSession;
+      return hasRequiredRole(currentRole, item.requiresRole);
+    };
 
-  const visibleItems = useMemo(() => SIDEBAR_ITEMS, []);
+    return SIDEBAR_ITEMS.reduce<SidebarItem[]>((accumulator, item) => {
+      if (!isGroup(item)) {
+        if (shouldShowLeaf(item)) {
+          accumulator.push(item);
+        }
+
+        return accumulator;
+      }
+
+      const visibleChildren = item.children.filter((child) => shouldShowLeaf({ requiresRole: child.requiresRole ?? item.requiresRole }));
+      if (visibleChildren.length === 0) {
+        return accumulator;
+      }
+
+      accumulator.push({ ...item, children: visibleChildren });
+      return accumulator;
+    }, []);
+  }, [currentRole, isAuthenticated]);
 
   const groupsWithActiveChildren = useMemo(() => {
     const activeGroupIds = new Set<string>();
@@ -71,14 +100,23 @@ export function AppLeftSidebar() {
   }, [pathname, visibleItems]);
 
   useEffect(() => {
-    setExpandedGroups((previous) => {
-      const next = { ...previous };
-      for (const groupId of groupsWithActiveChildren) {
-        next[groupId] = true;
-      }
-      return next;
-    });
-  }, [groupsWithActiveChildren]);
+    const refreshPersistedSession = () => {
+      setPersistedAuth(parsePersistedSession(window.localStorage.getItem(AUTH_STORAGE_KEY)));
+    };
+
+    refreshPersistedSession();
+    window.addEventListener("storage", refreshPersistedSession);
+
+    return () => {
+      window.removeEventListener("storage", refreshPersistedSession);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop && isOpen) {
+      dispatch(setIsSidebarOpen(false));
+    }
+  }, [dispatch, isDesktop, isOpen, pathname]);
 
   const closeSidebar = () => {
     dispatch(setIsSidebarOpen(false));
@@ -88,10 +126,21 @@ export function AppLeftSidebar() {
     setExpandedGroups((previous) => ({ ...previous, [groupId]: !previous[groupId] }));
   };
 
-  const goToRoute = (href: string, requiresAuth?: boolean) => {
-    if (requiresAuth && !isAuthenticated) {
+  const goToRoute = (href: string, requiresAuth?: boolean, requiresRole?: UserRole | UserRole[]) => {
+    const hasAccess = canAccessRoute(
+      { isAuthenticated, role: currentRole },
+      { requiresAuth, requiresRole },
+    );
+
+    if (!hasAccess && !isAuthenticated) {
       closeSidebar();
       router.push(`/auth?redirect=${encodeURIComponent(href)}`);
+      return;
+    }
+
+    if (!hasAccess) {
+      closeSidebar();
+      router.push("/");
       return;
     }
 
@@ -99,30 +148,46 @@ export function AppLeftSidebar() {
     router.push(href);
   };
 
+  const itemButtonSx = {
+    borderRadius: 1.5,
+    mb: 0.5,
+    "&.Mui-selected": {
+      bgcolor: "action.selected",
+      "&:hover": {
+        bgcolor: "action.selected",
+      },
+    },
+  };
+
   return (
     <Drawer
       anchor="left"
+      variant={isDesktop ? "persistent" : "temporary"}
       open={isOpen}
       onClose={closeSidebar}
-      ModalProps={{ keepMounted: true }}
+      ModalProps={isDesktop ? undefined : { keepMounted: true }}
       slotProps={{
         paper: {
           sx: {
-            top: 56,
-            height: "calc(100vh - 56px)",
-            width: 288,
+            top: NAVBAR_HEIGHT,
+            height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
+            width: isDesktop ? SIDEBAR_WIDTH : { xs: 280, sm: SIDEBAR_WIDTH },
             p: 1.5,
-            borderRight: 1,
-            borderColor: "divider",
+            bgcolor: "background.paper",
           },
         },
       }}
     >
       <Box sx={{ mb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>Navigation</Typography>
-        <IconButton size="small" onClick={closeSidebar} aria-label="Close sidebar">
-          <FiX />
-        </IconButton>
+        <Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>Navigation</Typography>
+          <Typography variant="caption" color="text.secondary">Choose a workspace module</Typography>
+        </Box>
+        {!isDesktop ? (
+          <IconButton size="small" onClick={closeSidebar} aria-label="Close sidebar">
+            <FiX />
+          </IconButton>
+        ) : null}
       </Box>
 
       <Divider sx={{ mb: 1 }} />
@@ -136,28 +201,41 @@ export function AppLeftSidebar() {
               <ListItemButton
                 key={item.href}
                 selected={active}
-                onClick={() => goToRoute(item.href, item.requiresAuth)}
-                sx={{ borderRadius: 1, mb: 0.5 }}
+                onClick={() => goToRoute(item.href, item.requiresAuth, item.requiresRole)}
+                sx={itemButtonSx}
               >
                 {item.icon ? (
-                  <ListItemIcon sx={{ minWidth: 30 }}>
+                  <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
                     <item.icon />
                   </ListItemIcon>
                 ) : null}
                 <Typography sx={{ fontSize: 14, fontWeight: 500, flexGrow: 1 }}>{item.label}</Typography>
-                {item.requiresAuth ? <FiLock size={14} /> : null}
+                {item.requiresAuth || item.requiresRole ? <FiLock size={14} style={{ opacity: 0.7 }} /> : null}
               </ListItemButton>
             );
           }
 
-          const expanded = Boolean(expandedGroups[item.id]);
+          const expanded = Boolean(expandedGroups[item.id]) || groupsWithActiveChildren.has(item.id);
           const groupActive = groupsWithActiveChildren.has(item.id);
 
           return (
-            <Box key={item.id} sx={{ border: 1, borderColor: "divider", borderRadius: 1, mb: 1, p: 0.5 }}>
-              <ListItemButton selected={groupActive} onClick={() => toggleGroup(item.id)} sx={{ borderRadius: 1 }}>
+            <Box
+              key={item.id}
+              sx={{
+                borderRadius: 1.5,
+                mb: 1,
+                p: 0.5,
+                bgcolor: groupActive ? "action.selected" : "action.hover",
+              }}
+            >
+              <ListItemButton
+                selected={groupActive}
+                onClick={() => toggleGroup(item.id)}
+                aria-expanded={expanded}
+                sx={{ ...itemButtonSx, mb: 0 }}
+              >
                 {item.icon ? (
-                  <ListItemIcon sx={{ minWidth: 30 }}>
+                  <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
                     <item.icon />
                   </ListItemIcon>
                 ) : null}
@@ -166,25 +244,26 @@ export function AppLeftSidebar() {
               </ListItemButton>
 
               <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <List dense sx={{ px: 0.5, pb: 0.5 }}>
+                <List dense sx={{ ml: 1.6, mt: 0.5, pl: 0.6, pb: 0.5, borderLeft: 1, borderColor: "divider" }}>
                   {item.children.map((child) => {
                     const childActive = pathname === child.href || pathname.startsWith(`${child.href}/`);
                     const requiresAuth = child.requiresAuth ?? item.requiresAuth;
+                    const requiresRole = child.requiresRole ?? item.requiresRole;
 
                     return (
                       <ListItemButton
                         key={child.href}
                         selected={childActive}
-                        onClick={() => goToRoute(child.href, requiresAuth)}
-                        sx={{ borderRadius: 1, mb: 0.5 }}
+                        onClick={() => goToRoute(child.href, requiresAuth, requiresRole)}
+                        sx={itemButtonSx}
                       >
                         {child.icon ? (
-                          <ListItemIcon sx={{ minWidth: 30 }}>
+                          <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
                             <child.icon />
                           </ListItemIcon>
                         ) : null}
                         <Typography sx={{ fontSize: 13, fontWeight: 500, flexGrow: 1 }}>{child.label}</Typography>
-                        {requiresAuth ? <FiLock size={13} /> : null}
+                        {requiresAuth || requiresRole ? <FiLock size={13} style={{ opacity: 0.7 }} /> : null}
                       </ListItemButton>
                     );
                   })}

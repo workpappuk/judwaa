@@ -4,50 +4,62 @@
 import { FiArrowUpRight, FiCheckCircle, FiLock } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { Box, Chip, Grid, Paper, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
 
 import { HOME_CARDS, type HomeCardConfig } from "@/config/navigation";
+import { canAccessRoute, inferUserRole } from "@/lib/access-control";
 import { useAppSelector } from "@/store/hooks";
+import type { UserRole } from "@/types/auth";
 
 const AUTH_STORAGE_KEY = "judwaa.auth.session";
 
 type AuthSession = {
+  role?: UserRole;
   username?: string;
   token?: string;
 };
 
-const hasValidSession = (): boolean => {
+const getPersistedSession = (): { hasToken: boolean; role: UserRole } => {
   if (typeof window === "undefined") {
-    return false;
+    return { hasToken: false, role: "user" };
   }
 
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) {
-      return false;
+      return { hasToken: false, role: "user" };
     }
 
     const parsed = JSON.parse(raw) as AuthSession;
-    return typeof parsed.token === "string" && parsed.token.trim().length > 0;
+    const hasToken = typeof parsed.token === "string" && parsed.token.trim().length > 0;
+    return {
+      hasToken,
+      role: inferUserRole({ username: parsed.username, token: parsed.token, role: parsed.role }),
+    };
   } catch {
-    return false;
+    return { hasToken: false, role: "user" };
   }
 };
 
 export default function Home() {
   const router = useRouter();
   const session = useAppSelector((state) => state.auth.session);
-  const [hasClientSession, setHasClientSession] = useState(false);
-
-  useEffect(() => {
-    setHasClientSession(hasValidSession());
-  }, []);
-
-  const isAuthenticated = Boolean(session?.token) || hasClientSession;
+  const persistedSession = getPersistedSession();
+  const isAuthenticated = Boolean(session?.token) || persistedSession.hasToken;
+  const currentRole: UserRole = session?.role ?? persistedSession.role;
 
   const handleCardClick = (card: HomeCardConfig) => {
-    if (card.requiresAuth && !isAuthenticated) {
-      router.push("/auth");
+    const hasAccess = canAccessRoute(
+      { isAuthenticated, role: currentRole },
+      { requiresAuth: card.requiresAuth, requiresRole: card.requiresRole },
+    );
+
+    if (!hasAccess && !isAuthenticated) {
+      router.push(`/auth?redirect=${encodeURIComponent(card.url)}`);
+      return;
+    }
+
+    if (!hasAccess) {
+      router.push("/");
       return;
     }
 
@@ -67,10 +79,24 @@ export default function Home() {
 
       <Grid container spacing={1.75}>
         {HOME_CARDS.map((card) => {
-          const protectedStatus = card.requiresAuth ? (isAuthenticated ? "unlocked" : "members") : "public";
+          const hasCardAccess = canAccessRoute(
+            { isAuthenticated, role: currentRole },
+            { requiresAuth: card.requiresAuth, requiresRole: card.requiresRole },
+          );
+
+          const protectedStatus = card.requiresAuth
+            ? hasCardAccess
+              ? "unlocked"
+              : card.requiresRole && isAuthenticated
+                ? "role-restricted"
+                : "members"
+            : "public";
+
           const borderColor =
             protectedStatus === "unlocked"
               ? "success.light"
+              : protectedStatus === "role-restricted"
+                ? "error.light"
               : protectedStatus === "members"
                 ? "warning.light"
                 : "divider";
@@ -117,10 +143,22 @@ export default function Home() {
                     {card.requiresAuth ? (
                       <Chip
                         size="small"
-                        color={isAuthenticated ? "success" : "warning"}
+                        color={
+                          protectedStatus === "role-restricted"
+                            ? "error"
+                            : isAuthenticated
+                              ? "success"
+                              : "warning"
+                        }
                         variant="outlined"
-                        icon={isAuthenticated ? <FiCheckCircle /> : <FiLock />}
-                        label={isAuthenticated ? "Unlocked" : "Members only"}
+                        icon={protectedStatus === "role-restricted" || !isAuthenticated ? <FiLock /> : <FiCheckCircle />}
+                        label={
+                          protectedStatus === "role-restricted"
+                            ? "Admin only"
+                            : isAuthenticated
+                              ? "Unlocked"
+                              : "Members only"
+                        }
                         sx={{
                           fontWeight: 700,
                           letterSpacing: 0.3,
