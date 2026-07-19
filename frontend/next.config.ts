@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const apiTargets = {
   development: "http://localhost:8080",
@@ -10,6 +11,9 @@ const apiTargets = {
 const proxyTarget = apiTargets[process.env.NODE_ENV as keyof typeof apiTargets] 
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   async rewrites() {
     return [
       {

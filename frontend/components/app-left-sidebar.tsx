@@ -49,8 +49,14 @@ export function AppLeftSidebar() {
   const pathname = usePathname();
   const isOpen = useAppSelector((state) => state.ui.isSidebarOpen);
   const authSession = useAppSelector((state) => state.auth.session);
+  const [hasClientSession, setHasClientSession] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  const isAuthenticated = Boolean(authSession?.token) || hasValidSession();
+
+  useEffect(() => {
+    setHasClientSession(hasValidSession());
+  }, []);
+
+  const isAuthenticated = Boolean(authSession?.token) || hasClientSession;
 
   const visibleItems = useMemo(() => SIDEBAR_ITEMS, []);
 

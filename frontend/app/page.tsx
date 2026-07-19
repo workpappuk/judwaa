@@ -4,6 +4,7 @@
 import { FiArrowUpRight, FiCheckCircle, FiLock } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { Box, Chip, Grid, Paper, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
 
 import { HOME_CARDS, type HomeCardConfig } from "@/config/navigation";
 import { useAppSelector } from "@/store/hooks";
@@ -36,7 +37,13 @@ const hasValidSession = (): boolean => {
 export default function Home() {
   const router = useRouter();
   const session = useAppSelector((state) => state.auth.session);
-  const isAuthenticated = Boolean(session?.token) || hasValidSession();
+  const [hasClientSession, setHasClientSession] = useState(false);
+
+  useEffect(() => {
+    setHasClientSession(hasValidSession());
+  }, []);
+
+  const isAuthenticated = Boolean(session?.token) || hasClientSession;
 
   const handleCardClick = (card: HomeCardConfig) => {
     if (card.requiresAuth && !isAuthenticated) {
