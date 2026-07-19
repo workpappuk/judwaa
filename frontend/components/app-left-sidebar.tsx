@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FiChevronDown, FiChevronRight, FiLock, FiX } from "react-icons/fi";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import {
   Box,
   Collapse,
@@ -20,7 +22,7 @@ import {
 import { canAccessRoute, hasRequiredRole, inferUserRole } from "@/lib/access-control";
 import { SIDEBAR_ITEMS, type SidebarGroupItem, type SidebarItem } from "@/config/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setIsSidebarOpen } from "@/store/slices/uiSlice";
+import { setIsSidebarOpen, setIsSidebarPinned } from "@/store/slices/uiSlice";
 import type { UserRole } from "@/types/auth";
 
 const AUTH_STORAGE_KEY = "judwaa.auth.session";
@@ -55,6 +57,7 @@ export function AppLeftSidebar() {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const isOpen = useAppSelector((state) => state.ui.isSidebarOpen);
+  const isPinned = useAppSelector((state) => state.ui.isSidebarPinned);
   const authSession = useAppSelector((state) => state.auth.session);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [persistedAuth, setPersistedAuth] = useState<{ hasToken: boolean; role: UserRole }>({ hasToken: false, role: "user" });
@@ -113,13 +116,32 @@ export function AppLeftSidebar() {
   }, []);
 
   useEffect(() => {
+    if (!isDesktop && isPinned) {
+      dispatch(setIsSidebarPinned(false));
+    }
+
+    if (isDesktop && isPinned && !isOpen) {
+      dispatch(setIsSidebarOpen(true));
+    }
+  }, [dispatch, isDesktop, isOpen, isPinned]);
+
+  useEffect(() => {
     if (!isDesktop && isOpen) {
       dispatch(setIsSidebarOpen(false));
     }
   }, [dispatch, isDesktop, isOpen, pathname]);
 
   const closeSidebar = () => {
+    if (isDesktop && isPinned) {
+      return;
+    }
+
     dispatch(setIsSidebarOpen(false));
+  };
+
+  const togglePin = () => {
+    const nextPinned = !isPinned;
+    dispatch(setIsSidebarPinned(nextPinned));
   };
 
   const toggleGroup = (groupId: string) => {
@@ -163,7 +185,7 @@ export function AppLeftSidebar() {
     <Drawer
       anchor="left"
       variant={isDesktop ? "persistent" : "temporary"}
-      open={isOpen}
+      open={isDesktop ? isPinned || isOpen : isOpen}
       onClose={closeSidebar}
       ModalProps={isDesktop ? undefined : { keepMounted: true }}
       slotProps={{
@@ -187,7 +209,16 @@ export function AppLeftSidebar() {
           <IconButton size="small" onClick={closeSidebar} aria-label="Close sidebar">
             <FiX />
           </IconButton>
-        ) : null}
+        ) : (
+          <IconButton
+            size="small"
+            onClick={togglePin}
+            aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+            title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+          >
+            {isPinned ? <PushPinIcon fontSize="small" /> : <PushPinOutlinedIcon fontSize="small" />}
+          </IconButton>
+        )}
       </Box>
 
       <Divider sx={{ mb: 1 }} />

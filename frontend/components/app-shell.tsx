@@ -14,11 +14,12 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const isSidebarOpen = useAppSelector((state) => state.ui.isSidebarOpen);
+  const isSidebarPinned = useAppSelector((state) => state.ui.isSidebarPinned);
   const pathname = usePathname();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
-  const contentLeftPadding = isDesktop && isSidebarOpen ? "300px" : undefined;
+  const contentLeftPadding = isDesktop && (isSidebarOpen || isSidebarPinned) ? "300px" : undefined;
 
   useEffect(() => {
     // Defensive reset in case a modal/page leaves body scroll locked.

@@ -7,6 +7,7 @@ interface UiState {
   isFullscreen: boolean;
   isAudioPlaying: boolean;
   isSidebarOpen: boolean;
+  isSidebarPinned: boolean;
 }
 
 const initialState: UiState = {
@@ -14,6 +15,7 @@ const initialState: UiState = {
   isFullscreen: false,
   isAudioPlaying: false,
   isSidebarOpen: false,
+  isSidebarPinned: false,
 };
 
 const uiSlice = createSlice({
@@ -41,8 +43,32 @@ const uiSlice = createSlice({
     toggleSidebar: (state) => {
       state.isSidebarOpen = !state.isSidebarOpen;
     },
+    setIsSidebarPinned: (state, action: PayloadAction<boolean>) => {
+      state.isSidebarPinned = action.payload;
+
+      if (action.payload) {
+        state.isSidebarOpen = true;
+      }
+    },
+    toggleSidebarPinned: (state) => {
+      state.isSidebarPinned = !state.isSidebarPinned;
+
+      if (state.isSidebarPinned) {
+        state.isSidebarOpen = true;
+      }
+    },
   },
 });
 
-export const { setThemeMode, toggleThemeMode, setIsFullscreen, toggleFullscreenState, setIsAudioPlaying, setIsSidebarOpen, toggleSidebar } = uiSlice.actions;
+export const {
+  setThemeMode,
+  toggleThemeMode,
+  setIsFullscreen,
+  toggleFullscreenState,
+  setIsAudioPlaying,
+  setIsSidebarOpen,
+  toggleSidebar,
+  setIsSidebarPinned,
+  toggleSidebarPinned,
+} = uiSlice.actions;
 export default uiSlice.reducer;
