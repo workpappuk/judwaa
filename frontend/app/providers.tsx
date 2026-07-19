@@ -34,13 +34,6 @@ function MuiAppTheme({ children }: { children: React.ReactNode }) {
         palette: {
           mode,
         },
-        typography: {
-          fontFamily: "var(--font-sans)",
-          button: {
-            textTransform: "none",
-            fontWeight: 600,
-          },
-        },
       }),
     [mode],
   );
